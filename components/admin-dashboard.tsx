@@ -1,237 +1,269 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
+"use client"
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { DollarSign, TrendingUp, Users, Target, MoreHorizontal, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Label } from "@/components/ui/label"
+import { Mail, Phone, User, MoreHorizontal } from "lucide-react"
+import { useState } from "react"
+
+type Client = {
+  id: string
+  name: string
+  email: string
+  phone: string
+  company: string
+  status: string
+  access: number
+}
+
+const initialClients: Client[] = [
+  {
+    id: "CLT-004",
+    name: "Emily Davis",
+    email: "emily@startup.io",
+    phone: "+15554567890",
+    company: "INVERNI BW",
+    status: "Active",
+    access: 0,
+  },
+]
 
 export function AdminDashboard() {
-  const metrics = [
-    {
-      title: "Annual Startup Benefits",
-      value: "$2,634k",
-      subtitle: "Overall startup income",
-      icon: DollarSign,
-      color: "bg-orange-500",
-      change: "+12.5%",
-      positive: true,
-    },
-    {
-      title: "Investment Money",
-      value: "4,933",
-      subtitle: "Total investments this month",
-      icon: TrendingUp,
-      color: "bg-purple-500",
-      change: "+8.2%",
-      positive: true,
-    },
-    {
-      title: "Active Clients",
-      value: "84,453",
-      subtitle: "Customer base all",
-      icon: Users,
-      color: "bg-pink-500",
-      change: "+15.3%",
-      positive: true,
-    },
-    {
-      title: "Revenue Growth",
-      value: "14.7%",
-      subtitle: "Driving revenue growth",
-      icon: Target,
-      color: "bg-blue-500",
-      change: "-2.1%",
-      positive: false,
-    },
-  ]
+  const [clients, setClients] = useState<Client[]>(initialClients)
+  const [search, setSearch] = useState("")
+  const [openDialog, setOpenDialog] = useState(false)
+  const [editClientIndex, setEditClientIndex] = useState<number | null>(null)
+  const [formData, setFormData] = useState<Client>({
+    id: "",
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    status: "Active",
+    access: 0,
+  })
 
-  const topClients = [
-    { name: "INVERNI BW", revenue: "$449,000", projects: 34, growth: "+23.42%", status: "Active" },
-    { name: "EVBALT Corp", revenue: "$199,000", projects: 53, growth: "+12.83%", status: "Active" },
-    { name: "STATUE TEMPUR", revenue: "$699,000", projects: 427, growth: "+16.02%", status: "Pending" },
-    { name: "TechFlow Solutions", revenue: "$325,000", projects: 28, growth: "+18.75%", status: "Active" },
-    { name: "Digital Dynamics", revenue: "$156,000", projects: 15, growth: "+9.45%", status: "Active" },
-  ]
+  const filteredClients = clients.filter((client) =>
+    client.name.toLowerCase().includes(search.toLowerCase())
+  )
 
-  const monthlyActivity = [
-    { month: "Jan", revenue: 45000, investments: 12000 },
-    { month: "Feb", revenue: 52000, investments: 15000 },
-    { month: "Mar", revenue: 48000, investments: 11000 },
-    { month: "Apr", revenue: 61000, investments: 18000 },
-    { month: "May", revenue: 55000, investments: 16000 },
-    { month: "Jun", revenue: 67000, investments: 22000 },
-    { month: "Jul", revenue: 72000, investments: 25000 },
-  ]
+  const handleAddOrEdit = () => {
+    if (editClientIndex !== null) {
+      // Edit existing
+      const updated = [...clients]
+      updated[editClientIndex] = { ...formData, id: updated[editClientIndex].id } // prevent editing ID
+      setClients(updated)
+    } else {
+      // Create new ID
+      const lastId = clients[clients.length - 1]?.id || "CLT-000"
+      const newIdNumber = parseInt(lastId.split("-")[1]) + 1
+      const newId = `CLT-${newIdNumber.toString().padStart(3, "0")}`
+      const newClient = { ...formData, id: newId }
+      setClients([...clients, newClient])
+    }
+
+    // Reset
+    setFormData({
+      id: "",
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      status: "Active",
+      access: 0,
+    })
+    setEditClientIndex(null)
+    setOpenDialog(false)
+    }
+
+
+  const handleDelete = (index: number) => {
+    const updated = [...clients]
+    updated.splice(index, 1)
+    setClients(updated)
+  }
+
+  const openEditDialog = (client: Client, index: number) => {
+    setFormData(client)
+    setEditClientIndex(index)
+    setOpenDialog(true)
+  }
+
+  const openWhatsApp = (phone: string) => {
+    const formatted = phone.replace(/[^0-9]/g, "")
+    window.open(`https://wa.me/${formatted}`, "_blank")
+  }
+
+  const openEmail = (email: string) => {
+    window.location.href = `mailto:${email}`
+  }
+
+  const changeAccess = (index: number, delta: number) => {
+    const updated = [...clients]
+    updated[index].access = Math.max(0, updated[index].access + delta)
+    setClients(updated)
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric, index) => (
-          <Card key={index} className="relative overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className={`w-12 h-12 ${metric.color} rounded-lg flex items-center justify-center`}>
-                  <metric.icon className="w-6 h-6 text-white" />
-                </div>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="mt-4">
-                <div className="text-2xl font-bold text-gray-900">{metric.value}</div>
-                <div className="text-sm text-gray-600 mt-1">{metric.subtitle}</div>
-                <div className="flex items-center mt-2">
-                  {metric.positive ? (
-                    <ArrowUpRight className="w-4 h-4 text-green-500" />
-                  ) : (
-                    <ArrowDownRight className="w-4 h-4 text-red-500" />
-                  )}
-                  <span className={`text-sm ml-1 ${metric.positive ? "text-green-500" : "text-red-500"}`}>
-                    {metric.change}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+    <Card>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <CardTitle>Clients</CardTitle>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Search clients..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-64"
+          />
+          <Button onClick={() => setOpenDialog(true)}>Add Client</Button>
+        </div>
+      </CardHeader>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Monthly Activity Chart */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Monthly Monetary Activity</CardTitle>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {monthlyActivity.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <span className="text-xs font-semibold text-orange-600">{item.month}</span>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-left text-muted-foreground border-b">
+                <th className="py-2 px-4">Client ID</th>
+                <th className="py-2 px-4">Name</th>
+                <th className="py-2 px-4">Contact</th>
+                <th className="py-2 px-4">Company</th>
+                <th className="py-2 px-4">Status</th>
+                <th className="py-2 px-4">Number of Access</th>
+                <th className="py-2 px-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredClients.map((client, index) => (
+                <tr key={client.id} className="border-b hover:bg-muted/50">
+                  <td className="py-2 px-4 font-semibold text-primary">{client.id}</td>
+                  <td className="py-2 px-4 flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    {client.name}
+                  </td>
+                  <td className="py-2 px-4 space-y-1">
+                    <div className="flex items-center gap-1">
+                      <Mail className="w-4 h-4" />
+                      {client.email}
                     </div>
-                    <div>
-                      <div className="font-medium">${item.revenue.toLocaleString()}</div>
-                      <div className="text-sm text-gray-500">Revenue</div>
+                    <div className="flex items-center gap-1">
+                      <Phone className="w-4 h-4" />
+                      {client.phone}
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium text-purple-600">${item.investments.toLocaleString()}</div>
-                    <div className="text-sm text-gray-500">Investments</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Investment Distribution */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Investment Distribution</CardTitle>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Technology</span>
-                <span className="text-sm text-gray-600">45%</span>
-              </div>
-              <Progress value={45} className="h-2" />
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Healthcare</span>
-                <span className="text-sm text-gray-600">30%</span>
-              </div>
-              <Progress value={30} className="h-2" />
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Finance</span>
-                <span className="text-sm text-gray-600">15%</span>
-              </div>
-              <Progress value={15} className="h-2" />
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Others</span>
-                <span className="text-sm text-gray-600">10%</span>
-              </div>
-              <Progress value={10} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Most Active Clients */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Most Active Clients</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm">
-              All Status
-            </Button>
-            <Button variant="outline" size="sm">
-              All Category
-            </Button>
-            <Button variant="outline" size="sm">
-              Export
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Client Name</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Revenue</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Projects</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Growth Rate</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Action</th>
+                  </td>
+                  <td className="py-2 px-4 font-semibold">{client.company}</td>
+                  <td className="py-2 px-4">
+                    <Badge
+                      variant={
+                        client.status === "Active"
+                          ? "default"
+                          : client.status === "Inactive"
+                          ? "destructive"
+                          : "secondary"
+                      }
+                    >
+                      {client.status}
+                    </Badge>
+                  </td>
+                  <td className="py-2 px-4 flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={() => changeAccess(index, -1)}>–</Button>
+                    <span>{client.access}</span>
+                    <Button variant="outline" size="icon" onClick={() => changeAccess(index, 1)}>+</Button>
+                  </td>
+                  <td className="py-2 px-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditDialog(client, index)}>
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openWhatsApp(client.phone)}>
+                          Call (WhatsApp)
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openEmail(client.email)}>
+                          Email
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(index)}
+                          className="text-red-600"
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {topClients.map((client, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50">
-                    <td className="py-4 px-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <span className="text-sm font-semibold text-gray-600">
-                            {client.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="font-medium">{client.name}</div>
-                          <div className="text-sm text-gray-500">Client</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 font-medium">{client.revenue}</td>
-                    <td className="py-4 px-4">{client.projects}</td>
-                    <td className="py-4 px-4 text-green-600">{client.growth}</td>
-                    <td className="py-4 px-4">
-                      <Badge variant={client.status === "Active" ? "default" : "secondary"}>{client.status}</Badge>
-                    </td>
-                    <td className="py-4 px-4">
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+
+      {/* Add/Edit Form Dialog */}
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editClientIndex !== null ? "Edit Client" : "Add Client"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            {["name", "email", "phone", "company"].map((field) => (
+              <div key={field} className="space-y-1">
+                <Label>{field.toUpperCase()}</Label>
+                <Input
+                  value={(formData as any)[field]}
+                  onChange={(e) =>
+                    setFormData({ ...formData, [field]: e.target.value })
+                  }
+                />
+              </div>
+            ))}
+
+            {/* Status Dropdown */}
+            <div className="space-y-1">
+              <Label>Status</Label>
+              <select
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value })
+                }
+                className="w-full border px-3 py-2 rounded-md"
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </div>
+
+            <Button onClick={handleAddOrEdit}>
+              {editClientIndex !== null ? "Update" : "Create"}
+            </Button>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </DialogContent>
+      </Dialog>
+    </Card>
   )
 }

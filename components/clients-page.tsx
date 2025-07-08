@@ -395,51 +395,32 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 justify-center">
+        {/* Total Clients Card */}
+        <Card className="rounded-lg shadow-sm w-80 h-40 mx-auto">
+          <CardContent className="flex flex-col items-center justify-center p-2 h-full">
+            <div className="w-10 h-10 bg-orange-500 rounded-md flex items-center justify-center mb-1">
+              <User className="w-4 h-4 text-white" />
             </div>
-            <div className="mt-4">
-              <div className="text-2xl font-bold text-gray-900">{clientsData.length}</div>
-              <div className="text-sm text-gray-600 mt-1">Total Clients</div>
-            </div>
+            <div className="text-lg font-semibold text-gray-800">{clientsData.length}</div>
+            <div className="text-xs text-gray-500">Total Clients</div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
-                <Building2 className="w-6 h-6 text-white" />
-              </div>
+        {/* Active Clients Card */}
+        <Card className="rounded-lg shadow-sm w-80 h-40 mx-auto">
+          <CardContent className="flex flex-col items-center justify-center p-2 h-full">
+            <div className="w-10 h-10 bg-green-500 rounded-md flex items-center justify-center mb-1">
+              <Building2 className="w-4 h-4 text-white" />
             </div>
-            <div className="mt-4">
-              <div className="text-2xl font-bold text-gray-900">{activeClients}</div>
-              <div className="text-sm text-gray-600 mt-1">Active Clients</div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-                <FileText className="w-6 h-6 text-white" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <div className="text-2xl font-bold text-gray-900">
-                {clientsData.reduce((sum, client) => sum + client.projects, 0)}
-              </div>
-              <div className="text-sm text-gray-600 mt-1">Total Projects</div>
-            </div>
+            <div className="text-lg font-semibold text-gray-900">{activeClients}</div>
+            <div className="text-xs text-gray-500">Active Clients</div>
           </CardContent>
         </Card>
       </div>
+
+
+
 
       {/* Search Section */}
       <Card>

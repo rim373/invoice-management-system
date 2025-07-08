@@ -1,5 +1,6 @@
 "use client"
 
+import { Switch } from "@/components/ui/switch"
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -16,11 +17,14 @@ import {
   ChevronDown,
   ChevronRight,
   Save,
-  Eye,
+  Folder,
   Settings,
   CheckCircle,
   Loader2,
 } from "lucide-react"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { cn } from "@/lib/utils"
+import { toast } from "@/hooks/use-toast"
 
 interface InvoiceItem {
   id: string
@@ -44,6 +48,31 @@ interface PaymentHistory {
   date: string
   method: string
   note?: string
+}
+interface InvoiceSettings {
+  invoiceNumber: boolean
+  dueDate: boolean
+  currency: boolean
+  discount: boolean
+  tax: boolean
+  notes: boolean
+  invoiceNumberPrefix: string
+  invoiceNumberStart: string
+  dueDateType: string
+  dueDateDays: string
+  vatNumber: string
+  taxAmount: string
+  taxMethod: string
+  currencyType: string
+  separator: string
+  signPlacement: string
+  decimals: string
+  discountType: string
+  discountAmount: string
+  defaultNotes: string
+  saveLocation: string
+  template: string
+  dateFormat: string
 }
 
 interface Invoice {
@@ -79,6 +108,49 @@ interface FacturePageProps {
 }
 
 export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps) {
+  //i aded this 
+      const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>({
+        invoiceNumber: true,
+        dueDateType: "custom", // "custom" ou "term"
+        dueDateDays: "30", // par défaut 30 jours
+        dueDateCustom: new Date().toISOString().split("T")[0],
+        currency: true,
+        discount: true,
+        tax: true,
+        notes: true,
+        invoiceNumberPrefix: "INV",
+        invoiceNumberStart: "001",
+        dueDateType: "custom",
+        dueDateDays: "30",
+        vatNumber: "",
+        taxAmount: "0",
+        taxMethod: "default",
+        currencyType: "EUR",
+        separator: "comma-dot",
+        signPlacement: "before",
+        decimals: "2",
+        discountType: "percentage",
+        discountAmount: "0",
+        defaultNotes: "",
+        saveLocation: "",
+        template: "",
+        dateFormat: "dd/MM/yyyy",
+      })
+  const [invoiceParameters, setInvoiceParameters] = useState({
+  invoiceNumber: true,
+  dueDate: true,
+  currency: true,
+  discount: true,
+  tax: true,
+  notes: true,
+})
+
+  const [newClient, setNewClient] = useState({
+  name: "",
+  company: "",
+  email: "",
+  phone: "",
+})
   const [activeTab, setActiveTab] = useState<"facture" | "avoir">("facture")
   const [isFormParametersOpen, setIsFormParametersOpen] = useState(false)
   const [selectedClient, setSelectedClient] = useState<string>("")
@@ -156,12 +228,17 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
   const validateForm = () => {
     const errors: { [key: string]: string } = {}
 
-    // Validate client selection
-    if (!selectedClient) {
-      errors.client = "Please select a client"
+    if (activeTab === "facture") {
+      if (!selectedClient) {
+        errors.client = "Please select a client"
+      }
+    } else {
+      // We're using the "new client" form — validate its fields
+      if (!newClient.name || !newClient.company || !newClient.email || !newClient.phone) {
+        errors.client = "Please fill all new client fields"
+      }
     }
 
-    // Validate invoice items
     if (invoiceItems.length === 0) {
       errors.items = "Please add at least one item"
     } else {
@@ -173,7 +250,6 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
       }
     }
 
-    // Validate total amount
     if (calculateTotal() <= 0) {
       errors.total = "Invoice total must be greater than 0"
     }
@@ -181,6 +257,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
     setFormErrors(errors)
     return Object.keys(errors).length === 0
   }
+
 
   const generateInvoiceNumber = () => {
     if (invoiceNumber) return invoiceNumber
@@ -198,10 +275,31 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
         throw new Error("Form validation failed")
       }
 
-      const clientData = getSelectedClientData()
-      if (!clientData) {
-        throw new Error("Client data not found")
+      let clientData: Client | null = null
+
+      if (activeTab === "facture") {
+        clientData = getSelectedClientData() || null
+        if (!clientData) {
+          throw new Error("Client data not found")
+        }
+      } else {
+        // Validate new client input
+        const { name, company, email, phone } = newClient
+        if (!name || !company || !email || !phone) {
+          throw new Error("All new client fields must be filled")
+        }
+
+        clientData = {
+          id: `client-${Date.now()}`,
+          name,
+          company,
+          email,
+          phone,
+          status: "Active",
+        }
       }
+      
+
 
       const finalInvoiceNumber = generateInvoiceNumber()
       const subtotal = calculateSubtotal()
@@ -250,6 +348,8 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
         setInvoiceDate(new Date().toISOString().split("T")[0])
         setDueDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
         setSubmitSuccess(false)
+        // 🔁 Reset new client fields
+        setNewClient({ name: "", company: "", email: "", phone: "" })
       }, 2000)
     } catch (error) {
       console.error("Invoice creation failed:", error)
@@ -283,7 +383,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
             variant={activeTab === "facture" ? "default" : "ghost"}
             size="sm"
             onClick={() => setActiveTab("facture")}
-            className={activeTab === "facture" ? "bg-white shadow-sm" : ""}
+            className={activeTab === "facture" ? "" : ""}
           >
             <FileText className="w-4 h-4 mr-2" />
             Existing Client
@@ -292,23 +392,14 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
             variant={activeTab === "avoir" ? "default" : "ghost"}
             size="sm"
             onClick={() => setActiveTab("avoir")}
-            className={activeTab === "avoir" ? "bg-white shadow-sm" : ""}
+            className={activeTab === "avoir" ? "shadow-sm" : ""}
           >
             <FileText className="w-4 h-4 mr-2" />
             New Client
           </Button>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" className="text-red-600 border-red-200 hover:bg-red-50 bg-transparent">
-            <Trash2 className="w-4 h-4 mr-2" />
-            Delete
-          </Button>
-          <Button className="bg-orange-500 hover:bg-orange-600 text-white">
-            <Save className="w-4 h-4 mr-2" />
-            Save & Preview
-          </Button>
-        </div>
+        
       </div>
 
       {/* Error/Success Messages */}
@@ -350,146 +441,346 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
         </Card>
       )}
 
-      {/* Form Parameters */}
+      {/* Invoice Parameters */}
       <Card>
-        <Collapsible open={isFormParametersOpen} onOpenChange={setIsFormParametersOpen}>
-          <CollapsibleTrigger asChild>
-            <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center space-x-2">
-                  <Settings className="w-5 h-5 text-gray-600" />
-                  <span>Form Parameters</span>
-                </CardTitle>
-                {isFormParametersOpen ? (
-                  <ChevronDown className="w-4 h-4 text-gray-600" />
-                ) : (
-                  <ChevronRight className="w-4 h-4 text-gray-600" />
-                )}
+        <CardContent className="p-6 space-y-6">
+          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">Invoice Parameters</h3>
+          <div className="grid grid-cols-6 gap-4">
+            {[
+              { key: "invoiceNumber", label: "Invoice Number" },
+              { key: "dueDate", label: "Due Date" },
+              { key: "currency", label: "Currency" },
+              { key: "discount", label: "Discount" },
+              { key: "tax", label: "Tax" },
+              { key: "notes", label: "Notes" },
+            ].map(({ key, label }) => (
+              <div key={key} className="flex flex-col items-center space-y-2">
+                <Label className="text-xs text-gray-600 text-center">{label}</Label>
+                <Switch
+                  checked={invoiceParameters[key as keyof typeof invoiceParameters]}
+                  onCheckedChange={(checked) =>
+                    setInvoiceParameters((prev) => ({ ...prev, [key]: checked }))
+                  }
+                  
+                />
               </div>
-            </CardHeader>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent className="pt-0">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="invoice-number">Invoice Number</Label>
-                  <Input
-                    id="invoice-number"
-                    placeholder="Auto-generated if empty"
-                    value={invoiceNumber}
-                    onChange={(e) => setInvoiceNumber(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="invoice-date">Invoice Date</Label>
-                  <Input
-                    id="invoice-date"
-                    type="date"
-                    value={invoiceDate}
-                    onChange={(e) => setInvoiceDate(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="due-date">Due Date</Label>
-                  <Input id="due-date" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Currency</Label>
-                  <Select value={currency} onValueChange={setCurrency}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="EUR">EUR (€)</SelectItem>
-                      <SelectItem value="USD">USD ($)</SelectItem>
-                      <SelectItem value="GBP">GBP (£)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="tax-rate">Tax Rate (%)</Label>
-                  <Input
-                    id="tax-rate"
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={taxRate}
-                    onChange={(e) => setTaxRate(Number.parseFloat(e.target.value) || 0)}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
+            ))}
+          </div>
+          {invoiceParameters.invoiceNumber && (
+  <div className="grid grid-cols-2 gap-4">
+    <div>
+      <Label>Prefix</Label>
+      <Input
+        value={invoiceSettings.invoiceNumberPrefix}
+        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, invoiceNumberPrefix: e.target.value }))}
+      />
+    </div>
+    <div>
+      <Label>Start Number</Label>
+      <Input
+        value={invoiceSettings.invoiceNumberStart}
+        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, invoiceNumberStart: e.target.value }))}
+      />
+    </div>
+  </div>
+)}
+
+{invoiceParameters.dueDate && (
+  <div>
+    <Label className="mb-2 block">Due Date</Label>
+    <RadioGroup
+      value={invoiceSettings.dueDateType}
+      onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, dueDateType: value }))}
+    >
+      <div className="flex items-center space-x-4 mb-4">
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="custom" id="customDate" />
+          <Label htmlFor="customDate">Custom Date</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="term" id="paymentTerm" />
+          <Label htmlFor="paymentTerm">Select Payment Term</Label>
+        </div>
+      </div>
+    </RadioGroup>
+
+    {invoiceSettings.dueDateType === "custom" && (
+      <Input
+        type="date"
+        value={invoiceSettings.dueDateCustom}
+        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, dueDateCustom: e.target.value }))}
+      />
+    )}
+
+    {invoiceSettings.dueDateType === "term" && (
+      <Select
+        value={invoiceSettings.dueDateDays}
+        onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, dueDateDays: value }))}
+      >
+        <SelectTrigger>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="7">7 jours après facturation</SelectItem>
+          <SelectItem value="10">10 jours après facturation</SelectItem>
+          <SelectItem value="20">20 jours après facturation</SelectItem>
+          <SelectItem value="30">30 jours après facturation</SelectItem>
+          <SelectItem value="60">60 jours après facturation</SelectItem>
+        </SelectContent>
+      </Select>
+    )}
+  </div>
+)}
+
+
+{invoiceParameters.currency && (
+  <div className="grid grid-cols-2 gap-4">
+    <div>
+      <Label>Currency</Label>
+      <Select
+        value={invoiceSettings.currencyType}
+        onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, currencyType: value }))}
+      >
+        <SelectTrigger><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="USD">US Dollar</SelectItem>
+          <SelectItem value="EUR">Euro</SelectItem>
+          <SelectItem value="TND">Tunisian Dinar</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+    <div>
+      <Label>Separator</Label>
+      <Select
+        value={invoiceSettings.separator}
+        onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, separator: value }))}
+      >
+        <SelectTrigger><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="comma-dot">1,999.00</SelectItem>
+          <SelectItem value="dot-comma">1.999,00</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+    <div>
+      <Label>Sign Placement</Label>
+      <Select
+        value={invoiceSettings.signPlacement}
+        onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, signPlacement: value }))}
+      >
+        <SelectTrigger><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="before">Before Amount</SelectItem>
+          <SelectItem value="after">After Amount</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+    <div>
+      <Label>Decimal Places</Label>
+      <Input
+        type="number"
+        min={0}
+        max={3}
+        value={invoiceSettings.decimals}
+        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, decimals: e.target.value }))}
+      />
+    </div>
+  </div>
+)}
+
+{invoiceParameters.discount && (
+  <div className="grid grid-cols-2 gap-4">
+    <div>
+      <Label>Discount Type</Label>
+      <RadioGroup
+        defaultValue={invoiceSettings.discountType}
+        onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, discountType: value }))}
+      >
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="percentage" id="percentage" />
+            <Label htmlFor="percentage">Percentage</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="fixed" id="fixed" />
+            <Label htmlFor="fixed">Fixed Amount</Label>
+          </div>
+        </div>
+      </RadioGroup>
+    </div>
+    <div>
+      <Label>Amount</Label>
+      <Input
+        type="number"
+        value={invoiceSettings.discountAmount}
+        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, discountAmount: e.target.value }))}
+      />
+    </div>
+  </div>
+)}
+
+{invoiceParameters.tax && (
+  <div className="grid grid-cols-3 gap-4">
+    <div>
+      <Label>VAT Number</Label>
+      <Input
+        value={invoiceSettings.vatNumber}
+        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, vatNumber: e.target.value }))}
+      />
+    </div>
+    <div>
+      <Label>Tax Amount (%)</Label>
+      <Input
+        type="number"
+        value={invoiceSettings.taxAmount}
+        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, taxAmount: e.target.value }))}
+      />
+    </div>
+    <div>
+      <Label>Tax Method</Label>
+      <Select
+        value={invoiceSettings.taxMethod}
+        onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, taxMethod: value }))}
+      >
+        <SelectTrigger><SelectValue /></SelectTrigger>
+        <SelectContent>
+          <SelectItem value="default">Default Values</SelectItem>
+          <SelectItem value="inclusive">autoliquidation</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  </div>
+)}
+
+{invoiceParameters.notes && (
+  <div>
+    <Label>Default Notes</Label>
+    <Textarea
+      placeholder="Enter default notes for invoices..."
+      value={invoiceSettings.defaultNotes}
+      onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, defaultNotes: e.target.value }))}
+    />
+  </div>
+)}
+
+        </CardContent>
       </Card>
+      
 
       {/* Client Information */}
       <Card>
         <CardHeader>
           <CardTitle>Client Information</CardTitle>
-          <p className="text-sm text-gray-600">
-            Available clients: {availableClients.length}
-            {availableClients.length === 0 && " - Go to Clients page to add clients"}
-          </p>
+          {activeTab === "facture" && (
+            <p className="text-sm text-gray-600">
+              Available clients: {availableClients.length}
+              {availableClients.length === 0 && " - Go to Clients page to add clients"}
+            </p>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="client-select">
-              Select Client <span className="text-red-500">*</span>
-            </Label>
-            <Select value={selectedClient} onValueChange={setSelectedClient}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a client..." />
-              </SelectTrigger>
-              <SelectContent>
-                {availableClients.length === 0 ? (
-                  <SelectItem value="" disabled>
-                    No clients available - Add clients first
-                  </SelectItem>
-                ) : (
-                  availableClients.map((client) => (
-                    <SelectItem key={client.id} value={client.id}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>
-                          {client.name} - {client.company}
-                        </span>
-                        <span className={`text-xs ml-2 ${getStatusColor(client.status)}`}>{client.status}</span>
-                      </div>
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
+          {activeTab === "facture" ? (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="client-select">
+                  Select Client <span className="text-red-500">*</span>
+                </Label>
+                <Select value={selectedClient} onValueChange={setSelectedClient}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a client..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableClients.length === 0 ? (
+                      <SelectItem value="" disabled>
+                        No clients available - Add clients first
+                      </SelectItem>
+                    ) : (
+                      availableClients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>
+                              {client.name} - {client.company}
+                            </span>
+                            <span className={`text-xs ml-2 ${getStatusColor(client.status)}`}>{client.status}</span>
+                          </div>
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
 
-          {selectedClient && (
-            <div className="bg-gray-50 p-4 rounded-lg space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Name & Company</Label>
-                  <p className="text-gray-900">{getSelectedClientData()?.name}</p>
-                  <p className="text-gray-600">{getSelectedClientData()?.company}</p>
+              {selectedClient && (
+                <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Name & Company</Label>
+                      <p className="text-gray-900">{getSelectedClientData()?.name}</p>
+                      <p className="text-gray-600">{getSelectedClientData()?.company}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Contact</Label>
+                      <p className="text-gray-900">{getSelectedClientData()?.email}</p>
+                      <p className="text-gray-600">{getSelectedClientData()?.phone}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Status</Label>
+                      <p className={`font-medium ${getStatusColor(getSelectedClientData()?.status || "")}`}>
+                        {getSelectedClientData()?.status}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">Client ID</Label>
+                      <p className="text-gray-900">{getSelectedClientData()?.id}</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Contact</Label>
-                  <p className="text-gray-900">{getSelectedClientData()?.email}</p>
-                  <p className="text-gray-600">{getSelectedClientData()?.phone}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Status</Label>
-                  <p className={`font-medium ${getStatusColor(getSelectedClientData()?.status || "")}`}>
-                    {getSelectedClientData()?.status}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">Client ID</Label>
-                  <p className="text-gray-900">{getSelectedClientData()?.id}</p>
-                </div>
+              )}
+            </>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-name">Name</Label>
+                <Input
+                  id="new-name"
+                  value={newClient.name}
+                  onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                  placeholder="Client full name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-company">Company</Label>
+                <Input
+                  id="new-company"
+                  value={newClient.company}
+                  onChange={(e) => setNewClient({ ...newClient, company: e.target.value })}
+                  placeholder="Client company name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-email">Email</Label>
+                <Input
+                  id="new-email"
+                  type="email"
+                  value={newClient.email}
+                  onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+                  placeholder="Client email address"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-phone">Phone</Label>
+                <Input
+                  id="new-phone"
+                  value={newClient.phone}
+                  onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
+                  placeholder="Client phone number"
+                />
               </div>
             </div>
           )}
         </CardContent>
       </Card>
+
 
       {/* Products/Services */}
       <Card>
@@ -596,10 +887,6 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
 
       {/* Action Buttons */}
       <div className="flex justify-end space-x-3">
-        <Button variant="outline">
-          <Eye className="w-4 h-4 mr-2" />
-          Preview
-        </Button>
         <Button
           className="bg-orange-500 hover:bg-orange-600 text-white"
           onClick={handleSaveInvoice}

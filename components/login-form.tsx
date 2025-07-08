@@ -11,38 +11,24 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Building2 } from "lucide-react"
 
 interface LoginFormProps {
-  onLogin: (userRole: "admin" | "user", userData: any) => void
+  onLogin: (userRole: "user" | "admin", userData: any) => void
 }
 
 // Mock user database
 const users = [
   {
-    email: "admin@company.com",
-    password: "admin123",
-    role: "admin" as const,
-    name: "John Admin",
-    company: "TechStartup Inc.",
-  },
-  {
-    email: "user@company.com",
-    password: "user123",
+    email: "demo@user.com",
+    password: "demo",
     role: "user" as const,
-    name: "Jane Client",
-    company: "Client Corp.",
+    name: "user",
+    company: "Demo Startup",
   },
   {
     email: "demo@admin.com",
     password: "demo",
     role: "admin" as const,
-    name: "Demo Admin",
-    company: "Demo Startup",
-  },
-  {
-    email: "demo@user.com",
-    password: "demo",
-    role: "user" as const,
-    name: "Demo User",
-    company: "Demo Client",
+    name: "admin",
+    company: "admin",
   },
 ]
 
@@ -138,10 +124,10 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               <p className="font-medium mb-2">Demo Accounts:</p>
               <div className="space-y-1 text-xs">
                 <p>
-                  <strong>Admin:</strong> demo@admin.com / demo
+                  <strong>client:</strong> demo@user.com / demo
                 </p>
                 <p>
-                  <strong>User:</strong> demo@user.com / demo
+                  <strong>admin:</strong> demo@admin.com / demo
                 </p>
               </div>
             </div>

@@ -4,11 +4,12 @@ import { useState, useEffect } from "react"
 import { LoginForm } from "@/components/login-form"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
+import { UserDashboard} from "@/components/user-dashboard"
 import { AdminDashboard } from "@/components/admin-dashboard"
-import { UserDashboard } from "@/components/user-dashboard"
 import { ClientsPage } from "@/components/clients-page"
 import { FacturePage } from "@/components/facture-page"
 import { JournalPage } from "@/components/journal-page"
+import { SettingsPage } from "@/components/settings-page"
 
 interface Client {
   id: string
@@ -54,50 +55,121 @@ interface Invoice {
     totalPrice: number
   }>
   paymentHistory: PaymentHistory[]
+  createdBy: string
+  userRole: "user" | "admin"
+  discountAmount?: number
+  discountType?: "percentage" | "fixed"
+  vatNumber?: string
+  notes?: string
 }
 
-// Local Storage Keys
-const STORAGE_KEYS = {
-  INVOICES: "client_facturation_invoices",
-  CLIENTS: "client_facturation_clients",
-}
+const getStorageKeys = (userRole: "user" | "admin", userEmail: string) => ({
+  INVOICES: `client_facturation_invoices_${userRole}_${userEmail}`,
+  CLIENTS: `client_facturation_clients_${userRole}`,
+})
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [userRole, setUserRole] = useState<"admin" | "user">("user")
+  const [userRole, setUserRole] = useState<"user" | "admin">("admin")
   const [userData, setUserData] = useState<any>(null)
   const [currentPage, setCurrentPage] = useState("home")
-
-  // Shared client data across components
   const [clientsData, setClientsData] = useState<Client[]>([])
-
-  // Invoice management state with persistent storage
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isDataLoaded, setIsDataLoaded] = useState(false)
 
   // Load data from localStorage on component mount
   useEffect(() => {
+    if (!isAuthenticated || !userData) return
+
     const loadStoredData = () => {
       try {
-        console.log("Loading stored data...")
+        console.log(`Loading stored data for ${userRole}: ${userData.email}`)
+
+        const storageKeys = getStorageKeys(userRole, userData.email)
 
         // Load invoices
-        const storedInvoices = localStorage.getItem(STORAGE_KEYS.INVOICES)
+        const storedInvoices = localStorage.getItem(storageKeys.INVOICES)
         if (storedInvoices) {
           const parsedInvoices = JSON.parse(storedInvoices)
-          console.log("Loaded invoices from storage:", parsedInvoices)
           setInvoices(parsedInvoices)
         } else {
-          console.log("No stored invoices found, using empty array")
           setInvoices([])
         }
 
-        // Load clients
-        const storedClients = localStorage.getItem(STORAGE_KEYS.CLIENTS)
-        if (storedClients) {
-          const parsedClients = JSON.parse(storedClients)
-          console.log("Loaded clients from storage:", parsedClients)
-          setClientsData(parsedClients)
+        // Load clients (user only)
+        if (userRole === "user") {
+          const storedClients = localStorage.getItem(storageKeys.CLIENTS)
+          if (storedClients) {
+            const parsedClients = JSON.parse(storedClients)
+            setClientsData(parsedClients)
+          } else {
+            const defaultClients: Client[] = [
+              {
+                id: "CLT-001",
+                name: "John Smith",
+                email: "john.smith@email.com",
+                phone: "+1 (555) 123-4567",
+                company: "Tech Solutions Inc",
+                status: "Active",
+                projects: 3,
+                lastActivity: "2 days ago",
+              },
+              {
+                id: "CLT-002",
+                name: "Sarah Johnson",
+                email: "sarah.j@company.com",
+                phone: "+1 (555) 234-5678",
+                company: "Marketing Pro",
+                status: "Active",
+                projects: 2,
+                lastActivity: "1 week ago",
+              },
+              {
+                id: "CLT-003",
+                name: "Michael Brown",
+                email: "m.brown@business.com",
+                phone: "+1 (555) 345-6789",
+                company: "Digital Dynamics",
+                status: "Pending",
+                projects: 1,
+                lastActivity: "3 days ago",
+              },
+              {
+                id: "CLT-004",
+                name: "Emily Davis",
+                email: "emily@startup.io",
+                phone: "+1 (555) 456-7890",
+                company: "INVERNI BW",
+                status: "Active",
+                projects: 5,
+                lastActivity: "Today",
+              },
+              {
+                id: "CLT-005",
+                name: "Robert Wilson",
+                email: "r.wilson@corp.com",
+                phone: "+1 (555) 567-8901",
+                company: "EVBALT Corp",
+                status: "Inactive",
+                projects: 1,
+                lastActivity: "2 months ago",
+              },
+              {
+                id: "CLT-006",
+                name: "Lisa Anderson",
+                email: "lisa@agency.com",
+                phone: "+1 (555) 678-9012",
+                company: "STATUE TEMPUR",
+                status: "Active",
+                projects: 4,
+                lastActivity: "5 days ago",
+              },
+            ]
+            setClientsData(defaultClients)
+            localStorage.setItem(storageKeys.CLIENTS, JSON.stringify(defaultClients))
+          }
+        } else {
+          setClientsData([])
         }
 
         setIsDataLoaded(true)
@@ -109,98 +181,98 @@ export default function Home() {
     }
 
     loadStoredData()
-  }, [])
+  }, [isAuthenticated, userData, userRole])
 
-  // Save invoices to localStorage whenever invoices change (but only after initial load)
+  // Save invoices to localStorage
   useEffect(() => {
-    if (isDataLoaded) {
+    if (isDataLoaded && isAuthenticated && userData) {
       try {
-        console.log("Saving invoices to storage:", invoices)
-        localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify(invoices))
+        const storageKeys = getStorageKeys(userRole, userData.email)
+        localStorage.setItem(storageKeys.INVOICES, JSON.stringify(invoices))
       } catch (error) {
         console.error("Error saving invoices to localStorage:", error)
       }
     }
-  }, [invoices, isDataLoaded])
+  }, [invoices, isDataLoaded, isAuthenticated, userData, userRole])
 
-  // Save clients to localStorage whenever clients change
+  // Save clients to localStorage
   useEffect(() => {
-    if (clientsData.length > 0) {
+    if (clientsData.length > 0 && userRole === "user" && userData) {
       try {
-        localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clientsData))
+        const storageKeys = getStorageKeys(userRole, userData.email)
+        localStorage.setItem(storageKeys.CLIENTS, JSON.stringify(clientsData))
       } catch (error) {
         console.error("Error saving clients to localStorage:", error)
       }
     }
-  }, [clientsData])
+  }, [clientsData, userRole, userData])
 
-  const handleLogin = (role: "admin" | "user", data: any) => {
+  const handleLogin = (role: "user" | "admin", data: any) => {
     setUserRole(role)
     setUserData(data)
     setIsAuthenticated(true)
+    setCurrentPage("home")
   }
 
   const handleLogout = () => {
     setIsAuthenticated(false)
-    setUserRole("user")
+    setUserRole("admin")
     setUserData(null)
     setCurrentPage("home")
-    // Note: We don't clear localStorage on logout to persist data
+    setInvoices([])
+    setClientsData([])
+    setIsDataLoaded(false)
   }
 
   const handlePageChange = (page: string) => {
+    if (page === "clients" && userRole !== "user") {
+      console.log("Access denied: Clients page is user only")
+      return
+    }
     setCurrentPage(page)
   }
 
   const handleInvoiceCreate = (newInvoice: Invoice) => {
-    return new Promise((resolve) => setTimeout(resolve, 1000))
-      .then(() => {
-        // Add the new invoice to the list
-        const updatedInvoices = [newInvoice, ...invoices]
-        console.log("Creating new invoice:", newInvoice)
-        console.log("Updated invoices list:", updatedInvoices)
-        setInvoices(updatedInvoices)
+    return new Promise<void>((resolve, reject) => {
+      setTimeout(() => {
+        try {
+          const invoiceWithUser = {
+            ...newInvoice,
+            createdBy: userData.email,
+            userRole: userRole,
+          }
 
-        // Switch to journal page to show the created invoice
-        setCurrentPage("journal")
-
-        return Promise.resolve()
-      })
-      .catch((error) => {
-        return Promise.reject(error)
-      })
+          const updatedInvoices = [invoiceWithUser, ...invoices]
+          setInvoices(updatedInvoices)
+          setCurrentPage("journal")
+          resolve()
+        } catch (error) {
+          reject(error)
+        }
+      }, 1000)
+    })
   }
 
   const handleInvoiceUpdate = (updatedInvoices: Invoice[]) => {
-    console.log("Updating invoices:", updatedInvoices)
     setInvoices(updatedInvoices)
   }
 
   const handleInvoiceDelete = (invoiceId: string) => {
-    console.log("Deleting invoice with ID:", invoiceId)
     const updatedInvoices = invoices.filter((inv) => inv.id !== invoiceId)
-    console.log("Invoices after deletion:", updatedInvoices)
     setInvoices(updatedInvoices)
   }
 
   const handleClientUpdate = (updatedClients: Client[]) => {
-    console.log("Updating clients:", updatedClients)
-    setClientsData(updatedClients)
+    if (userRole === "user") {
+      setClientsData(updatedClients)
+    }
   }
 
   const handleClientDelete = (clientId: string) => {
-    console.log("Deleting client with ID:", clientId)
-    const updatedClients = clientsData.filter((client) => client.id !== clientId)
-    console.log("Clients after deletion:", updatedClients)
-    setClientsData(updatedClients)
-  }
-
-  // Clear all data function (for debugging)
-  const clearAllData = () => {
-    localStorage.removeItem(STORAGE_KEYS.INVOICES)
-    localStorage.removeItem(STORAGE_KEYS.CLIENTS)
-    setInvoices([])
-    console.log("All data cleared from localStorage")
+    if (userRole === "user") {
+      const updatedClients = clientsData.filter((client) => client.id !== clientId)
+      setClientsData(updatedClients)
+    }
   }
 
   if (!isAuthenticated) {
@@ -210,22 +282,42 @@ export default function Home() {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case "clients":
-        return (
-          <ClientsPage clients={clientsData} onClientUpdate={handleClientUpdate} onClientDelete={handleClientDelete} />
-        )
+        if (userRole === "user") {
+          return (
+            <ClientsPage
+              clients={clientsData}
+              onClientUpdate={handleClientUpdate}
+              onClientDelete={handleClientDelete}
+            />
+          )
+        } else {
+          setCurrentPage("home")
+          return  <AdminDashboard />
+        }
       case "facture":
-        return <FacturePage clients={clientsData} onInvoiceCreate={handleInvoiceCreate} />
+        return <FacturePage clients={userRole === "user" ? clientsData : []} onInvoiceCreate={handleInvoiceCreate} />
       case "journal":
         return (
           <JournalPage
             invoices={invoices}
             onInvoiceUpdate={handleInvoiceUpdate}
             onInvoiceDelete={handleInvoiceDelete}
+            userRole={userRole}
+            userData={userData}
           />
+        )
+      case "settings":
+        return <SettingsPage userRole={userRole} />
+      case "help":
+        return (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Help Center</h2>
+            <p className="text-gray-600">Help documentation coming soon...</p>
+          </div>
         )
       case "home":
       default:
-        return userRole === "admin" ? <AdminDashboard /> : <UserDashboard />
+        return userRole === "user" ? <UserDashboard /> : <AdminDashboard />
     }
   }
 
@@ -234,12 +326,7 @@ export default function Home() {
       <Sidebar userRole={userRole} currentPage={currentPage} onPageChange={handlePageChange} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header userRole={userRole} userData={userData} onLogout={handleLogout} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
-          {renderCurrentPage()}
-
-          {/* Debug Panel - Remove this in production */}
-          
-        </main>
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">{renderCurrentPage()}</main>
       </div>
     </div>
   )
