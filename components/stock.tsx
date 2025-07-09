@@ -613,10 +613,6 @@ export function StockPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="rounded-xl">
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" />
-                          View
-                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEditModal(item)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
