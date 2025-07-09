@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Home, Users, FileText, BookOpen, Settings } from "lucide-react"
+import { Home, Users, FileText, BookOpen, Settings, BoxIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { HelpDropdown } from "@/components/help-dropdown"
 import { TutorialOverlay } from "@/components/tutorial-overlay"
@@ -35,12 +35,18 @@ export function Sidebar({ userRole, currentPage, onPageChange }: SidebarProps) {
       id: "facture",
       label: "Invoice",
       icon: FileText,
-      available: userRole === "user",
+      available: true,
     },
     {
       id: "journal",
       label: "Journal",
       icon: BookOpen,
+      available: true,
+    },
+    {
+      id: "stock",
+      label: "Stock",
+      icon: BoxIcon,
       available: userRole === "user",
     },
   ]

@@ -14,7 +14,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   DropdownMenu,
@@ -32,8 +31,13 @@ type Client = {
   email: string
   phone: string
   company: string
-  status: string
   access: number
+  secteur:string
+  location:string
+  company_size :string
+  mdp : string
+  date: string
+  paiement_method: string
 }
 
 const initialClients: Client[] = [
@@ -43,8 +47,14 @@ const initialClients: Client[] = [
     email: "emily@startup.io",
     phone: "+15554567890",
     company: "INVERNI BW",
-    status: "Active",
     access: 0,
+    secteur:"IOT",
+    location:"SUPCOM",
+    company_size :"+1000",
+    mdp:"CLT-004",
+    date: "2025-07-08",
+    paiement_method: "Per Month",
+
   },
 ]
 
@@ -59,8 +69,14 @@ export function AdminDashboard() {
     email: "",
     phone: "",
     company: "",
-    status: "Active",
     access: 0,
+    secteur:"",
+    location:"",
+    company_size :"",
+    mdp :"",
+    date: "", // <-- NEW
+    paiement_method: "Per Month",
+
   })
 
   const filteredClients = clients.filter((client) =>
@@ -69,32 +85,45 @@ export function AdminDashboard() {
 
   const handleAddOrEdit = () => {
     if (editClientIndex !== null) {
-      // Edit existing
+      // Edit existing client
       const updated = [...clients]
-      updated[editClientIndex] = { ...formData, id: updated[editClientIndex].id } // prevent editing ID
+      const existingClient = updated[editClientIndex]
+      updated[editClientIndex] = {
+        ...formData,
+        id: existingClient.id,   // preserve original ID
+        mdp: existingClient.mdp, // preserve original mdp
+        date: existingClient.date,
+      }
       setClients(updated)
     } else {
-      // Create new ID
+      // Create new client
       const lastId = clients[clients.length - 1]?.id || "CLT-000"
       const newIdNumber = parseInt(lastId.split("-")[1]) + 1
       const newId = `CLT-${newIdNumber.toString().padStart(3, "0")}`
-      const newClient = { ...formData, id: newId }
+      const today = new Date().toISOString().split("T")[0] // <-- define it here
+      const newClient = { ...formData, id: newId, mdp: newId,date: today  } // mdp = id
       setClients([...clients, newClient])
     }
 
-    // Reset
+    // Reset form
     setFormData({
       id: "",
       name: "",
       email: "",
       phone: "",
       company: "",
-      status: "Active",
       access: 0,
+      secteur: "",
+      location: "",
+      company_size: "",
+      mdp: "", // <-- Reset mdp too
+      date: "", // <-- reset
+      paiement_method: "Per Month",
     })
     setEditClientIndex(null)
     setOpenDialog(false)
-    }
+  }
+
 
 
   const handleDelete = (index: number) => {
@@ -148,9 +177,14 @@ export function AdminDashboard() {
                 <th className="py-2 px-4">Name</th>
                 <th className="py-2 px-4">Contact</th>
                 <th className="py-2 px-4">Company</th>
-                <th className="py-2 px-4">Status</th>
                 <th className="py-2 px-4">Number of Access</th>
+                <th className="py-2 px-4">Secteur</th>
+                <th className="py-2 px-4">Location</th>
+                <th className="py-2 px-4">Company Size</th>
+                <th className="py-2 px-4">Participation Date</th>
+                <th className="py-2 px-4">Paiement Method</th>
                 <th className="py-2 px-4">Actions</th>
+                
               </tr>
             </thead>
             <tbody>
@@ -172,23 +206,28 @@ export function AdminDashboard() {
                     </div>
                   </td>
                   <td className="py-2 px-4 font-semibold">{client.company}</td>
-                  <td className="py-2 px-4">
-                    <Badge
-                      variant={
-                        client.status === "Active"
-                          ? "default"
-                          : client.status === "Inactive"
-                          ? "destructive"
-                          : "secondary"
-                      }
-                    >
-                      {client.status}
-                    </Badge>
-                  </td>
                   <td className="py-2 px-4 flex items-center gap-2">
                     <Button variant="outline" size="icon" onClick={() => changeAccess(index, -1)}>–</Button>
                     <span>{client.access}</span>
                     <Button variant="outline" size="icon" onClick={() => changeAccess(index, 1)}>+</Button>
+                  </td>
+                  
+                  <td className="py-2 px-4 font-semibold">{client.secteur}</td>
+                  <td className="py-2 px-4 font-semibold">{client.location}</td>
+                  <td className="py-2 px-4 font-semibold">{client.company_size}</td>
+                  <td className="py-2 px-4 font-semibold">{client.date}</td>
+                  <td className="py-2 px-4">
+                    <Badge
+                      variant={
+                        client.paiement_method === "Per Month "
+                          ? "default"
+                          : client.paiement_method === "3 months "
+                          ? "destructive"
+                          : "secondary"
+                      }
+                    >
+                      {client.paiement_method}
+                    </Badge>
                   </td>
                   <td className="py-2 px-4">
                     <DropdownMenu>
@@ -213,6 +252,11 @@ export function AdminDashboard() {
                         >
                           Delete
                         </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600"
+                        >
+                          Stop Acess
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
@@ -230,7 +274,7 @@ export function AdminDashboard() {
             <DialogTitle>{editClientIndex !== null ? "Edit Client" : "Add Client"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            {["name", "email", "phone", "company"].map((field) => (
+            {["name", "email", "phone", "company","secteur","location","company_size"].map((field) => (
               <div key={field} className="space-y-1">
                 <Label>{field.toUpperCase()}</Label>
                 <Input
@@ -242,19 +286,20 @@ export function AdminDashboard() {
               </div>
             ))}
 
-            {/* Status Dropdown */}
+            
+            {/* Paiement method Dropdown */}
             <div className="space-y-1">
-              <Label>Status</Label>
+              <Label>Paiement method</Label>
               <select
-                value={formData.status}
+                value={formData.paiement_method}
                 onChange={(e) =>
-                  setFormData({ ...formData, status: e.target.value })
+                  setFormData({ ...formData, paiement_method: e.target.value })
                 }
                 className="w-full border px-3 py-2 rounded-md"
               >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-                <option value="Pending">Pending</option>
+                <option value="Per Month">Per Month</option>
+                <option value="3 Months">3 Months </option>
+                <option value="Per Year">Per Year</option>
               </select>
             </div>
 

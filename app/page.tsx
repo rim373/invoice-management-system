@@ -10,6 +10,7 @@ import { ClientsPage } from "@/components/clients-page"
 import { FacturePage } from "@/components/facture-page"
 import { JournalPage } from "@/components/journal-page"
 import { SettingsPage } from "@/components/settings-page"
+import {StockPage } from "@/components/stock"
 
 interface Client {
   id: string
@@ -306,6 +307,8 @@ export default function Home() {
             userData={userData}
           />
         )
+      case "stock":
+        return <StockPage userRole={"user"} />  
       case "settings":
         return <SettingsPage userRole={userRole} />
       case "help":

@@ -9,22 +9,16 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import {
   FileText,
   Plus,
   Trash2,
-  ChevronDown,
-  ChevronRight,
   Save,
-  Folder,
-  Settings,
   CheckCircle,
   Loader2,
 } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { cn } from "@/lib/utils"
-import { toast } from "@/hooks/use-toast"
+
 
 interface InvoiceItem {
   id: string
@@ -60,6 +54,7 @@ interface InvoiceSettings {
   invoiceNumberStart: string
   dueDateType: string
   dueDateDays: string
+  dueDateCustom : string
   vatNumber: string
   taxAmount: string
   taxMethod: string
@@ -86,8 +81,6 @@ interface Invoice {
   status: "paid" | "partial" | "pending" | "refunded" | "cancelled"
   totalAmount: number
   subtotalAmount: number
-  taxAmount: number
-  taxRate: number
   paidAmount: number
   currency: string
   createdDate: string
@@ -111,6 +104,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
   //i aded this 
       const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>({
         invoiceNumber: true,
+        dueDate:true,
         dueDateType: "custom", // "custom" ou "term"
         dueDateDays: "30", // par défaut 30 jours
         dueDateCustom: new Date().toISOString().split("T")[0],
@@ -120,8 +114,6 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
         notes: true,
         invoiceNumberPrefix: "INV",
         invoiceNumberStart: "001",
-        dueDateType: "custom",
-        dueDateDays: "30",
         vatNumber: "",
         taxAmount: "0",
         taxMethod: "default",
@@ -152,7 +144,6 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
   phone: "",
 })
   const [activeTab, setActiveTab] = useState<"facture" | "avoir">("facture")
-  const [isFormParametersOpen, setIsFormParametersOpen] = useState(false)
   const [selectedClient, setSelectedClient] = useState<string>("")
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([{ id: "1", description: "", price: 0, quantity: 1 }])
 
@@ -164,8 +155,8 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
   const [invoiceNumber, setInvoiceNumber] = useState("")
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0])
   const [dueDate, setDueDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
-  const [currency, setCurrency] = useState("EUR")
-  const [taxRate, setTaxRate] = useState(20)
+  const [currency] = useState("EUR")
+  
 
   // Default clients if none provided (fallback)
   // Use provided clients or empty array as fallback
@@ -199,17 +190,36 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
   const getSelectedClientData = () => {
     return availableClients.find((client) => client.id === selectedClient)
   }
-
   const calculateSubtotal = () => {
     return invoiceItems.reduce((total, item) => total + item.price * item.quantity, 0)
   }
+  const calculateDiscount = () => {
+    const { discountType, discountAmount } = invoiceSettings
+    const subtotal = calculateSubtotal()
 
+    const parsedAmount = parseFloat(discountAmount || "0")
+
+    if (parsedAmount <= 0 || !invoiceParameters.discount) {
+      return 0
+    }
+
+    if (discountType === "percentage") {
+      return (subtotal * parsedAmount) / 100
+    }
+
+    if (discountType === "fixed") {
+      return parsedAmount
+    }
+
+    return 0
+  }
   const calculateTax = () => {
-    return (calculateSubtotal() * taxRate) / 100
+    const rate = parseFloat(invoiceSettings.taxAmount || "0")
+    return (calculateSubtotal() * rate) / 100
   }
 
   const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax()
+    return calculateSubtotal() + calculateTax() - calculateDiscount()
   }
 
   const getStatusColor = (status: string) => {
@@ -318,7 +328,6 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
         totalAmount: total,
         subtotalAmount: subtotal,
         taxAmount: tax,
-        taxRate: taxRate,
         paidAmount: 0,
         currency: currency,
         createdDate: invoiceDate,
@@ -359,7 +368,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
     } finally {
       setIsSubmitting(false)
     }
-  }, [selectedClient, invoiceItems, invoiceDate, dueDate, currency, taxRate, onInvoiceCreate])
+  }, [selectedClient, invoiceItems, invoiceDate, dueDate, currency, onInvoiceCreate])
 
   return (
     <div className="space-y-6">
@@ -691,7 +700,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
                   </SelectTrigger>
                   <SelectContent>
                     {availableClients.length === 0 ? (
-                      <SelectItem value="" disabled>
+                      <SelectItem value="no-clients" disabled>
                         No clients available - Add clients first
                       </SelectItem>
                     ) : (
@@ -867,9 +876,15 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax ({taxRate}%):</span>
+                  <span className="text-gray-600">Tax ({invoiceSettings.taxAmount}%):</span>
                   <span className="font-medium">
                     {currency} {calculateTax().toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Discount:</span>
+                  <span className="font-medium text-red-600">
+                    - {currency} {calculateDiscount().toFixed(2)}
                   </span>
                 </div>
                 <Separator />
