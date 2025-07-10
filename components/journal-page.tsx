@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-
+import { InvoicePreview } from "./invoice-viewer"
 import {
   BookOpen,
   Search,
@@ -70,6 +70,17 @@ interface JournalPageProps {
 }
 
 export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInvoiceDelete }: JournalPageProps) {
+  // invoice pdf
+  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null)
+  const [isViewerOpen, setIsViewerOpen] = useState(false)
+  const handleViewInvoice = (invoice: Invoice) => {
+    setViewingInvoice(invoice)
+    setIsViewerOpen(true)
+  }
+  // invoice pdf
+
+
+
   const receiptRef = useRef<HTMLDivElement>(null)
   const [activeStatus, setActiveStatus] = useState<string>("all")
   const [searchTerm, setSearchTerm] = useState("")
@@ -565,7 +576,7 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                       <Edit className="w-4 h-4 mr-2" />
                       MODIFY
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => handleViewInvoice(invoice)}>
                       <Eye className="w-4 h-4 mr-2" />
                       VIEW
                     </Button>
@@ -824,6 +835,15 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
 
         </DialogContent>
       </Dialog>
+      {/* Invoice Viewer */}
+      <InvoicePreview
+        invoice={viewingInvoice}
+        isOpen={isViewerOpen}
+        onClose={() => {
+          setIsViewerOpen(false)
+          setViewingInvoice(null)
+        }}
+      />
 
     </div>
   )
