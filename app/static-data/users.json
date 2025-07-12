@@ -1,0 +1,19 @@
+{
+  "users": [
+    {
+      "id": "USR-001",
+      "name": "Emily Davis",
+      "email": "emily@startup.io",
+      "phone": "+15554567890",
+      "company": "INVERNI BW",
+      "access": 0,
+      "secteur": "IOT",
+      "location": "SUPCOM",
+      "company_size": "+1000",
+      "password": "USR-001",
+      "date": "2025-07-08",
+      "paiement_method": "Per Month",
+      "status": "active"
+    }
+  ]
+}
