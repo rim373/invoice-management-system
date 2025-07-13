@@ -4,11 +4,13 @@ import { useState, useEffect } from "react"
 import { LoginForm } from "@/components/login-form"
 import { Header } from "@/components/header"
 import { Sidebar } from "@/components/sidebar"
-import { AdminDashboard } from "@/components/admin-dashboard"
 import { UserDashboard } from "@/components/user-dashboard"
+import { AdminDashboard } from "@/components/admin-dashboard"
 import { ClientsPage } from "@/components/clients-page"
 import { FacturePage } from "@/components/facture-page"
 import { JournalPage } from "@/components/journal-page"
+import { SettingsPage } from "@/components/settings-page"
+import { StockPage } from "@/components/stock"
 
 interface Client {
   id: string
@@ -54,153 +56,201 @@ interface Invoice {
     totalPrice: number
   }>
   paymentHistory: PaymentHistory[]
-}
-
-// Local Storage Keys
-const STORAGE_KEYS = {
-  INVOICES: "client_facturation_invoices",
-  CLIENTS: "client_facturation_clients",
+  createdBy: string
+  userRole: "user" | "admin"
+  discountAmount?: number
+  discountType?: "percentage" | "fixed"
+  vatNumber?: string
+  notes?: string
 }
 
 export default function Home() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [userRole, setUserRole] = useState<"admin" | "user">("user")
+  const [userRole, setUserRole] = useState<"user" | "admin">("admin")
   const [userData, setUserData] = useState<any>(null)
   const [currentPage, setCurrentPage] = useState("home")
-
-  // Shared client data across components
   const [clientsData, setClientsData] = useState<Client[]>([])
-
-  // Invoice management state with persistent storage
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isDataLoaded, setIsDataLoaded] = useState(false)
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
 
-  // Load data from localStorage on component mount
+  // Load data from backend on authentication
   useEffect(() => {
-    const loadStoredData = () => {
-      try {
-        console.log("Loading stored data...")
+    if (!isAuthenticated || !userData) return
 
-        // Load invoices
-        const storedInvoices = localStorage.getItem(STORAGE_KEYS.INVOICES)
-        if (storedInvoices) {
-          const parsedInvoices = JSON.parse(storedInvoices)
-          console.log("Loaded invoices from storage:", parsedInvoices)
-          setInvoices(parsedInvoices)
+    const loadData = async () => {
+      try {
+        console.log(`Loading data for ${userRole}: ${userData.email}`)
+
+        // Load invoices from backend
+        const invoicesResponse = await fetch("/api/invoices")
+        const invoicesResult = await invoicesResponse.json()
+
+        if (invoicesResult.success) {
+          setInvoices(invoicesResult.data)
+          console.log(`Loaded ${invoicesResult.data.length} invoices`)
         } else {
-          console.log("No stored invoices found, using empty array")
+          console.log("Failed to load invoices:", invoicesResult.error)
           setInvoices([])
         }
 
-        // Load clients
-        const storedClients = localStorage.getItem(STORAGE_KEYS.CLIENTS)
-        if (storedClients) {
-          const parsedClients = JSON.parse(storedClients)
-          console.log("Loaded clients from storage:", parsedClients)
-          setClientsData(parsedClients)
+        // Load contacts for users (admin manages users, not contacts)
+        if (userRole === "user") {
+          const contactsResponse = await fetch("/api/contacts")
+          const contactsResult = await contactsResponse.json()
+
+          if (contactsResult.success) {
+            setClientsData(contactsResult.data)
+            console.log(`Loaded ${contactsResult.data.length} contacts`)
+          } else {
+            console.log("Failed to load contacts:", contactsResult.error)
+            setClientsData([])
+          }
+        } else {
+          setClientsData([])
         }
 
         setIsDataLoaded(true)
       } catch (error) {
-        console.error("Error loading stored data:", error)
+        console.log("Error loading data:", error)
         setInvoices([])
+        setClientsData([])
         setIsDataLoaded(true)
       }
     }
 
-    loadStoredData()
-  }, [])
+    loadData()
+  }, [isAuthenticated, userData, userRole])
 
-  // Save invoices to localStorage whenever invoices change (but only after initial load)
-  useEffect(() => {
-    if (isDataLoaded) {
-      try {
-        console.log("Saving invoices to storage:", invoices)
-        localStorage.setItem(STORAGE_KEYS.INVOICES, JSON.stringify(invoices))
-      } catch (error) {
-        console.error("Error saving invoices to localStorage:", error)
-      }
-    }
-  }, [invoices, isDataLoaded])
-
-  // Save clients to localStorage whenever clients change
-  useEffect(() => {
-    if (clientsData.length > 0) {
-      try {
-        localStorage.setItem(STORAGE_KEYS.CLIENTS, JSON.stringify(clientsData))
-      } catch (error) {
-        console.error("Error saving clients to localStorage:", error)
-      }
-    }
-  }, [clientsData])
-
-  const handleLogin = (role: "admin" | "user", data: any) => {
+  const handleLogin = (role: "user" | "admin", data: any) => {
+    console.log("Login successful, setting user data:", role, data.email)
     setUserRole(role)
     setUserData(data)
     setIsAuthenticated(true)
+    setCurrentPage("home")
   }
 
   const handleLogout = () => {
+    console.log("Logging out user")
     setIsAuthenticated(false)
-    setUserRole("user")
+    setUserRole("admin")
     setUserData(null)
     setCurrentPage("home")
-    // Note: We don't clear localStorage on logout to persist data
+    setInvoices([])
+    setClientsData([])
+    setIsDataLoaded(false)
+    setEditingInvoice(null)
   }
 
   const handlePageChange = (page: string) => {
+    if (page === "clients" && userRole !== "user") {
+      console.log("Access denied: Clients page is user only")
+      return
+    }
+    console.log("Changing page to:", page)
     setCurrentPage(page)
+
+    // Clear editing invoice when changing pages
+    if (page !== "facture") {
+      setEditingInvoice(null)
+    }
   }
 
-  const handleInvoiceCreate = (newInvoice: Invoice) => {
-    return new Promise((resolve) => setTimeout(resolve, 1000))
-      .then(() => {
-        // Add the new invoice to the list
-        const updatedInvoices = [newInvoice, ...invoices]
-        console.log("Creating new invoice:", newInvoice)
-        console.log("Updated invoices list:", updatedInvoices)
-        setInvoices(updatedInvoices)
+  const handleInvoiceCreate = async (newInvoice: Invoice) => {
+    try {
+      console.log("Creating new invoice:", newInvoice.number)
+      const response = await fetch("/api/invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userEmail: userData.email,
+          userRole: userRole,
+          invoiceData: newInvoice,
+        }),
+      })
 
-        // Switch to journal page to show the created invoice
+      const result = await response.json()
+      if (result.success) {
+        // Reload invoices
+        const invoicesResponse = await fetch("/api/invoices")
+        const invoicesResult = await invoicesResponse.json()
+
+        if (invoicesResult.success) {
+          setInvoices(invoicesResult.data)
+        }
+
+        console.log("Invoice created successfully, redirecting to journal")
+        setEditingInvoice(null)
         setCurrentPage("journal")
+      } else {
+        throw new Error(result.error || "Failed to create invoice")
+      }
+    } catch (error) {
+      console.log("Error creating invoice:", error)
+      throw error
+    }
+  }
 
-        return Promise.resolve()
+  const handleInvoiceUpdate = async (updatedInvoice: Invoice) => {
+    try {
+      console.log("Updating invoice:", updatedInvoice.number)
+      const response = await fetch("/api/invoices", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userEmail: userData.email,
+          userRole: userRole,
+          invoiceData: updatedInvoice,
+        }),
       })
-      .catch((error) => {
-        return Promise.reject(error)
+
+      const result = await response.json()
+      if (result.success) {
+        // Reload invoices
+        const invoicesResponse = await fetch("/api/invoices")
+        const invoicesResult = await invoicesResponse.json()
+
+        if (invoicesResult.success) {
+          setInvoices(invoicesResult.data)
+        }
+
+        console.log("Invoice updated successfully, redirecting to journal")
+        setEditingInvoice(null)
+        setCurrentPage("journal")
+      } else {
+        throw new Error(result.error || "Failed to update invoice")
+      }
+    } catch (error) {
+      console.log("Error updating invoice:", error)
+      throw error
+    }
+  }
+
+  const handleInvoiceEdit = (invoice: Invoice) => {
+    console.log("Setting invoice for editing:", invoice.number)
+    setEditingInvoice(invoice)
+    setCurrentPage("facture")
+  }
+
+  const handleInvoiceDelete = async (invoiceId: string) => {
+    try {
+      console.log("Deleting invoice:", invoiceId)
+      const response = await fetch(`/api/invoices?invoiceId=${invoiceId}`, {
+        method: "DELETE",
       })
-  }
 
-  const handleInvoiceUpdate = (updatedInvoices: Invoice[]) => {
-    console.log("Updating invoices:", updatedInvoices)
-    setInvoices(updatedInvoices)
-  }
-
-  const handleInvoiceDelete = (invoiceId: string) => {
-    console.log("Deleting invoice with ID:", invoiceId)
-    const updatedInvoices = invoices.filter((inv) => inv.id !== invoiceId)
-    console.log("Invoices after deletion:", updatedInvoices)
-    setInvoices(updatedInvoices)
-  }
-
-  const handleClientUpdate = (updatedClients: Client[]) => {
-    console.log("Updating clients:", updatedClients)
-    setClientsData(updatedClients)
-  }
-
-  const handleClientDelete = (clientId: string) => {
-    console.log("Deleting client with ID:", clientId)
-    const updatedClients = clientsData.filter((client) => client.id !== clientId)
-    console.log("Clients after deletion:", updatedClients)
-    setClientsData(updatedClients)
-  }
-
-  // Clear all data function (for debugging)
-  const clearAllData = () => {
-    localStorage.removeItem(STORAGE_KEYS.INVOICES)
-    localStorage.removeItem(STORAGE_KEYS.CLIENTS)
-    setInvoices([])
-    console.log("All data cleared from localStorage")
+      const result = await response.json()
+      if (result.success) {
+        // Remove from local state
+        const updatedInvoices = invoices.filter((inv) => inv.id !== invoiceId)
+        setInvoices(updatedInvoices)
+        console.log("Invoice deleted successfully")
+      } else {
+        console.log("Failed to delete invoice:", result.error)
+      }
+    } catch (error) {
+      console.log("Error deleting invoice:", error)
+    }
   }
 
   if (!isAuthenticated) {
@@ -210,22 +260,48 @@ export default function Home() {
   const renderCurrentPage = () => {
     switch (currentPage) {
       case "clients":
-        return (
-          <ClientsPage clients={clientsData} onClientUpdate={handleClientUpdate} onClientDelete={handleClientDelete} />
-        )
+        if (userRole === "user") {
+          return <ClientsPage userEmail={userData?.email} userRole={userRole} />
+        } else {
+          setCurrentPage("home")
+          return <AdminDashboard />
+        }
       case "facture":
-        return <FacturePage clients={clientsData} onInvoiceCreate={handleInvoiceCreate} />
+        return (
+          <FacturePage
+            clients={userRole === "user" ? clientsData : []}
+            onInvoiceCreate={handleInvoiceCreate}
+            onInvoiceUpdate={handleInvoiceUpdate}
+            editInvoice={editingInvoice}
+            userEmail={userData?.email}
+            userRole={userRole}
+          />
+        )
       case "journal":
         return (
           <JournalPage
             invoices={invoices}
-            onInvoiceUpdate={handleInvoiceUpdate}
+            onInvoiceUpdate={setInvoices}
             onInvoiceDelete={handleInvoiceDelete}
+            onInvoiceEdit={handleInvoiceEdit}
+            userRole={userRole}
+            userData={userData}
           />
+        )
+      case "stock":
+        return <StockPage userRole={userRole} />
+      case "settings":
+        return <SettingsPage userRole={userRole} userEmail={userData?.email} />
+      case "help":
+        return (
+          <div className="text-center py-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Help Center</h2>
+            <p className="text-gray-600">Help documentation coming soon...</p>
+          </div>
         )
       case "home":
       default:
-        return userRole === "admin" ? <AdminDashboard /> : <UserDashboard />
+        return userRole === "user" ? <UserDashboard /> : <AdminDashboard />
     }
   }
 
@@ -234,12 +310,7 @@ export default function Home() {
       <Sidebar userRole={userRole} currentPage={currentPage} onPageChange={handlePageChange} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header userRole={userRole} userData={userData} onLogout={handleLogout} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">
-          {renderCurrentPage()}
-
-          {/* Debug Panel - Remove this in production */}
-          
-        </main>
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-6">{renderCurrentPage()}</main>
       </div>
     </div>
   )

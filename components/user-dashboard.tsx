@@ -1,257 +1,137 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Target, Wallet, TrendingUp, Calendar, MoreHorizontal, ArrowUpRight } from "lucide-react"
+import { DollarSign, TrendingUp, Users, Target, MoreHorizontal, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer,ComposedChart, Line
+} from "recharts"
 
 export function UserDashboard() {
-  const userMetrics = [
-    {
-      title: "Current Project Benefits",
-      value: "$45,200",
-      subtitle: "Annual benefits this year",
-      icon: Target,
-      color: "bg-blue-500",
-      change: "+18.5%",
-    },
-    {
-      title: "Total Historical Benefits",
-      value: "$127,800",
-      subtitle: "All projects combined",
-      icon: Wallet,
-      color: "bg-green-500",
-      change: "+24.3%",
-    },
-    {
-      title: "Performance Score",
-      value: "92.5%",
-      subtitle: "Project completion rate",
-      icon: TrendingUp,
-      color: "bg-purple-500",
-      change: "+5.2%",
-    },
-    {
-      title: "Active Projects",
-      value: "3",
-      subtitle: "Currently working on",
-      icon: Calendar,
-      color: "bg-orange-500",
-      change: "+1",
-    },
-  ]
+  const metrics = [
+  {
+    title: "Growth Rate",
+    value: "N/A",
+    subtitle: "compared to last month",
+    icon: TrendingUp,
+    color: "bg-blue-500",
+    change: "N/A",
+    positive: true,
+  },
+  {
+    title: "Average Sale",
+    value: "0.00",
+    subtitle: "per invoice",
+    icon: DollarSign,
+    color: "bg-green-500",
+    change: "0.0%",
+    positive: true,
+  },
+  {
+    title: "Conversion Rate",
+    value: "0.0%",
+    subtitle: "Paid invoices",
+    icon: Target,
+    color: "bg-purple-500",
+    change: "0.0%",
+    positive: true,
+  },
+]
 
-  const currentProjects = [
-    {
-      name: "E-commerce Platform",
-      client: "TechFlow Solutions",
-      progress: 75,
-      benefit: "$18,500",
-      deadline: "Dec 15, 2024",
-      status: "On Track",
-    },
-    {
-      name: "Mobile App Development",
-      client: "Digital Dynamics",
-      progress: 45,
-      benefit: "$12,300",
-      deadline: "Jan 30, 2025",
-      status: "In Progress",
-    },
-    {
-      name: "Data Analytics Dashboard",
-      client: "INVERNI BW",
-      progress: 90,
-      benefit: "$14,400",
-      deadline: "Nov 28, 2024",
-      status: "Near Completion",
-    },
-  ]
+  const revenueByClientProduct = [
+  { client: "INVERNI BW", ProductA: 120000, ProductB: 180000, ProductC: 149000 },
+  { client: "EVBALT Corp", ProductA: 90000, ProductB: 70000, ProductC: 39000 },
+  { client: "STATUE TEMPUR", ProductA: 300000, ProductB: 200000, ProductC: 199000 },
+  { client: "TechFlow Solutions", ProductA: 125000, ProductB: 100000, ProductC: 100000 },
+  { client: "Digital Dynamics", ProductA: 56000, ProductB: 50000, ProductC: 50000 },
+];
 
-  const historicalProjects = [
-    {
-      name: "CRM System",
-      client: "EVBALT Corp",
-      completedDate: "Sep 2024",
-      benefit: "$22,100",
-      rating: 4.8,
-    },
-    {
-      name: "Website Redesign",
-      client: "STATUE TEMPUR",
-      completedDate: "Jul 2024",
-      benefit: "$15,600",
-      rating: 4.9,
-    },
-    {
-      name: "API Integration",
-      client: "TechFlow Solutions",
-      completedDate: "May 2024",
-      benefit: "$18,900",
-      rating: 4.7,
-    },
-    {
-      name: "Database Optimization",
-      client: "Digital Dynamics",
-      completedDate: "Mar 2024",
-      benefit: "$12,800",
-      rating: 4.6,
-    },
+  const monthlyActivity = [
+    { month: "Jan", revenue: 45000},
+    { month: "Feb", revenue: 52000 },
+    { month: "Mar", revenue: 48000},
+    { month: "Apr", revenue: 61000},
+    { month: "May", revenue: 55000},
+    { month: "Jun", revenue: 67000 },
+    { month: "Jul", revenue: 72000},
   ]
 
   return (
     <div className="space-y-6">
-      {/* User Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {userMetrics.map((metric, index) => (
-          <Card key={index} className="relative overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className={`w-12 h-12 ${metric.color} rounded-lg flex items-center justify-center`}>
-                  <metric.icon className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex items-center text-green-500">
-                  <ArrowUpRight className="w-4 h-4" />
-                  <span className="text-sm ml-1">{metric.change}</span>
-                </div>
-              </div>
-              <div className="mt-4">
-                <div className="text-2xl font-bold text-gray-900">{metric.value}</div>
-                <div className="text-sm text-gray-600 mt-1">{metric.subtitle}</div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  {metrics.map((metric, index) => (
+    <Card key={index} className="relative overflow-hidden">
+      <CardContent className="p-6 text-center">
+        <div className="text-sm text-gray-600 mb-1">{metric.title}</div>
+        <div className="text-2xl font-bold text-gray-900">{metric.value}</div>
+        <div className="text-sm text-gray-600 mt-1">{metric.subtitle}</div>
+      </CardContent>
+    </Card>
+  ))}
+</div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Current Projects */}
+      <div className="grid grid-cols-1  gap-6">
+        {/* Monthly Activity Chart */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Current Projects</CardTitle>
+            <CardTitle>Monthly Monetary Activity</CardTitle>
             <Button variant="ghost" size="icon">
               <MoreHorizontal className="w-4 h-4" />
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="space-y-6">
-              {currentProjects.map((project, index) => (
-                <div key={index} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{project.name}</h3>
-                      <p className="text-sm text-gray-600">{project.client}</p>
-                    </div>
-                    <Badge
-                      variant={
-                        project.status === "On Track"
-                          ? "default"
-                          : project.status === "Near Completion"
-                            ? "secondary"
-                            : "outline"
-                      }
-                    >
-                      {project.status}
-                    </Badge>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Progress</span>
-                      <span>{project.progress}%</span>
-                    </div>
-                    <Progress value={project.progress} className="h-2" />
-                  </div>
-
-                  <div className="flex items-center justify-between mt-3 text-sm">
-                    <span className="text-gray-600">
-                      Benefit: <span className="font-semibold text-green-600">{project.benefit}</span>
-                    </span>
-                    <span className="text-gray-600">Due: {project.deadline}</span>
-                  </div>
-                </div>
-              ))}
+            <div className="w-full h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyActivity} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                  <XAxis dataKey="month" stroke="#888888" />
+                  <YAxis stroke="#888888" />
+                  <Tooltip
+                    formatter={(value: number) => `$${value.toLocaleString()}`}
+                  />
+                  <Legend />
+                  <Bar dataKey="revenue" fill="#fb923c" radius={[4, 4, 0, 0]} name="Revenue" barSize={50} />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
-
-        {/* Benefits Overview */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Benefits Breakdown</CardTitle>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-gray-900">$127,800</div>
-                <div className="text-sm text-gray-600">Total Lifetime Benefits</div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Current Year</span>
-                  <span className="text-sm text-gray-600">$45,200 (35%)</span>
-                </div>
-                <Progress value={35} className="h-2" />
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Previous Year</span>
-                  <span className="text-sm text-gray-600">$52,100 (41%)</span>
-                </div>
-                <Progress value={41} className="h-2" />
-
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">2022 & Earlier</span>
-                  <span className="text-sm text-gray-600">$30,500 (24%)</span>
-                </div>
-                <Progress value={24} className="h-2" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        
       </div>
 
-      {/* Historical Projects */}
+      {/* Revenue par client and product */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Historical Projects & Benefits</CardTitle>
-          <Button variant="outline" size="sm">
-            View All
+          <CardTitle>Revenue by Client & Product</CardTitle>
+          <Button variant="ghost" size="icon">
+            <MoreHorizontal className="w-4 h-4" />
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Project Name</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Client</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Completed</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Benefit</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Rating</th>
-                </tr>
-              </thead>
-              <tbody>
-                {historicalProjects.map((project, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50">
-                    <td className="py-4 px-4">
-                      <div className="font-medium">{project.name}</div>
-                    </td>
-                    <td className="py-4 px-4 text-gray-600">{project.client}</td>
-                    <td className="py-4 px-4 text-gray-600">{project.completedDate}</td>
-                    <td className="py-4 px-4 font-medium text-green-600">{project.benefit}</td>
-                    <td className="py-4 px-4">
-                      <div className="flex items-center">
-                        <span className="text-yellow-500">★</span>
-                        <span className="ml-1 text-sm">{project.rating}</span>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="w-full h-[400px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart
+                data={revenueByClientProduct}
+                margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+              >
+                <XAxis dataKey="client" stroke="#888888" />
+                <YAxis stroke="#888888" />
+                <Tooltip
+                  formatter={(value: number) => `$${value.toLocaleString()}`}
+                />
+                <Legend />
+                <Bar dataKey="ProductA" name="Product A" fill="#60a5fa" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="ProductB" name="Product B" fill="#fb923c" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="ProductC" name="Product C" fill="#34d399" radius={[4, 4, 0, 0]} />
+                {/* Example: Line for total revenue */}
+                <Line
+                  type="monotone"
+                  dataKey={(data) => data.ProductA + data.ProductB + data.ProductC}
+                  name="Total Revenue"
+                  stroke="#8b5cf6"
+                  strokeWidth={2}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>

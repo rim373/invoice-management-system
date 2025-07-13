@@ -1,136 +1,160 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import {
-  Home,
-  Users,
-  FileText,
-  BookOpen,
-  MessageSquare,
-  BarChart3,
-  Megaphone,
-  CreditCard,
-  Settings,
-  HelpCircle,
-} from "lucide-react"
+import { Home, Users, FileText, BookOpen, Settings, BoxIcon } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { HelpDropdown } from "@/components/help-dropdown"
+import { TutorialOverlay } from "@/components/tutorial-overlay"
+import { LearnMoreModal } from "@/components/learn-more-modal"
 
 interface SidebarProps {
-  userRole: "admin" | "user"
-  currentPage?: string
-  onPageChange?: (page: string) => void
+  userRole: "user" | "admin" | null
+  currentPage: string
+  onPageChange: (page: string) => void
 }
 
-export function Sidebar({ userRole, currentPage = "home", onPageChange }: SidebarProps) {
-  const [expandedItems, setExpandedItems] = useState<string[]>([])
-
-  const toggleExpanded = (item: string) => {
-    setExpandedItems((prev) => (prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]))
-  }
-
-  const handlePageChange = (page: string) => {
-    if (onPageChange) {
-      onPageChange(page)
-    }
-  }
+export function Sidebar({ userRole, currentPage, onPageChange }: SidebarProps) {
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
+  const [showTutorial, setShowTutorial] = useState(false)
+  const [showLearnMore, setShowLearnMore] = useState(false)
 
   const menuItems = [
     {
       id: "home",
       label: "Home",
       icon: Home,
-      active: currentPage === "home",
+      available: true,
     },
     {
       id: "clients",
       label: "Clients",
       icon: Users,
-      active: currentPage === "clients",
+      available: userRole === "user",
     },
     {
       id: "facture",
-      label: "Facture",
+      label: "Invoice",
       icon: FileText,
-      active: currentPage === "facture",
+      available: true,
     },
     {
       id: "journal",
       label: "Journal",
       icon: BookOpen,
-      active: currentPage === "journal",
+      available: true,
     },
-    
+    {
+      id: "stock",
+      label: "Stock",
+      icon: BoxIcon,
+      available: userRole === "user",
+    },
   ]
 
-  const helpItems = [
+  const bottomMenuItems = [
     {
-      id: "setting",
-      label: "Setting",
+      id: "settings",
+      label: "Settings",
       icon: Settings,
-      active: currentPage === "setting",
-    },
-    {
-      id: "help",
-      label: "Help",
-      icon: HelpCircle,
-      active: currentPage === "help",
+      available: true,
     },
   ]
+
+  const handleShowTutorial = () => {
+    setShowTutorial(true)
+  }
+
+  const handleCheckUpdates = () => {
+    setShowUpdateModal(true)
+  }
+
+  const handleLearnMore = () => {
+    setShowLearnMore(true)
+  }
+
+  const handleTutorialSkip = () => {
+    setShowTutorial(false)
+    onPageChange("home")
+  }
 
   return (
-    <div className="w-64 bg-white shadow-lg h-full flex flex-col">
-      {/* Logo */}
-      <div className="p-6 border-b">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-sm">CF</span>
+    <>
+      <div className="bg-white w-64 min-h-screen shadow-lg flex flex-col">
+        <div className="p-6 border-b">
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-sm">CF</span>
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-gray-900">Client Facturation</h1>
+              <p className="text-xs text-gray-500 capitalize">{userRole} Dashboard</p>
+            </div>
           </div>
-          <span className="text-xl font-bold text-gray-900">CLIENT FACTURATION</span>
+        </div>
+
+        <nav className="flex-1 p-4">
+          <ul className="space-y-2">
+            {menuItems
+              .filter((item) => item.available)
+              .map((item) => {
+                const Icon = item.icon
+                return (
+                  <li key={item.id}>
+                    <button
+                      onClick={() => onPageChange(item.id)}
+                      className={cn(
+                        "w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors",
+                        currentPage === item.id
+                          ? "bg-orange-100 text-orange-700 font-medium"
+                          : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+                      )}
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span>{item.label}</span>
+                    </button>
+                  </li>
+                )
+              })}
+          </ul>
+        </nav>
+
+        <div className="p-4 border-t">
+          <ul className="space-y-2">
+            {bottomMenuItems.map((item) => {
+              const Icon = item.icon
+              return (
+                <li key={item.id}>
+                  <button
+                    onClick={() => onPageChange(item.id)}
+                    className={cn(
+                      "w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors",
+                      currentPage === item.id
+                        ? "bg-orange-100 text-orange-700 font-medium"
+                        : "text-gray-600 hover:bg-gray-100 hover:text-gray-900",
+                    )}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{item.label}</span>
+                  </button>
+                </li>
+              )
+            })}
+
+            <li>
+              <HelpDropdown
+                onShowTutorial={handleShowTutorial}
+                onLearnMore={handleLearnMore}
+              />
+            </li>
+          </ul>
         </div>
       </div>
 
-      {/* General Menu */}
-      <div className="flex-1 p-4">
-        <div className="mb-6">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">General Menu</h3>
-          <nav className="space-y-1">
-            {menuItems.map((item) => (
-              <div key={item.id}>
-                <Button
-                  variant={item.active ? "secondary" : "ghost"}
-                  className={`w-full justify-start ${
-                    item.active ? "bg-orange-50 text-orange-700 hover:bg-orange-100" : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                  onClick={() => handlePageChange(item.id)}
-                >
-                  <item.icon className="w-5 h-5 mr-3" />
-                  <span className="flex-1 text-left">{item.label}</span>
-                </Button>
-              </div>
-            ))}
-          </nav>
-        </div>
+      {/* Modals and Overlays */}
 
-        {/* Help Center */}
-        <div>
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Help Center</h3>
-          <nav className="space-y-1">
-            {helpItems.map((item) => (
-              <Button
-                key={item.id}
-                variant={item.active ? "secondary" : "ghost"}
-                className={`w-full justify-start ${
-                  item.active ? "bg-orange-50 text-orange-700 hover:bg-orange-100" : "text-gray-700 hover:bg-gray-100"
-                }`}
-                onClick={() => handlePageChange(item.id)}
-              >
-                <item.icon className="w-5 h-5 mr-3" />
-                <span>{item.label}</span>
-              </Button>
-            ))}
-          </nav>
-        </div>
-      </div>
-    </div>
+      <TutorialOverlay isOpen={showTutorial} onClose={() => setShowTutorial(false)} onSkip={handleTutorialSkip} />
+
+      <LearnMoreModal isOpen={showLearnMore} onClose={() => setShowLearnMore(false)} />
+    </>
   )
 }

@@ -1,237 +1,578 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { DollarSign, TrendingUp, Users, Target, MoreHorizontal, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Mail, Phone, MoreHorizontal, Plus } from "lucide-react"
+import { useState, useEffect } from "react"
+
+type AdminUser = {
+  id: string
+  name: string
+  email: string
+  phone: string
+  company: string
+  access: number
+  secteur: string
+  location: string
+  company_size: string
+  password: string
+  date: string
+  paiement_method: string
+  status: string
+}
+
+const SECTORS = [
+  "Technology",
+  "Healthcare",
+  "Finance",
+  "Education",
+  "Manufacturing",
+  "Retail",
+  "Construction",
+  "Transportation",
+  "Energy",
+  "Agriculture",
+  "Real Estate",
+  "Entertainment",
+  "Other",
+]
+
+const COMPANY_SIZES = [
+  "1-10 employees",
+  "11-50 employees",
+  "51-200 employees",
+  "201-500 employees",
+  "501-1000 employees",
+  "1000+ employees",
+]
+
+const LOCATIONS = ["North America", "Europe", "Asia Pacific", "Latin America", "Middle East", "Africa", "Other"]
 
 export function AdminDashboard() {
-  const metrics = [
-    {
-      title: "Annual Startup Benefits",
-      value: "$2,634k",
-      subtitle: "Overall startup income",
-      icon: DollarSign,
-      color: "bg-orange-500",
-      change: "+12.5%",
-      positive: true,
-    },
-    {
-      title: "Investment Money",
-      value: "4,933",
-      subtitle: "Total investments this month",
-      icon: TrendingUp,
-      color: "bg-purple-500",
-      change: "+8.2%",
-      positive: true,
-    },
-    {
-      title: "Active Clients",
-      value: "84,453",
-      subtitle: "Customer base all",
-      icon: Users,
-      color: "bg-pink-500",
-      change: "+15.3%",
-      positive: true,
-    },
-    {
-      title: "Revenue Growth",
-      value: "14.7%",
-      subtitle: "Driving revenue growth",
-      icon: Target,
-      color: "bg-blue-500",
-      change: "-2.1%",
-      positive: false,
-    },
-  ]
+  const [users, setUsers] = useState<AdminUser[]>([])
+  const [search, setSearch] = useState("")
+  const [openDialog, setOpenDialog] = useState(false)
+  const [editUserIndex, setEditUserIndex] = useState<number | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [formData, setFormData] = useState<Partial<AdminUser>>({
+    name: "",
+    email: "",
+    phone: "",
+    company: "",
+    access: 0,
+    secteur: "Technology",
+    location: "Europe",
+    company_size: "1-10 employees",
+    paiement_method: "Per Month",
+    password: "",
+    status: "Active",
+    date: new Date().toISOString().split("T")[0], 
+  })
 
-  const topClients = [
-    { name: "INVERNI BW", revenue: "$449,000", projects: 34, growth: "+23.42%", status: "Active" },
-    { name: "EVBALT Corp", revenue: "$199,000", projects: 53, growth: "+12.83%", status: "Active" },
-    { name: "STATUE TEMPUR", revenue: "$699,000", projects: 427, growth: "+16.02%", status: "Pending" },
-    { name: "TechFlow Solutions", revenue: "$325,000", projects: 28, growth: "+18.75%", status: "Active" },
-    { name: "Digital Dynamics", revenue: "$156,000", projects: 15, growth: "+9.45%", status: "Active" },
-  ]
+  // Load users on component mount
+  useEffect(() => {
+    loadUsers()
+  }, [])
 
-  const monthlyActivity = [
-    { month: "Jan", revenue: 45000, investments: 12000 },
-    { month: "Feb", revenue: 52000, investments: 15000 },
-    { month: "Mar", revenue: 48000, investments: 11000 },
-    { month: "Apr", revenue: 61000, investments: 18000 },
-    { month: "May", revenue: 55000, investments: 16000 },
-    { month: "Jun", revenue: 67000, investments: 22000 },
-    { month: "Jul", revenue: 72000, investments: 25000 },
-  ]
+  const loadUsers = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fetch(`/api/users?role=admin`)
+      const result = await response.json()
+
+      if (result.success) {
+        // Ensure all fields have default values
+        const processedUsers = result.data.map((user: any) => ({
+          ...user,
+          access: user.access || 0,
+          secteur: user.secteur || "Technology",
+          location: user.location || "Europe",
+          company_size: user.company_size || "1-10 employees",
+          paiement_method: user.paiement_method || "Per Month",
+          date: user.date || new Date().toLocaleDateString(),
+          status: user.status || "Active",
+          phone: user.phone || "",
+        }))
+        setUsers(processedUsers)
+      } else {
+        console.error("Failed to load users:", result.error)
+      }
+    } catch (error) {
+      console.error("Error loading users:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name.toLowerCase().includes(search.toLowerCase()) ||
+      user.email.toLowerCase().includes(search.toLowerCase()) ||
+      user.company.toLowerCase().includes(search.toLowerCase()),
+  )
+
+ const handleAddOrEdit = async () => {
+  try {
+    setIsLoading(true)
+    
+    // Validate required fields
+    if (!formData.name || !formData.email || !formData.company) {
+      alert("Please fill in all required fields (Name, Email, Company)")
+      return
+    }
+    
+    // For new users, password is required
+    if (editUserIndex === null && !formData.password) {
+      alert("Password is required for new users")
+      return
+    }
+    
+    // Prepare the data to send directly (not nested in userData)
+    const dataToSend = {
+  name: formData.name,
+  email: formData.email,
+  phone: formData.phone || "",
+  company: formData.company,
+  access_count: formData.access || 0,
+  sector: formData.secteur || "Technology",
+  location: formData.location || "Europe",
+  company_size: formData.company_size || "1-10 employees",
+  payment_method: formData.paiement_method || "Per Month",
+  join_date: formData.date || new Date().toISOString().split("T")[0],
+  status: formData.status || "Active",
+  ...(formData.password && { password: formData.password }),
+}
+
+    
+    if (editUserIndex !== null) {
+      // Edit existing user
+      const userId = users[editUserIndex].id
+      const response = await fetch("/api/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            id: userId,
+          ...dataToSend, // Spread the data directly instead of nesting in userData
+        }),
+      })
+      
+      const result = await response.json()
+      if (result.success) {
+        await loadUsers() // Reload users
+      } else {
+        console.error("Failed to update user:", result.error)
+        alert("Failed to update user: " + result.error)
+      }
+    } else {
+      // Create new user
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dataToSend), // Send data directly
+      })
+      
+      const result = await response.json()
+      if (result.success) {
+        await loadUsers() // Reload users
+      } else {
+        console.error("Failed to create user:", result.error)
+        alert("Failed to create user: " + result.error)
+      }
+    }
+    
+    // Reset form
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      access: 0,
+      secteur: "Technology",
+      location: "Europe",
+      company_size: "1-10 employees",
+      paiement_method: "Per Month",
+      password: "",
+      status: "Active",
+      date: new Date().toLocaleDateString(),
+    })
+    setEditUserIndex(null)
+    setOpenDialog(false)
+  } catch (error) {
+    console.error("Error saving user:", error)
+    alert("Error saving user")
+  } finally {
+    setIsLoading(false)
+  }
+}
+  const openEditDialog = (user: AdminUser, index: number) => {
+    setFormData({
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      company: user.company,
+      access: user.access,
+      secteur: user.secteur,
+      location: user.location,
+      company_size: user.company_size,
+      paiement_method: user.paiement_method,
+      date: user.date,
+      status: user.status,
+      password: "", // Don't pre-fill password for security
+    })
+    setEditUserIndex(index)
+    setOpenDialog(true)
+  }
+
+  const openAddDialog = () => {
+    setFormData({
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      access: 0,
+      secteur: "Technology",
+      location: "Europe",
+      company_size: "1-10 employees",
+      paiement_method: "Per Month",
+      password: "",
+      status: "Active",
+      date: new Date().toLocaleDateString(),
+    })
+    setEditUserIndex(null)
+    setOpenDialog(true)
+  }
+
+  const openWhatsApp = (phone: string) => {
+    if (!phone) return
+    const formatted = phone.replace(/[^0-9]/g, "")
+    window.open(`https://wa.me/${formatted}`, "_blank")
+  }
+
+  const openEmail = (email: string) => {
+    window.location.href = `mailto:${email}`
+  }
+
+  const changeAccess = async (index: number, delta: number) => {
+    const user = users[index]
+    const newAccess = Math.max(0, user.access + delta)
+
+    try {
+      const response = await fetch("/api/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userRole: "admin",
+          userId: user.id,
+          userData: { ...user, access: newAccess },
+        }),
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        await loadUsers() // Reload users
+      }
+    } catch (error) {
+      console.error("Error updating access:", error)
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric, index) => (
-          <Card key={index} className="relative overflow-hidden">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className={`w-12 h-12 ${metric.color} rounded-lg flex items-center justify-center`}>
-                  <metric.icon className="w-6 h-6 text-white" />
-                </div>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal className="w-4 h-4" />
-                </Button>
-              </div>
-              <div className="mt-4">
-                <div className="text-2xl font-bold text-gray-900">{metric.value}</div>
-                <div className="text-sm text-gray-600 mt-1">{metric.subtitle}</div>
-                <div className="flex items-center mt-2">
-                  {metric.positive ? (
-                    <ArrowUpRight className="w-4 h-4 text-green-500" />
-                  ) : (
-                    <ArrowDownRight className="w-4 h-4 text-red-500" />
-                  )}
-                  <span className={`text-sm ml-1 ${metric.positive ? "text-green-500" : "text-red-500"}`}>
-                    {metric.change}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+    <Card>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <CardTitle>Users Management</CardTitle>
+        <div className="flex gap-2">
+          <Input
+            placeholder="Search users..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-64"
+          />
+          <Button onClick={openAddDialog} disabled={isLoading}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add User
+          </Button>
+        </div>
+      </CardHeader>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Monthly Activity Chart */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Monthly Monetary Activity</CardTitle>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {monthlyActivity.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <span className="text-xs font-semibold text-orange-600">{item.month}</span>
+      <CardContent>
+        {isLoading && <div className="text-center py-4">Loading...</div>}
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-left text-muted-foreground border-b">
+                <th className="py-2 px-4">User ID</th>
+                <th className="py-2 px-4">Name</th>
+                <th className="py-2 px-4">Contact</th>
+                <th className="py-2 px-4">Company</th>
+                <th className="py-2 px-4">Access Count</th>
+                <th className="py-2 px-4">Sector</th>
+                <th className="py-2 px-4">Location</th>
+                <th className="py-2 px-4">Company Size</th>
+                <th className="py-2 px-4">Join Date</th>
+                <th className="py-2 px-4">Payment Method</th>
+                <th className="py-2 px-4">Status</th>
+                <th className="py-2 px-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((user, index) => (
+                <tr key={user.id} className="border-b hover:bg-muted/50">
+                  <td className="py-2 px-4 font-semibold text-primary">{user.id.substring(0, 8)}...</td>
+                  <td className="py-2 px-4">{user.name}</td>
+                  <td className="py-2 px-4 space-y-1">
+                    <div className="flex items-center gap-1">
+                      <Mail className="w-4 h-4" />
+                      <span className="text-xs">{user.email}</span>
                     </div>
-                    <div>
-                      <div className="font-medium">${item.revenue.toLocaleString()}</div>
-                      <div className="text-sm text-gray-500">Revenue</div>
+                    <div className="flex items-center gap-1">
+                      <Phone className="w-4 h-4" />
+                      <span className="text-xs">{user.phone || "N/A"}</span>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium text-purple-600">${item.investments.toLocaleString()}</div>
-                    <div className="text-sm text-gray-500">Investments</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Investment Distribution */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Investment Distribution</CardTitle>
-            <Button variant="ghost" size="icon">
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Technology</span>
-                <span className="text-sm text-gray-600">45%</span>
-              </div>
-              <Progress value={45} className="h-2" />
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Healthcare</span>
-                <span className="text-sm text-gray-600">30%</span>
-              </div>
-              <Progress value={30} className="h-2" />
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Finance</span>
-                <span className="text-sm text-gray-600">15%</span>
-              </div>
-              <Progress value={15} className="h-2" />
-
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium">Others</span>
-                <span className="text-sm text-gray-600">10%</span>
-              </div>
-              <Progress value={10} className="h-2" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Most Active Clients */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Most Active Clients</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm">
-              All Status
-            </Button>
-            <Button variant="outline" size="sm">
-              All Category
-            </Button>
-            <Button variant="outline" size="sm">
-              Export
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Client Name</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Revenue</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Projects</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Growth Rate</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Status</th>
-                  <th className="text-left py-3 px-4 font-medium text-gray-600">Action</th>
+                  </td>
+                  <td className="py-2 px-4 font-semibold">{user.company}</td>
+                  <td className="py-2 px-4 flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={() => changeAccess(index, -1)} disabled={isLoading}>
+                      –
+                    </Button>
+                    <span className="min-w-[20px] text-center">{user.access}</span>
+                    <Button variant="outline" size="icon" onClick={() => changeAccess(index, 1)} disabled={isLoading}>
+                      +
+                    </Button>
+                  </td>
+                  <td className="py-2 px-4 font-semibold">{user.secteur}</td>
+                  <td className="py-2 px-4 font-semibold">{user.location}</td>
+                  <td className="py-2 px-4 font-semibold">{user.company_size}</td>
+                  <td className="py-2 px-4 font-semibold">{user.date}</td>
+                  <td className="py-2 px-4">
+                    <Badge
+                      variant={
+                        user.paiement_method === "Per Month"
+                          ? "default"
+                          : user.paiement_method === "3 Months"
+                            ? "destructive"
+                            : "secondary"
+                      }
+                    >
+                      {user.paiement_method}
+                    </Badge>
+                  </td>
+                  <td className="py-2 px-4">
+                    <Badge variant={user.status === "Active" ? "default" : "secondary"}>{user.status}</Badge>
+                  </td>
+                  <td className="py-2 px-4">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" disabled={isLoading}>
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditDialog(user, index)}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openWhatsApp(user.phone)}>Call (WhatsApp)</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => openEmail(user.email)}>Email</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(index)} className="text-red-600">
+                          Delete
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600">Stop Access</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {topClients.map((client, index) => (
-                  <tr key={index} className="border-b hover:bg-gray-50">
-                    <td className="py-4 px-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                          <span className="text-sm font-semibold text-gray-600">
-                            {client.name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="font-medium">{client.name}</div>
-                          <div className="text-sm text-gray-500">Client</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-4 px-4 font-medium">{client.revenue}</td>
-                    <td className="py-4 px-4">{client.projects}</td>
-                    <td className="py-4 px-4 text-green-600">{client.growth}</td>
-                    <td className="py-4 px-4">
-                      <Badge variant={client.status === "Active" ? "default" : "secondary"}>{client.status}</Badge>
-                    </td>
-                    <td className="py-4 px-4">
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </CardContent>
+
+      {/* Add/Edit Form Dialog */}
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editUserIndex !== null ? "Edit User" : "Add User"}</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Name *</Label>
+              <Input
+                value={formData.name || ""}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Enter full name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Email *</Label>
+              <Input
+                type="email"
+                value={formData.email || ""}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="Enter email address"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Phone</Label>
+              <Input
+                value={formData.phone || ""}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="Enter phone number"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Company *</Label>
+              <Input
+                value={formData.company || ""}
+                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                placeholder="Enter company name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Sector</Label>
+              <Select
+                value={formData.secteur || "Technology"}
+                onValueChange={(value) => setFormData({ ...formData, secteur: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select sector" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SECTORS.map((sector) => (
+                    <SelectItem key={sector} value={sector}>
+                      {sector}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Select
+                value={formData.location || "Europe"}
+                onValueChange={(value) => setFormData({ ...formData, location: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {LOCATIONS.map((location) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Company Size</Label>
+              <Select
+                value={formData.company_size || "1-10 employees"}
+                onValueChange={(value) => setFormData({ ...formData, company_size: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select company size" />
+                </SelectTrigger>
+                <SelectContent>
+                  {COMPANY_SIZES.map((size) => (
+                    <SelectItem key={size} value={size}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Payment Method</Label>
+              <Select
+                value={formData.paiement_method || "Per Month"}
+                onValueChange={(value) => setFormData({ ...formData, paiement_method: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select payment method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Per Month">Per Month</SelectItem>
+                  <SelectItem value="3 Months">3 Months</SelectItem>
+                  <SelectItem value="Per Year">Per Year</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Access Count</Label>
+              <Input
+                type="number"
+                min="0"
+                value={formData.access || 0}
+                onChange={(e) => setFormData({ ...formData, access: Number.parseInt(e.target.value) || 0 })}
+                placeholder="Enter access count"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select
+                value={formData.status || "Active"}
+                onValueChange={(value) => setFormData({ ...formData, status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Inactive">Inactive</SelectItem>
+                  <SelectItem value="Pending">Pending</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Join Date</Label>
+              <Input
+                type="date"
+                value={
+                  formData.date
+                    ? new Date(formData.date).toISOString().split("T")[0]
+                    : new Date().toISOString().split("T")[0]
+                }
+                onChange={(e) => setFormData({ ...formData, date: new Date(e.target.value).toLocaleDateString() })}
+              />
+            </div>
+
+            {editUserIndex === null && (
+              <div className="space-y-2 col-span-2">
+                <Label>Password *</Label>
+                <Input
+                  type="password"
+                  value={formData.password || ""}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Enter password"
+                />
+              </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setOpenDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddOrEdit} disabled={isLoading}>
+              {isLoading ? "Saving..." : editUserIndex !== null ? "Update" : "Create"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </Card>
   )
 }

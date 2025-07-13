@@ -1,0 +1,140 @@
+{
+  "defaultProfile": {
+    "firstName": "Manta Ray",
+    "company": "Omnilink",
+    "address": "Incubateur Supcom Technopole Ghazela Ariana Tunis",
+    "phone": "+216 54131778",
+    "email": "omnilink.tn@gmail.com",
+    "website": "http://www.Omnilink.tn/",
+    "bankRib": "",
+    "bankName": ""
+  },
+  "defaultInvoice": {
+    "invoiceNumber": true,
+    "dueDate": true,
+    "currency": false,
+    "discount": false,
+    "tax": false,
+    "notes": false,
+    "invoiceNumberPrefix": "INV",
+    "invoiceNumberStart": "001",
+    "dueDateType": "custom",
+    "dueDateDays": "30",
+    "vatNumber": "123-456-789",
+    "taxAmount": "0",
+    "taxMethod": "Default Values",
+    "currencyType": "US Dollar",
+    "separator": "1,999,000 (Comma & Dot)",
+    "signPlacement": "Before Amount",
+    "decimals": "2",
+    "discountType": "percentage",
+    "discountAmount": "0",
+    "defaultNotes": "",
+    "saveLocation": "C:\\Users\\rimba\\OneDrive\\Gambar\\Saved Pictures",
+    "template": "Minimal",
+    "dateFormat": "07/04/2025 (MM/DD/YYYY)"
+  },
+  "defaultGeneral": {
+    "sound": "Default Values",
+    "language": "English",
+    "mute": false,
+    "openPdfAfterSave": true
+  },
+  "options": {
+    "currencies": [
+      { "value": "US Dollar", "label": "US Dollar" },
+      { "value": "Euro", "label": "Euro" },
+      { "value": "Tunisian Dinar", "label": "Tunisian Dinar" }
+    ],
+    "separators": [
+      { "value": "1,999,000 (Comma & Dot)", "label": "1,999,000 (Comma & Dot)" },
+      { "value": "1.999.000 (Dot & Comma)", "label": "1.999.000 (Dot & Comma)" }
+    ],
+    "signPlacements": [
+      { "value": "Before Amount", "label": "Before Amount" },
+      { "value": "After Amount", "label": "After Amount" }
+    ],
+    "taxMethods": [{ "value": "Default Values", "label": "Default Values" }, { "value": "Custom", "label": "Custom" }],
+    "templates": [
+      { "value": "Minimal", "label": "Minimal" },
+      { "value": "Standard", "label": "Standard" },
+      { "value": "Professional", "label": "Professional" }
+    ],
+    "dateFormats": [
+      { "value": "07/04/2025 (MM/DD/YYYY)", "label": "07/04/2025 (MM/DD/YYYY)" },
+      { "value": "04/07/2025 (DD/MM/YYYY)", "label": "04/07/2025 (DD/MM/YYYY)" },
+      { "value": "2025-07-04 (YYYY-MM-DD)", "label": "2025-07-04 (YYYY-MM-DD)" }
+    ],
+    "sounds": [
+      { "value": "Default Values", "label": "Default Values" },
+      { "value": "Custom", "label": "Custom" },
+      { "value": "Disabled", "label": "Disabled" }
+    ],
+    "languages": [
+      { "value": "English", "label": "English" },
+      { "value": "Français", "label": "Français" },
+      { "value": "العربية", "label": "العربية" }
+    ]
+  },
+  "labels": {
+    "profile": {
+      "logo": "LOGO",
+      "logoDescription": "Accepts PNG, JPG & SVG (Recommended)",
+      "firstName": "FIRST & LAST NAME",
+      "company": "COMPANY",
+      "address": "ADDRESS",
+      "phone": "PHONE NUMBER",
+      "email": "EMAIL",
+      "website": "WEBSITE",
+      "bankName": "BANK NAME",
+      "bankRib": "BANK RIB"
+    },
+    "invoice": {
+      "requiredFields": "REQUIRED FIELDS",
+      "invoiceNumber": "INVOICE NUMBER",
+      "dueDate": "DUE DATE",
+      "currency": "CURRENCY",
+      "discount": "DISCOUNT",
+      "tax": "TAX",
+      "notes": "NOTES",
+      "invoiceNumberSettings": "INVOICE NUMBER SETTINGS",
+      "prefix": "PREFIX",
+      "startingNumber": "STARTING NUMBER",
+      "dueDateSettings": "DUE DATE SETTINGS",
+      "customDate": "Custom Date",
+      "paymentTerm": "Select Payment Term",
+      "days": "DAYS",
+      "currencySettings": "CURRENCY SETTINGS",
+      "separator": "SEPARATOR",
+      "signPlacement": "SIGN PLACEMENT",
+      "decimalPlaces": "DECIMAL PLACES",
+      "discountSettings": "DISCOUNT SETTINGS",
+      "percentage": "Percentage",
+      "fixedAmount": "Fixed Amount",
+      "amount": "AMOUNT",
+      "taxSettings": "TAX SETTINGS",
+      "vatNumber": "VAT NUMBER",
+      "method": "METHOD",
+      "notesSettings": "NOTES SETTINGS",
+      "defaultNotes": "DEFAULT NOTES",
+      "otherSettings": "OTHER SETTINGS",
+      "pdfFolder": "PDF FOLDER SAVE LOCATION",
+      "template": "TEMPLATE",
+      "dateFormat": "DATE FORMAT"
+    },
+    "general": {
+      "sound": "SOUND",
+      "mute": "MUTE",
+      "language": "LANGUAGE",
+      "openPdf": "OPEN PDF FILE AFTER SAVE"
+    }
+  },
+  "placeholders": {
+    "invoicePrefix": "INV",
+    "invoiceStart": "001",
+    "dueDateDays": "30",
+    "discountAmount": "0",
+    "folderPath": "Select folder path...",
+    "defaultNotes": "Enter default notes for invoices..."
+  }
+}
