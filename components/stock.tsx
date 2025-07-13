@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,97 +21,20 @@ import {
   Plus,
   Package,
   AlertTriangle,
-  TrendingUp,
   TrendingDown,
   MoreHorizontal,
   Edit,
   Trash2,
-  Eye,
   ShoppingCart,
   Filter,
-  Currency,
+  Loader2,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 
-// Initial stock data
-const initialStockItems = [
-  {
-    id: 1,
-    name: "MacBook Pro 16",
-    myproduct:true,
-    quantity: 25,
-    minStock: 10,
-    price: 2499.99,
-    currency: "EUR",
-    source: "entreprise x",
-    description: "High-performance laptop for professionals",
-  },
-  {
-    id: 2,
-    name: "Ergonomic Office Chair",
-    myproduct:true,
-    quantity: 5,
-    minStock: 15,
-    price: 299.99,
-    currency: "EUR",
-    supplier: "Herman Miller",
-    description: "Comfortable office chair with lumbar support",
-
-  },
-  {
-    id: 3,
-    name: "Wireless Mouse",
-    myproduct:true,
-    quantity: 0,
-    minStock: 20,
-    price: 99.99,
-    currency: "EUR",
-    supplier: "Logitech",
-    description: "Precision wireless mouse",
-
-  },
-  {
-    id: 4,
-    name: "iPhone 15 Pro",
-    myproduct:true,
-    quantity: 45,
-    minStock: 20,
-    price: 999.99,
-    currency: "EUR",
-    supplier: "Apple Inc.",
-    description: "Latest iPhone with advanced features",
-
-  },
-  {
-    id: 5,
-    name: "Standing Desk",
-    myproduct:false,
-    quantity: 8,
-    minStock: 10,
-    price: 799.99,
-    currency: "EUR",
-    supplier: "Uplift Desk",
-    description: "Adjustable height standing desk",
-
-  },
-  {
-    id: 6,
-    name: "AirPods Pro",
-    myproduct:true,
-    quantity: 32,
-    minStock: 25,
-    price: 249.99,
-    currency: "EUR",
-    supplier: "Apple Inc.",
-    description: "Noise-cancelling wireless earbuds",
-
-  },
-]
-
 interface StockItem {
-  id: number
+  id: string
   name: string
   myproduct: boolean
   quantity: number
@@ -120,12 +43,12 @@ interface StockItem {
   currency: string
   supplier?: string
   description: string
-
 }
 
 export function StockPage() {
   const [productOriginFilter, setProductOriginFilter] = useState<"all" | "my" | "imported">("all")
-  const [stockItems, setStockItems] = useState<StockItem[]>(initialStockItems)
+  const [stockItems, setStockItems] = useState<StockItem[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -134,29 +57,53 @@ export function StockPage() {
   const [editingItem, setEditingItem] = useState<StockItem | null>(null)
   const [restockingItem, setRestockingItem] = useState<StockItem | null>(null)
   const [restockQuantity, setRestockQuantity] = useState("")
+  const [submitting, setSubmitting] = useState(false)
   const { toast } = useToast()
 
   // Form state for adding/editing products
   const [formData, setFormData] = useState({
     name: "",
-    myproduct: false,
+    myproduct: true,
     quantity: "",
     minStock: "",
     price: "",
-    currency: "",
+    currency: "EUR",
     supplier: "",
     description: "",
   })
 
-  // Get next available ID
-  const getNextId = () => {
-    return Math.max(...stockItems.map((item) => item.id)) + 1
+  // Fetch stock items from API
+  const fetchStockItems = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/stock")
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch stock items")
+      }
+
+      const data = await response.json()
+      setStockItems(data.stockItems || [])
+    } catch (error) {
+      console.error("Error fetching stock items:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load stock items",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
+
+  // Load stock items on component mount
+  useEffect(() => {
+    fetchStockItems()
+  }, [])
 
   // Filter items based on search and status
   const filteredItems = stockItems.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
     let matchesStatus = true
     if (selectedStatus === "in-stock") {
       matchesStatus = item.quantity > item.minStock
@@ -168,35 +115,34 @@ export function StockPage() {
 
     let matchesOrigin = true
     if (productOriginFilter === "my") {
-        matchesOrigin = item.myproduct === true
+      matchesOrigin = item.myproduct === true
     } else if (productOriginFilter === "imported") {
-        matchesOrigin = item.myproduct === false
+      matchesOrigin = item.myproduct === false
     }
 
-    return matchesSearch && matchesStatus&& matchesOrigin
+    return matchesSearch && matchesStatus && matchesOrigin
   })
 
   const totalItems = stockItems.length
   const lowStockItems = stockItems.filter((item) => item.quantity <= item.minStock && item.quantity > 0).length
   const outOfStockItems = stockItems.filter((item) => item.quantity === 0).length
-  const totalValue = stockItems.reduce((sum, item) => sum + item.quantity * item.price, 0)
 
   // Reset form
   const resetForm = () => {
     setFormData({
       name: "",
-      myproduct:true,
+      myproduct: true,
       quantity: "",
       minStock: "",
       price: "",
-      currency: "",
+      currency: "EUR",
       supplier: "",
       description: "",
     })
   }
 
   // Add new product
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     if (!formData.name || !formData.quantity || !formData.price) {
       toast({
         title: "Error",
@@ -206,30 +152,42 @@ export function StockPage() {
       return
     }
 
-    const newItem: StockItem = {
-      id: getNextId(),
-      name: formData.name,
-      myproduct: formData.myproduct,
-      quantity: Number.parseInt(formData.quantity),
-      minStock: Number.parseInt(formData.minStock) || 0,
-      price: Number.parseFloat(formData.price),
-      currency: formData.currency,
-      supplier: formData.supplier,
-      description: formData.description,
-      
-    }
+    try {
+      setSubmitting(true)
+      const response = await fetch("/api/stock", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
 
-    setStockItems([...stockItems, newItem])
-    resetForm()
-    setIsAddModalOpen(false)
-    toast({
-      title: "Success",
-      description: "Product added successfully",
-    })
+      if (!response.ok) {
+        throw new Error("Failed to add product")
+      }
+
+      const data = await response.json()
+      setStockItems([data.stockItem, ...stockItems])
+      resetForm()
+      setIsAddModalOpen(false)
+      toast({
+        title: "Success",
+        description: "Product added successfully",
+      })
+    } catch (error) {
+      console.error("Error adding product:", error)
+      toast({
+        title: "Error",
+        description: "Failed to add product",
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   // Edit product
-  const handleEditProduct = () => {
+  const handleEditProduct = async () => {
     if (!editingItem || !formData.name || !formData.quantity || !formData.price) {
       toast({
         title: "Error",
@@ -239,34 +197,43 @@ export function StockPage() {
       return
     }
 
-    const updatedItems = stockItems.map((item) =>
-      item.id === editingItem.id
-        ? {
-            ...item,
-            name: formData.name,
-            myproduct: formData.myproduct,
-            quantity: Number.parseInt(formData.quantity),
-            minStock: Number.parseInt(formData.minStock) || 0,
-            price: Number.parseFloat(formData.price),
-            currency: formData.currency,
-            supplier: formData.supplier,
-            description: formData.description,
-          }
-        : item,
-    )
+    try {
+      setSubmitting(true)
+      const response = await fetch(`/api/stock/${editingItem.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
 
-    setStockItems(updatedItems)
-    resetForm()
-    setIsEditModalOpen(false)
-    setEditingItem(null)
-    toast({
-      title: "Success",
-      description: "Product updated successfully",
-    })
+      if (!response.ok) {
+        throw new Error("Failed to update product")
+      }
+
+      const data = await response.json()
+      setStockItems(stockItems.map((item) => (item.id === editingItem.id ? data.stockItem : item)))
+      resetForm()
+      setIsEditModalOpen(false)
+      setEditingItem(null)
+      toast({
+        title: "Success",
+        description: "Product updated successfully",
+      })
+    } catch (error) {
+      console.error("Error updating product:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update product",
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   // Restock product
-  const handleRestock = () => {
+  const handleRestock = async () => {
     if (!restockingItem || !restockQuantity || Number.parseInt(restockQuantity) <= 0) {
       toast({
         title: "Error",
@@ -276,27 +243,65 @@ export function StockPage() {
       return
     }
 
-    const updatedItems = stockItems.map((item) =>
-      item.id === restockingItem.id ? { ...item, quantity: item.quantity + Number.parseInt(restockQuantity) } : item,
-    )
+    try {
+      setSubmitting(true)
+      const response = await fetch(`/api/stock/${restockingItem.id}/restock`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ quantity: restockQuantity }),
+      })
 
-    setStockItems(updatedItems)
-    setRestockQuantity("")
-    setIsRestockModalOpen(false)
-    setRestockingItem(null)
-    toast({
-      title: "Success",
-      description: `Added ${restockQuantity} units to ${restockingItem.name}`,
-    })
+      if (!response.ok) {
+        throw new Error("Failed to restock product")
+      }
+
+      const data = await response.json()
+      setStockItems(stockItems.map((item) => (item.id === restockingItem.id ? data.stockItem : item)))
+      setRestockQuantity("")
+      setIsRestockModalOpen(false)
+      setRestockingItem(null)
+      toast({
+        title: "Success",
+        description: `Added ${restockQuantity} units to ${restockingItem.name}`,
+      })
+    } catch (error) {
+      console.error("Error restocking product:", error)
+      toast({
+        title: "Error",
+        description: "Failed to restock product",
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   // Delete product
-  const handleDeleteProduct = (id: number) => {
-    setStockItems(stockItems.filter((item) => item.id !== id))
-    toast({
-      title: "Success",
-      description: "Product deleted successfully",
-    })
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      const response = await fetch(`/api/stock/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete product")
+      }
+
+      setStockItems(stockItems.filter((item) => item.id !== id))
+      toast({
+        title: "Success",
+        description: "Product deleted successfully",
+      })
+    } catch (error) {
+      console.error("Error deleting product:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive",
+      })
+    }
   }
 
   // Open edit modal
@@ -308,8 +313,8 @@ export function StockPage() {
       quantity: item.quantity.toString(),
       minStock: item.minStock.toString(),
       price: item.price.toString(),
-      currency: item.currency, 
-      supplier: item.supplier ?? "", 
+      currency: item.currency,
+      supplier: item.supplier ?? "",
       description: item.description,
     })
     setIsEditModalOpen(true)
@@ -337,6 +342,17 @@ export function StockPage() {
     } else {
       return { badge: "In Stock", variant: "outline" as const }
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading stock items...</span>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -381,11 +397,11 @@ export function StockPage() {
                   <div className="flex items-center justify-between">
                     <Label htmlFor="myproduct">My Product</Label>
                     <Switch
-                        id="myproduct"
-                        checked={formData.myproduct}
-                        onCheckedChange={(checked) => setFormData({ ...formData, myproduct: checked })}
+                      id="myproduct"
+                      checked={formData.myproduct}
+                      onCheckedChange={(checked) => setFormData({ ...formData, myproduct: checked })}
                     />
-                    </div>
+                  </div>
                   <div className="space-y-3">
                     <div>
                       <Label htmlFor="quantity">Quantity *</Label>
@@ -422,31 +438,31 @@ export function StockPage() {
                   <div>
                     <Label htmlFor="currency">Currency</Label>
                     <Select
-                        value={formData.currency}
-                        onValueChange={(value) => setFormData({ ...formData, currency: value })}
+                      value={formData.currency}
+                      onValueChange={(value) => setFormData({ ...formData, currency: value })}
                     >
-                        <SelectTrigger className="rounded-xl text-sm h-9">
+                      <SelectTrigger className="rounded-xl text-sm h-9">
                         <SelectValue placeholder="Select currency" />
-                        </SelectTrigger>
-                        <SelectContent>
+                      </SelectTrigger>
+                      <SelectContent>
                         <SelectItem value="EUR">€ Euro</SelectItem>
                         <SelectItem value="USD">$ US Dollar</SelectItem>
                         <SelectItem value="TND">DT Tunisian Dinar</SelectItem>
-                        </SelectContent>
+                      </SelectContent>
                     </Select>
-                    </div>
+                  </div>
 
                   {!formData.myproduct && (
                     <div>
-                        <Label htmlFor="supplier">Supplier</Label>
-                        <Input
+                      <Label htmlFor="supplier">Supplier</Label>
+                      <Input
                         id="supplier"
                         value={formData.supplier}
                         onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
                         className="rounded-xl text-sm h-9"
-                        />
+                      />
                     </div>
-                    )}
+                  )}
                   <div>
                     <Label htmlFor="description">Description</Label>
                     <Textarea
@@ -462,14 +478,23 @@ export function StockPage() {
                       variant="outline"
                       onClick={() => setIsAddModalOpen(false)}
                       className="flex-1 rounded-xl text-sm h-8"
+                      disabled={submitting}
                     >
                       Cancel
                     </Button>
                     <Button
                       onClick={handleAddProduct}
                       className="flex-1 bg-gray-900 hover:bg-gray-800 rounded-xl text-sm h-8"
+                      disabled={submitting}
                     >
-                      Add Product
+                      {submitting ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Adding...
+                        </>
+                      ) : (
+                        "Add Product"
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -523,7 +548,6 @@ export function StockPage() {
               </div>
             </CardContent>
           </Card>
-
         </div>
 
         {/* Search & Filters */}
@@ -553,28 +577,28 @@ export function StockPage() {
               </Select>
               <div className="flex gap-2">
                 <Button
-                    variant={productOriginFilter === "my" ? "default" : "outline"}
-                    className="rounded-xl border-gray-200"
-                    onClick={() => setProductOriginFilter("my")}
+                  variant={productOriginFilter === "my" ? "default" : "outline"}
+                  className="rounded-xl border-gray-200"
+                  onClick={() => setProductOriginFilter("my")}
                 >
-                    My Products
+                  My Products
                 </Button>
                 <Button
-                    variant={productOriginFilter === "imported" ? "default" : "outline"}
-                    className="rounded-xl border-gray-200"
-                    onClick={() => setProductOriginFilter("imported")}
+                  variant={productOriginFilter === "imported" ? "default" : "outline"}
+                  className="rounded-xl border-gray-200"
+                  onClick={() => setProductOriginFilter("imported")}
                 >
-                    Imported Products
+                  Imported Products
                 </Button>
                 <Button
-                    variant={productOriginFilter === "all" ? "default" : "outline"}
-                    className="rounded-xl border-gray-200"
-                    onClick={() => setProductOriginFilter("all")}
-                    >
-                    All Products
-                    </Button>
-                </div>
-        </div>
+                  variant={productOriginFilter === "all" ? "default" : "outline"}
+                  className="rounded-xl border-gray-200"
+                  onClick={() => setProductOriginFilter("all")}
+                >
+                  All Products
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -585,10 +609,7 @@ export function StockPage() {
             const statusInfo = getStatusInfo(item)
 
             return (
-              <Card
-                key={item.id}
-                className="group border border-gray-200 shadow-sm hover:shadow-md"
-              >
+              <Card key={item.id} className="group border border-gray-200 shadow-sm hover:shadow-md">
                 <CardContent className="p-6">
                   {/* Product Header */}
                   <div className="flex items-start justify-between mb-4">
@@ -658,7 +679,10 @@ export function StockPage() {
                     {/* Price  */}
                     <div className="flex justify-between items-center pt-3 border-t border-gray-100">
                       <div>
-                        <p className="text-xl font-semibold text-gray-900"> {item.currency} {item.price}</p>
+                        <p className="text-xl font-semibold text-gray-900">
+                          {" "}
+                          {item.currency} {item.price}
+                        </p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-gray-500">Min: {item.minStock}</p>
@@ -731,13 +755,13 @@ export function StockPage() {
                 className="rounded-xl text-sm h-9"
               />
             </div>
-            <div>
-              <Label htmlFor="edit-myproduct">myproduct *</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="edit-myproduct">My Product</Label>
               <Switch
                 id="edit-myproduct"
                 checked={formData.myproduct}
                 onCheckedChange={(checked) => setFormData({ ...formData, myproduct: checked })}
-                />
+              />
             </div>
             <div className="space-y-3">
               <div>
@@ -773,33 +797,33 @@ export function StockPage() {
               />
             </div>
             <div>
-                <Label htmlFor="currency">Currency</Label>
-                <Select
-                    value={formData.currency}
-                    onValueChange={(value) => setFormData({ ...formData, currency: value })}
-                >
-                    <SelectTrigger className="rounded-xl text-sm h-9">
-                    <SelectValue placeholder="Select currency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                    <SelectItem value="EUR">€ Euro</SelectItem>
-                    <SelectItem value="USD">$ US Dollar</SelectItem>
-                    <SelectItem value="TND">DT Tunisian Dinar</SelectItem>
-                    </SelectContent>
-                </Select>
-                </div>
+              <Label htmlFor="currency">Currency</Label>
+              <Select
+                value={formData.currency}
+                onValueChange={(value) => setFormData({ ...formData, currency: value })}
+              >
+                <SelectTrigger className="rounded-xl text-sm h-9">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="EUR">€ Euro</SelectItem>
+                  <SelectItem value="USD">$ US Dollar</SelectItem>
+                  <SelectItem value="TND">DT Tunisian Dinar</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             {!formData.myproduct && (
-                <div>
-                    <Label htmlFor="supplier">Supplier</Label>
-                    <Input
-                    id="supplier"
-                    value={formData.supplier}
-                    onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
-                    className="rounded-xl text-sm h-9"
-                    />
-                </div>
-                )}
+              <div>
+                <Label htmlFor="supplier">Supplier</Label>
+                <Input
+                  id="supplier"
+                  value={formData.supplier}
+                  onChange={(e) => setFormData({ ...formData, supplier: e.target.value })}
+                  className="rounded-xl text-sm h-9"
+                />
+              </div>
+            )}
             <div>
               <Label htmlFor="edit-description">Description</Label>
               <Textarea
@@ -815,14 +839,23 @@ export function StockPage() {
                 variant="outline"
                 onClick={() => setIsEditModalOpen(false)}
                 className="flex-1 rounded-xl text-sm h-8"
+                disabled={submitting}
               >
                 Cancel
               </Button>
               <Button
                 onClick={handleEditProduct}
                 className="flex-1 bg-gray-900 hover:bg-gray-800 rounded-xl text-sm h-8"
+                disabled={submitting}
               >
-                Update Product
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  "Update Product"
+                )}
               </Button>
             </div>
           </div>
@@ -861,16 +894,32 @@ export function StockPage() {
               </p>
             </div>
             <div className="flex gap-2 pt-4">
-              <Button variant="outline" onClick={() => setIsRestockModalOpen(false)} className="flex-1 rounded-xl">
+              <Button
+                variant="outline"
+                onClick={() => setIsRestockModalOpen(false)}
+                className="flex-1 rounded-xl"
+                disabled={submitting}
+              >
                 Cancel
               </Button>
-              <Button onClick={handleRestock} className="flex-1 bg-gray-900 hover:bg-gray-800 rounded-xl">
-                Add Stock
+              <Button
+                onClick={handleRestock}
+                className="flex-1 bg-gray-900 hover:bg-gray-800 rounded-xl"
+                disabled={submitting}
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  "Add Stock"
+                )}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
     </div>
-  );
+  )
 }

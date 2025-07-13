@@ -102,3 +102,18 @@ export interface RefreshToken {
   expires_at: string
   created_at: string
 }
+
+export interface StockItem {
+  id: string
+  user_id: string
+  name: string
+  my_product: boolean
+  quantity: number
+  min_stock: number
+  price: number
+  currency: string
+  supplier?: string
+  description: string
+  created_at: string
+  updated_at: string
+}
