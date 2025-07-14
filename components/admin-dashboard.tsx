@@ -54,6 +54,34 @@ const COMPANY_SIZES = [
 
 const LOCATIONS = ["North America", "Europe", "Asia Pacific", "Latin America", "Middle East", "Africa", "Other"]
 
+// Helper function to format date for input
+const formatDateForInput = (dateString: string): string => {
+  if (!dateString) return new Date().toISOString().split("T")[0]
+  
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) {
+      return new Date().toISOString().split("T")[0]
+    }
+    return date.toISOString().split("T")[0]
+  } catch (error) {
+    return new Date().toISOString().split("T")[0]
+  }
+}
+
+// Helper function to format date for display
+const formatDateForDisplay = (dateString: string): string => {
+  if (!dateString) return "N/A"
+  
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return "Invalid Date"
+    return date.toLocaleDateString()
+  } catch (error) {
+    return "Invalid Date"
+  }
+}
+
 export function AdminDashboard() {
   const [users, setUsers] = useState<AdminUser[]>([])
   const [search, setSearch] = useState("")
@@ -95,7 +123,7 @@ export function AdminDashboard() {
           location: user.location || "Europe",
           company_size: user.company_size || "1-10 employees",
           paiement_method: user.paiement_method || "Per Month",
-          date: user.date || new Date().toLocaleDateString(),
+          date: user.date ? formatDateForInput(user.date) : new Date().toISOString().split("T")[0],
           status: user.status || "Active",
           phone: user.phone || "",
         }))
@@ -135,19 +163,19 @@ export function AdminDashboard() {
     
     // Prepare the data to send directly (not nested in userData)
     const dataToSend = {
-  name: formData.name,
-  email: formData.email,
-  phone: formData.phone || "",
-  company: formData.company,
-  access_count: formData.access || 0,
-  sector: formData.secteur || "Technology",
-  location: formData.location || "Europe",
-  company_size: formData.company_size || "1-10 employees",
-  payment_method: formData.paiement_method || "Per Month",
-  join_date: formData.date || new Date().toISOString().split("T")[0],
-  status: formData.status || "Active",
-  ...(formData.password && { password: formData.password }),
-}
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone || "",
+      company: formData.company,
+      access_count: formData.access || 0,
+      sector: formData.secteur || "Technology",
+      location: formData.location || "Europe",
+      company_size: formData.company_size || "1-10 employees",
+      payment_method: formData.paiement_method || "Per Month",
+      join_date: formData.date || new Date().toISOString().split("T")[0],
+      status: formData.status || "Active",
+      ...(formData.password && { password: formData.password }),
+  }
 
     
     if (editUserIndex !== null) {
@@ -199,7 +227,7 @@ export function AdminDashboard() {
       paiement_method: "Per Month",
       password: "",
       status: "Active",
-      date: new Date().toLocaleDateString(),
+      date: new Date().toISOString().split("T")[0]
     })
     setEditUserIndex(null)
     setOpenDialog(false)
@@ -221,7 +249,7 @@ export function AdminDashboard() {
       location: user.location,
       company_size: user.company_size,
       paiement_method: user.paiement_method,
-      date: user.date,
+      date: formatDateForInput(user.date),
       status: user.status,
       password: "", // Don't pre-fill password for security
     })
@@ -242,7 +270,7 @@ export function AdminDashboard() {
       paiement_method: "Per Month",
       password: "",
       status: "Active",
-      date: new Date().toLocaleDateString(),
+      date: new Date().toISOString().split("T")[0],
     })
     setEditUserIndex(null)
     setOpenDialog(true)
@@ -542,11 +570,11 @@ export function AdminDashboard() {
               <Input
                 type="date"
                 value={
-                  formData.date
+                  formData.date && !isNaN(new Date(formData.date).getTime())
                     ? new Date(formData.date).toISOString().split("T")[0]
                     : new Date().toISOString().split("T")[0]
                 }
-                onChange={(e) => setFormData({ ...formData, date: new Date(e.target.value).toLocaleDateString() })}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               />
             </div>
 

@@ -62,14 +62,21 @@ interface Invoice {
   paymentHistory: PaymentHistory[]
 }
 
-
 interface JournalPageProps {
   invoices?: Invoice[]
   onInvoiceUpdate?: (invoices: Invoice[]) => void
   onInvoiceDelete?: (invoiceId: string) => void
+  onInvoiceEdit?: (invoice: Invoice) => void
+  searchTerm?: string
 }
 
-export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInvoiceDelete }: JournalPageProps) {
+export function JournalPage({
+  invoices: externalInvoices,
+  onInvoiceUpdate,
+  onInvoiceDelete,
+  onInvoiceEdit,
+  searchTerm: externalSearchTerm,
+}: JournalPageProps) {
   // invoice pdf
   const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null)
   const [isViewerOpen, setIsViewerOpen] = useState(false)
@@ -79,11 +86,9 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
   }
   // invoice pdf
 
-
-
   const receiptRef = useRef<HTMLDivElement>(null)
   const [activeStatus, setActiveStatus] = useState<string>("all")
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState(externalSearchTerm || "")
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState("")
@@ -91,11 +96,11 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
   const [paymentNote, setPaymentNote] = useState("")
   const [showReceipt, setShowReceipt] = useState(false)
   const [lastPayment, setLastPayment] = useState<{
-  payment: PaymentHistory
-  invoice: Invoice
-  paidUntilNow: number
-  remaining: number
-} | null>(null)
+    payment: PaymentHistory
+    invoice: Invoice
+    paidUntilNow: number
+    remaining: number
+  } | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null)
 
@@ -108,6 +113,13 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
       setInvoices(externalInvoices)
     }
   }, [externalInvoices])
+
+  // Update search term when external search term changes
+  useEffect(() => {
+    if (externalSearchTerm !== undefined) {
+      setSearchTerm(externalSearchTerm)
+    }
+  }, [externalSearchTerm])
 
   const statusCounts = {
     paid: invoices.filter((inv) => inv.status === "paid").length,
@@ -202,6 +214,12 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
     setInvoiceToDelete(null)
   }
 
+  const handleEditInvoice = (invoice: Invoice) => {
+    if (onInvoiceEdit) {
+      onInvoiceEdit(invoice)
+    }
+  }
+
   const handleSavePayment = () => {
     if (!selectedInvoice || !paymentAmount || Number.parseFloat(paymentAmount) <= 0) {
       return
@@ -245,7 +263,7 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
           payment: newPayment,
           invoice: updatedInvoice,
           paidUntilNow: newPaidAmount,
-          remaining: updatedInvoice.totalAmount - newPaidAmount
+          remaining: updatedInvoice.totalAmount - newPaidAmount,
         })
 
         return updatedInvoice
@@ -263,6 +281,8 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
     // Show receipt popup
     setShowReceipt(true)
   }
+
+
 
   return (
     <div className="space-y-6">
@@ -572,10 +592,11 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                   </Select>
 
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Edit className="w-4 h-4 mr-2" />
-                      MODIFY
-                    </Button>
+                    <Button variant="outline" onClick={() => handleEditInvoice(invoice)}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Modify
+                  </Button>
+                    
                     <Button variant="outline" size="sm" onClick={() => handleViewInvoice(invoice)}>
                       <Eye className="w-4 h-4 mr-2" />
                       VIEW

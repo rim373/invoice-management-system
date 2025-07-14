@@ -73,6 +73,8 @@ export default function Home() {
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isDataLoaded, setIsDataLoaded] = useState(false)
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
+  const [prefilledClient, setPrefilledClient] = useState<Client | null>(null)
+  const [journalSearchTerm, setJournalSearchTerm] = useState("")
 
   // Load data from backend on authentication
   useEffect(() => {
@@ -140,6 +142,8 @@ export default function Home() {
     setClientsData([])
     setIsDataLoaded(false)
     setEditingInvoice(null)
+    setPrefilledClient(null)
+    setJournalSearchTerm("")
   }
 
   const handlePageChange = (page: string) => {
@@ -150,10 +154,29 @@ export default function Home() {
     console.log("Changing page to:", page)
     setCurrentPage(page)
 
-    // Clear editing invoice when changing pages
+    // Clear editing invoice and prefilled client when changing pages
     if (page !== "facture") {
       setEditingInvoice(null)
+      setPrefilledClient(null)
     }
+
+    // Clear journal search when leaving journal page
+    if (page !== "journal") {
+      setJournalSearchTerm("")
+    }
+  }
+
+  const handleCreateInvoiceForClient = (client: Client) => {
+    console.log("Creating invoice for client:", client.name)
+    setPrefilledClient(client)
+    setEditingInvoice(null)
+    setCurrentPage("facture")
+  }
+
+  const handleViewClientInvoices = (clientName: string) => {
+    console.log("Viewing invoices for client:", clientName)
+    setJournalSearchTerm(clientName)
+    setCurrentPage("journal")
   }
 
   const handleInvoiceCreate = async (newInvoice: Invoice) => {
@@ -181,6 +204,7 @@ export default function Home() {
 
         console.log("Invoice created successfully, redirecting to journal")
         setEditingInvoice(null)
+        setPrefilledClient(null)
         setCurrentPage("journal")
       } else {
         throw new Error(result.error || "Failed to create invoice")
@@ -216,6 +240,7 @@ export default function Home() {
 
         console.log("Invoice updated successfully, redirecting to journal")
         setEditingInvoice(null)
+        setPrefilledClient(null)
         setCurrentPage("journal")
       } else {
         throw new Error(result.error || "Failed to update invoice")
@@ -229,6 +254,7 @@ export default function Home() {
   const handleInvoiceEdit = (invoice: Invoice) => {
     console.log("Setting invoice for editing:", invoice.number)
     setEditingInvoice(invoice)
+    setPrefilledClient(null)
     setCurrentPage("facture")
   }
 
@@ -261,7 +287,14 @@ export default function Home() {
     switch (currentPage) {
       case "clients":
         if (userRole === "user") {
-          return <ClientsPage userEmail={userData?.email} userRole={userRole} />
+          return (
+            <ClientsPage
+              userEmail={userData?.email}
+              userRole={userRole}
+              onCreateInvoice={handleCreateInvoiceForClient}
+              onViewInvoices={handleViewClientInvoices}
+            />
+          )
         } else {
           setCurrentPage("home")
           return <AdminDashboard />
@@ -273,6 +306,7 @@ export default function Home() {
             onInvoiceCreate={handleInvoiceCreate}
             onInvoiceUpdate={handleInvoiceUpdate}
             editInvoice={editingInvoice}
+            prefilledClient={prefilledClient}
             userEmail={userData?.email}
             userRole={userRole}
           />
@@ -286,6 +320,7 @@ export default function Home() {
             onInvoiceEdit={handleInvoiceEdit}
             userRole={userRole}
             userData={userData}
+            searchTerm={journalSearchTerm}
           />
         )
       case "stock":

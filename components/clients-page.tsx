@@ -28,11 +28,12 @@ import {
   User,
   Building2,
   ArrowUpDown,
+  Eye,
 } from "lucide-react"
 
 interface Client {
   id: string
-  contact_id: string 
+  contact_id: string
   name: string
   email: string
   phone: string
@@ -45,9 +46,11 @@ interface Client {
 interface ClientsPageProps {
   userEmail?: string
   userRole?: string
+  onCreateInvoice?: (client: Client) => void
+  onViewInvoices?: (clientName: string) => void
 }
 
-export function ClientsPage({ userEmail, userRole }: ClientsPageProps) {
+export function ClientsPage({ userEmail, userRole, onCreateInvoice, onViewInvoices }: ClientsPageProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddClientOpen, setIsAddClientOpen] = useState(false)
   const [isEditClientOpen, setIsEditClientOpen] = useState(false)
@@ -71,25 +74,25 @@ export function ClientsPage({ userEmail, userRole }: ClientsPageProps) {
     }
   }, [userEmail, userRole])
 
- const loadContacts = async () => {
-  if (!userEmail || userRole !== "user") return
+  const loadContacts = async () => {
+    if (!userEmail || userRole !== "user") return
 
-  try {
-    setIsLoading(true)
-    const response = await fetch(`/api/contacts?userEmail=${encodeURIComponent(userEmail)}&userRole=${userRole}`)
-    const result = await response.json()
+    try {
+      setIsLoading(true)
+      const response = await fetch(`/api/contacts?userEmail=${encodeURIComponent(userEmail)}&userRole=${userRole}`)
+      const result = await response.json()
 
-    if (result.success) {
-      setClientsData(result.data)
-    } else {
-      console.error("Failed to load contacts:", result.error)
+      if (result.success) {
+        setClientsData(result.data)
+      } else {
+        console.error("Failed to load contacts:", result.error)
+      }
+    } catch (error) {
+      console.error("Error loading contacts:", error)
+    } finally {
+      setIsLoading(false)
     }
-  } catch (error) {
-    console.error("Error loading contacts:", error)
-  } finally {
-    setIsLoading(false)
   }
-}
 
   const filteredClients = clientsData
     .filter(
@@ -131,6 +134,18 @@ export function ClientsPage({ userEmail, userRole }: ClientsPageProps) {
     setIsEditClientOpen(true)
   }
 
+  const handleCreateInvoice = (client: Client) => {
+    if (onCreateInvoice) {
+      onCreateInvoice(client)
+    }
+  }
+
+  const handleViewInvoices = (client: Client) => {
+    if (onViewInvoices) {
+      onViewInvoices(client.name)
+    }
+  }
+
   const handleSendEmail = (email: string) => {
     window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${email}`, "_blank")
   }
@@ -166,75 +181,75 @@ export function ClientsPage({ userEmail, userRole }: ClientsPageProps) {
   }
 
   const handleSaveEdit = async () => {
-  if (!editingClient || !userEmail) return
-  try {
-    setIsLoading(true)
-    const response = await fetch("/api/contacts", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: editingClient.id,
-        name: editingClient.name,
-        email: editingClient.email,
-        phone: editingClient.phone,
-        company: editingClient.company,
-        address: editingClient.address,
-        status: editingClient.status,
-      }),
-    })
-    const result = await response.json()
-    if (result.success) {
-      await loadContacts() 
-      setIsEditClientOpen(false)
-      setEditingClient(null)
-    } else {
-      console.error("Failed to update contact:", result.error)
+    if (!editingClient || !userEmail) return
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/contacts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingClient.id,
+          name: editingClient.name,
+          email: editingClient.email,
+          phone: editingClient.phone,
+          company: editingClient.company,
+          address: editingClient.address,
+          status: editingClient.status,
+        }),
+      })
+      const result = await response.json()
+      if (result.success) {
+        await loadContacts()
+        setIsEditClientOpen(false)
+        setEditingClient(null)
+      } else {
+        console.error("Failed to update contact:", result.error)
+      }
+    } catch (error) {
+      console.error("Error updating contact:", error)
+    } finally {
+      setIsLoading(false)
     }
-  } catch (error) {
-    console.error("Error updating contact:", error)
-  } finally {
-    setIsLoading(false)
   }
-}
 
   const handleAddClient = async () => {
-  if (!newClient.name || !newClient.email || !newClient.phone || !newClient.company || !userEmail) return
+    if (!newClient.name || !newClient.email || !newClient.phone || !newClient.company || !userEmail) return
 
-  try {
-    setIsLoading(true)
-    const response = await fetch("/api/contacts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        // Send the contact data directly, not nested in contactData
-        name: newClient.name,
-        email: newClient.email,
-        phone: newClient.phone,
-        company: newClient.company,
-        status: newClient.status,
-      }),
-    })
-
-    const result = await response.json()
-    if (result.success) {
-      await loadContacts()
-      setNewClient({
-        name: "",
-        email: "",
-        phone: "",
-        company: "",
-        status: "Active",
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          // Send the contact data directly, not nested in contactData
+          name: newClient.name,
+          email: newClient.email,
+          phone: newClient.phone,
+          company: newClient.company,
+          status: newClient.status,
+        }),
       })
-      setIsAddClientOpen(false)
-    } else {
-      console.error("Failed to create contact:", result.error)
+
+      const result = await response.json()
+      if (result.success) {
+        await loadContacts()
+        setNewClient({
+          name: "",
+          email: "",
+          phone: "",
+          company: "",
+          status: "Active",
+        })
+        setIsAddClientOpen(false)
+      } else {
+        console.error("Failed to create contact:", result.error)
+      }
+    } catch (error) {
+      console.error("Error creating contact:", error)
+    } finally {
+      setIsLoading(false)
     }
-  } catch (error) {
-    console.error("Error creating contact:", error)
-  } finally {
-    setIsLoading(false)
   }
-}
 
   if (userRole !== "user") {
     return (
@@ -611,9 +626,13 @@ export function ClientsPage({ userEmail, userRole }: ClientsPageProps) {
                             <Edit className="mr-2 h-4 w-4" />
                             Edit Contact
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleCreateInvoice(client)}>
                             <FileText className="mr-2 h-4 w-4 text-orange-500" />
                             <span className="text-orange-500">Create Invoice</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleViewInvoices(client)}>
+                            <Eye className="mr-2 h-4 w-4 text-blue-500" />
+                            <span className="text-blue-500">View Invoices</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleSendEmail(client.email)}>
                             <Mail className="mr-2 h-4 w-4" />

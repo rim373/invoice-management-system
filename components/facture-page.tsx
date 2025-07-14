@@ -66,10 +66,17 @@ interface FacturePageProps {
   clients?: Client[]
   onInvoiceCreate?: (invoice: Invoice) => Promise<void>
   editInvoice?: Invoice | null
+  prefilledClient?: Client | null
   onInvoiceUpdate?: (invoice: Invoice) => Promise<void>
 }
 
-export function FacturePage({ clients = [], onInvoiceCreate, editInvoice, onInvoiceUpdate }: FacturePageProps) {
+export function FacturePage({
+  clients = [],
+  onInvoiceCreate,
+  editInvoice,
+  prefilledClient,
+  onInvoiceUpdate,
+}: FacturePageProps) {
   const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>({
     invoiceNumber: true,
     dueDate: true,
@@ -116,6 +123,7 @@ export function FacturePage({ clients = [], onInvoiceCreate, editInvoice, onInvo
   const [activeTab, setActiveTab] = useState<"facture" | "avoir">("facture")
   const [selectedClient, setSelectedClient] = useState<string>("")
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([{ id: "1", description: "", price: 0, quantity: 1 }])
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
 
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -138,6 +146,16 @@ export function FacturePage({ clients = [], onInvoiceCreate, editInvoice, onInvo
       loadInvoiceForEdit(editInvoice)
     }
   }, [editInvoice])
+
+  // Handle prefilled client
+  useEffect(() => {
+    if (prefilledClient) {
+      setActiveTab("facture")
+      setSelectedClient(prefilledClient.id)
+      // Clear any editing invoice when using prefilled client
+      setEditingInvoice(null)
+    }
+  }, [prefilledClient])
 
   const loadSettings = async () => {
     try {
@@ -189,6 +207,7 @@ export function FacturePage({ clients = [], onInvoiceCreate, editInvoice, onInvo
       quantity: item.quantity,
     }))
     setInvoiceItems(items)
+    setEditingInvoice(invoice)
   }
 
   const availableClients = clients && clients.length > 0 ? clients : []
@@ -218,6 +237,9 @@ export function FacturePage({ clients = [], onInvoiceCreate, editInvoice, onInvo
   }
 
   const getSelectedClientData = () => {
+    if (prefilledClient && selectedClient === prefilledClient.id) {
+      return prefilledClient
+    }
     return availableClients.find((client) => client.id === selectedClient)
   }
 
@@ -399,7 +421,17 @@ export function FacturePage({ clients = [], onInvoiceCreate, editInvoice, onInvo
     } finally {
       setIsSubmitting(false)
     }
-  }, [selectedClient, invoiceItems, invoiceDate, dueDate, currency, onInvoiceCreate, onInvoiceUpdate, editInvoice])
+  }, [
+    selectedClient,
+    invoiceItems,
+    invoiceDate,
+    dueDate,
+    currency,
+    onInvoiceCreate,
+    onInvoiceUpdate,
+    editInvoice,
+    prefilledClient,
+  ])
 
   return (
     <div className="space-y-6">
@@ -414,7 +446,11 @@ export function FacturePage({ clients = [], onInvoiceCreate, editInvoice, onInvo
               {editInvoice ? "Modify Invoice" : "Create New Invoice"}
             </h1>
             <p className="text-gray-600">
-              {editInvoice ? "Update invoice details" : "Generate professional invoices for your clients"}
+              {editInvoice
+                ? "Update invoice details"
+                : prefilledClient
+                  ? `Creating invoice for ${prefilledClient.name}`
+                  : "Generate professional invoices for your clients"}
             </p>
           </div>
         </div>
@@ -720,8 +756,10 @@ export function FacturePage({ clients = [], onInvoiceCreate, editInvoice, onInvo
           <CardTitle>Client Information</CardTitle>
           {activeTab === "facture" && (
             <p className="text-sm text-gray-600">
-              Available clients: {availableClients.length}
-              {availableClients.length === 0 && " - Go to Clients page to add clients"}
+              {prefilledClient
+                ? `Selected: ${prefilledClient.name} - ${prefilledClient.company}`
+                : `Available clients: ${availableClients.length}`}
+              {availableClients.length === 0 && !prefilledClient && " - Go to Clients page to add clients"}
             </p>
           )}
         </CardHeader>
@@ -737,21 +775,35 @@ export function FacturePage({ clients = [], onInvoiceCreate, editInvoice, onInvo
                     <SelectValue placeholder="Choose a client..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableClients.length === 0 ? (
+                    {prefilledClient && (
+                      <SelectItem key={prefilledClient.id} value={prefilledClient.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>
+                            {prefilledClient.name} - {prefilledClient.company}
+                          </span>
+                          <span className={`text-xs ml-2 ${getStatusColor(prefilledClient.status)}`}>
+                            {prefilledClient.status}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    )}
+                    {availableClients.length === 0 && !prefilledClient ? (
                       <SelectItem value="no-clients" disabled>
                         No clients available - Add clients first
                       </SelectItem>
                     ) : (
-                      availableClients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          <div className="flex items-center justify-between w-full">
-                            <span>
-                              {client.name} - {client.company}
-                            </span>
-                            <span className={`text-xs ml-2 ${getStatusColor(client.status)}`}>{client.status}</span>
-                          </div>
-                        </SelectItem>
-                      ))
+                      availableClients
+                        .filter((client) => !prefilledClient || client.id !== prefilledClient.id)
+                        .map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            <div className="flex items-center justify-between w-full">
+                              <span>
+                                {client.name} - {client.company}
+                              </span>
+                              <span className={`text-xs ml-2 ${getStatusColor(client.status)}`}>{client.status}</span>
+                            </div>
+                          </SelectItem>
+                        ))
                     )}
                   </SelectContent>
                 </Select>
