@@ -1,5 +1,7 @@
 "use client"
 
+import html2canvas from "html2canvas"
+import jsPDF from "jspdf"
 import { useState, useEffect,useRef  } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -784,49 +786,40 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
             <Button
               size="sm"
               variant="outline"
-              onClick={() => {
-                if (!receiptRef.current) return
+              onClick={async () => {
+                if (!receiptRef.current) return;
 
-                const printWindow = window.open("", "PRINT", "height=600,width=800")
-                if (printWindow) {
-                  printWindow.document.write(`
-                    <html>
-                      <head>
-                        <title>Reçu</title>
-                        <style>
-                          body {
-                            font-family: monospace;
-                            padding: 20px;
-                            font-size: 14px;
-                          }
-                          .line {
-                            display: flex;
-                            justify-content: space-between;
-                            margin: 4px 0;
-                          }
-                          .title {
-                            text-align: center;
-                            font-weight: bold;
-                            margin-bottom: 10px;
-                            font-size: 16px;
-                          }
-                          hr {
-                            border: none;
-                            border-top: 1px dashed #999;
-                            margin: 10px 0;
-                          }
-                        </style>
-                      </head>
-                      <body>
-                        ${receiptRef.current.innerHTML}
-                      </body>
-                    </html>
-                  `)
-                  printWindow.document.close()
-                  printWindow.focus()
-                  printWindow.print()
-                  printWindow.close()
-                }
+                const canvas = await html2canvas(receiptRef.current, {
+                  scale: 2, // Higher resolution
+                  useCORS: true,
+                });
+
+                const imgData = canvas.toDataURL("image/png");
+
+                const pdf = new jsPDF("p", "mm", "a4"); // A4 page: 210x297 mm
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imgProps = {
+                  width: canvas.width,
+                  height: canvas.height,
+                };
+
+                // Convert px to mm (1px = 0.264583 mm)
+                const imgWidthMm = imgProps.width * 0.264583;
+                const imgHeightMm = imgProps.height * 0.264583;
+
+                // Fit image within PDF page width, keep aspect ratio
+                const scale = Math.min(pageWidth / imgWidthMm, pageHeight / imgHeightMm);
+
+                const finalWidth = imgWidthMm * scale;
+                const finalHeight = imgHeightMm * scale;
+
+                const marginX = (pageWidth - finalWidth) / 2;
+                const marginY = 10; // small top margin
+
+                // 3. Add image to PDF and save
+                pdf.addImage(imgData, "PNG", marginX, marginY, finalWidth, finalHeight);
+                pdf.save(`reçu-${lastPayment?.payment?.id}.pdf`);
               }}
             >
               🖨️ Imprimer le reçu

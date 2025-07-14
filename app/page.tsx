@@ -1,5 +1,6 @@
 "use client"
 
+import { useSearchParams, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import { LoginForm } from "@/components/login-form"
 import { Header } from "@/components/header"
@@ -70,16 +71,25 @@ const getStorageKeys = (userRole: "user" | "admin", userEmail: string) => ({
 })
 
 export default function Home() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const rawPage = searchParams.get("page")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const currentPage = isAuthenticated ? (rawPage || "home") : "home"
   const [userRole, setUserRole] = useState<"user" | "admin">("admin")
   const [userData, setUserData] = useState<any>(null)
-  const [currentPage, setCurrentPage] = useState("home")
   const [clientsData, setClientsData] = useState<Client[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isDataLoaded, setIsDataLoaded] = useState(false)
 
   // Load data from localStorage on component mount
   useEffect(() => {
+
+    if (!isAuthenticated && new URLSearchParams(window.location.search).get("page")) {
+    router.replace("/")
+    return        // stop the rest of the effect
+  }
+    
     if (!isAuthenticated || !userData) return
 
     const loadStoredData = () => {
@@ -212,25 +222,28 @@ export default function Home() {
     setUserRole(role)
     setUserData(data)
     setIsAuthenticated(true)
-    setCurrentPage("home")
+    router.push("/?page=home")
   }
 
   const handleLogout = () => {
     setIsAuthenticated(false)
     setUserRole("admin")
     setUserData(null)
-    setCurrentPage("home")
+    router.push("/?page=home")
     setInvoices([])
     setClientsData([])
     setIsDataLoaded(false)
   }
 
   const handlePageChange = (page: string) => {
+    if (!isAuthenticated) return
+
     if (page === "clients" && userRole !== "user") {
       console.log("Access denied: Clients page is user only")
       return
     }
-    setCurrentPage(page)
+
+    router.push(`/?page=${page}`)
   }
 
   const handleInvoiceCreate = (newInvoice: Invoice) => {
@@ -245,7 +258,7 @@ export default function Home() {
 
           const updatedInvoices = [invoiceWithUser, ...invoices]
           setInvoices(updatedInvoices)
-          setCurrentPage("journal")
+          router.push("/?page=journal")
           resolve()
         } catch (error) {
           reject(error)
@@ -292,7 +305,7 @@ export default function Home() {
             />
           )
         } else {
-          setCurrentPage("home")
+          router.push("/?page=home")
           return  <AdminDashboard />
         }
       case "facture":
