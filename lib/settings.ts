@@ -8,7 +8,7 @@ export interface ProfileSettings {
   website: string
   bankRib: string
   bankName: string
-  logoPreview?: string
+  logoPreview?: string | null // Changed to string | null to store data URL or external URL
 }
 
 export interface InvoiceSettings {
@@ -64,21 +64,24 @@ export async function fetchSettings(): Promise<{ success: boolean; settings?: Us
 
     if (!response.ok) {
       if (response.status === 401) {
+        // Redirect to login if unauthorized
         window.location.href = "/login"
       }
       return { success: false, error: data.error || "Failed to fetch settings" }
     }
 
-    return { success: true, settings: data.data }
+    // The API returns `data.settings` directly, not `data.data`
+    return { success: true, settings: data.settings }
   } catch (error) {
+    console.error("Fetch settings network error:", error)
     return { success: false, error: "Network error" }
   }
 }
 
 export async function updateSettings(settingsData: {
-  profile?: Partial<ProfileSettings>
-  invoice?: Partial<InvoiceSettings>
-  general?: Partial<GeneralSettings>
+  profileSettings: ProfileSettings
+  invoiceSettings: InvoiceSettings
+  generalSettings: GeneralSettings
 }): Promise<{ success: boolean; settings?: UserSettings; error?: string }> {
   try {
     const response = await fetch("/api/settings", {
@@ -92,13 +95,16 @@ export async function updateSettings(settingsData: {
 
     if (!response.ok) {
       if (response.status === 401) {
+        // Redirect to login if unauthorized
         window.location.href = "/login"
       }
       return { success: false, error: data.error || "Failed to update settings" }
     }
 
-    return { success: true, settings: data.data }
+    // The API returns `data.settings` directly, not `data.data`
+    return { success: true, settings: data.settings }
   } catch (error) {
+    console.error("Update settings network error:", error)
     return { success: false, error: "Network error" }
   }
 }
@@ -106,7 +112,7 @@ export async function updateSettings(settingsData: {
 export async function resetSettings(): Promise<{ success: boolean; settings?: UserSettings; error?: string }> {
   try {
     const response = await fetch("/api/settings", {
-      method: "PUT",
+      method: "PUT", // Assuming PUT is used for reset, though POST could also work
       headers: {
         "Content-Type": "application/json",
       },
@@ -130,14 +136,15 @@ export async function resetSettings(): Promise<{ success: boolean; settings?: Us
 // Default settings
 export const defaultSettings: UserSettings = {
   profile_settings: {
-    firstName: "",
-    company: "",
+    firstName: "", // Will be pre-filled by user data
+    company: "", // Will be pre-filled by user data
     address: "",
     phone: "",
-    email: "",
+    email: "", // Will be pre-filled by user data
     website: "",
     bankRib: "",
     bankName: "",
+    logoPreview: null, // Default to no logo
   },
   invoice_settings: {
     invoiceNumber: true,

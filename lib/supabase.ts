@@ -40,6 +40,7 @@ export interface User {
   status: "Active" | "Inactive" | "Pending"
   created_at: string
   updated_at: string
+  image?: string // Added image field for user profile picture
 }
 
 export interface Contact {

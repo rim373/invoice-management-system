@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator"
 import { FileText, Plus, Trash2, Save, CheckCircle, Loader2 } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { fetchSettings, type InvoiceSettings } from "@/lib/settings"
+import { fetchSettings, type InvoiceSettings, defaultSettings } from "@/lib/settings" // Import defaultSettings
 
 interface InvoiceItem {
   id: string
@@ -77,40 +77,17 @@ export function FacturePage({
   prefilledClient,
   onInvoiceUpdate,
 }: FacturePageProps) {
-  const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>({
-    invoiceNumber: true,
-    dueDate: true,
-    dueDateType: "custom",
-    dueDateDays: "30",
-    dueDateCustom: new Date().toISOString().split("T")[0],
-    currency: true,
-    discount: true,
-    tax: true,
-    notes: true,
-    invoiceNumberPrefix: "INV",
-    invoiceNumberStart: "001",
-    vatNumber: "",
-    taxAmount: "0",
-    taxMethod: "default",
-    currencyType: "EUR",
-    separator: "comma-dot",
-    signPlacement: "before",
-    decimals: "2",
-    discountType: "percentage",
-    discountAmount: "0",
-    defaultNotes: "",
-    saveLocation: "",
-    template: "",
-    dateFormat: "dd/MM/yyyy",
-  })
+  // State for invoice settings, initialized with default values
+  const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>(defaultSettings.invoice_settings)
 
+  // State for invoice parameters (switches), initialized from invoiceSettings
   const [invoiceParameters, setInvoiceParameters] = useState({
-    invoiceNumber: true,
-    dueDate: true,
-    currency: true,
-    discount: true,
-    tax: true,
-    notes: true,
+    invoiceNumber: defaultSettings.invoice_settings.invoiceNumber,
+    dueDate: defaultSettings.invoice_settings.dueDate,
+    currency: defaultSettings.invoice_settings.currency,
+    discount: defaultSettings.invoice_settings.discount,
+    tax: defaultSettings.invoice_settings.tax,
+    notes: defaultSettings.invoice_settings.notes,
   })
 
   const [newClient, setNewClient] = useState({
@@ -133,7 +110,7 @@ export function FacturePage({
   const [invoiceNumber, setInvoiceNumber] = useState("")
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0])
   const [dueDate, setDueDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
-  const [currency] = useState("EUR")
+  const [currency] = useState("EUR") // This seems hardcoded, but invoiceSettings.currencyType is used for display
 
   // Load settings on component mount
   useEffect(() => {
@@ -161,16 +138,28 @@ export function FacturePage({
     try {
       const result = await fetchSettings()
       if (result.success && result.settings) {
-        const settings = result.settings.invoice_settings
-        setInvoiceSettings(settings)
+        const fetchedInvoiceSettings = result.settings.invoice_settings
+        setInvoiceSettings(fetchedInvoiceSettings)
+        // Update invoiceParameters based on fetched settings
         setInvoiceParameters({
-          invoiceNumber: settings.invoiceNumber,
-          dueDate: settings.dueDate,
-          currency: settings.currency,
-          discount: settings.discount,
-          tax: settings.tax,
-          notes: settings.notes,
+          invoiceNumber: fetchedInvoiceSettings.invoiceNumber,
+          dueDate: fetchedInvoiceSettings.dueDate,
+          currency: fetchedInvoiceSettings.currency,
+          discount: fetchedInvoiceSettings.discount,
+          tax: fetchedInvoiceSettings.tax,
+          notes: fetchedInvoiceSettings.notes,
         })
+        // Set initial due date based on fetched settings
+        if (fetchedInvoiceSettings.dueDate) {
+          if (fetchedInvoiceSettings.dueDateType === "custom") {
+            setDueDate(fetchedInvoiceSettings.dueDateCustom)
+          } else if (fetchedInvoiceSettings.dueDateType === "term") {
+            const days = Number.parseInt(fetchedInvoiceSettings.dueDateDays, 10)
+            const newDueDate = new Date()
+            newDueDate.setDate(newDueDate.getDate() + days)
+            setDueDate(newDueDate.toISOString().split("T")[0])
+          }
+        }
       }
     } catch (error) {
       console.error("Error loading settings:", error)
@@ -270,6 +259,7 @@ export function FacturePage({
 
   const calculateTax = () => {
     const rate = Number.parseFloat(invoiceSettings.taxAmount || "0")
+    if (!invoiceParameters.tax) return 0 // Only apply tax if enabled by parameter
     return (calculateSubtotal() * rate) / 100
   }
 
@@ -323,8 +313,11 @@ export function FacturePage({
   }
 
   const generateInvoiceNumber = () => {
-    if (invoiceNumber) return invoiceNumber
-    return `${invoiceSettings.invoiceNumberPrefix}-${Date.now()}`
+    if (invoiceParameters.invoiceNumber && invoiceNumber) return invoiceNumber // Use user-entered if available and enabled
+    if (invoiceParameters.invoiceNumber) {
+      return `${invoiceSettings.invoiceNumberPrefix}-${invoiceSettings.invoiceNumberStart}`
+    }
+    return `INV-${Date.now()}` // Fallback if invoice number is disabled
   }
 
   const handleSaveInvoice = useCallback(async () => {
@@ -380,9 +373,9 @@ export function FacturePage({
         taxAmount: tax,
         discountAmount: discount,
         paidAmount: editInvoice?.paidAmount || 0,
-        currency: currency,
+        currency: invoiceSettings.currencyType, // Use currency from settings
         createdDate: invoiceDate,
-        dueDate: dueDate,
+        dueDate: invoiceParameters.dueDate ? dueDate : "", // Only include due date if enabled
         items: invoiceItems.map((item) => ({
           id: item.id,
           description: item.description,
@@ -408,7 +401,15 @@ export function FacturePage({
           setInvoiceItems([{ id: "1", description: "", price: 0, quantity: 1 }])
           setInvoiceNumber("")
           setInvoiceDate(new Date().toISOString().split("T")[0])
-          setDueDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
+          // Reset due date based on current settings
+          if (invoiceSettings.dueDateType === "custom") {
+            setDueDate(invoiceSettings.dueDateCustom)
+          } else {
+            const days = Number.parseInt(invoiceSettings.dueDateDays, 10)
+            const newDueDate = new Date()
+            newDueDate.setDate(newDueDate.getDate() + days)
+            setDueDate(newDueDate.toISOString().split("T")[0])
+          }
           setSubmitSuccess(false)
           setNewClient({ name: "", company: "", email: "", phone: "" })
         }
@@ -426,11 +427,13 @@ export function FacturePage({
     invoiceItems,
     invoiceDate,
     dueDate,
-    currency,
+    invoiceSettings, // Added invoiceSettings to dependencies
+    invoiceParameters, // Added invoiceParameters to dependencies
     onInvoiceCreate,
     onInvoiceUpdate,
     editInvoice,
     prefilledClient,
+    newClient, // Added newClient to dependencies
   ])
 
   return (
@@ -926,7 +929,7 @@ export function FacturePage({
                 </div>
                 <div className="col-span-1 flex items-center justify-between">
                   <span className="font-medium text-gray-900">
-                    {currency} {(item.price * item.quantity).toFixed(2)}
+                    {invoiceSettings.currencyType} {(item.price * item.quantity).toFixed(2)}
                   </span>
                 </div>
                 <div className="col-span-1 flex justify-end">
@@ -935,7 +938,7 @@ export function FacturePage({
                       variant="ghost"
                       size="icon"
                       onClick={() => removeInvoiceItem(item.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -961,26 +964,30 @@ export function FacturePage({
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal:</span>
                   <span className="font-medium">
-                    {currency} {calculateSubtotal().toFixed(2)}
+                    {invoiceSettings.currencyType} {calculateSubtotal().toFixed(2)}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax ({invoiceSettings.taxAmount}%):</span>
-                  <span className="font-medium">
-                    {currency} {calculateTax().toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Discount:</span>
-                  <span className="font-medium text-red-600">
-                    - {currency} {calculateDiscount().toFixed(2)}
-                  </span>
-                </div>
+                {invoiceParameters.tax && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Tax ({invoiceSettings.taxAmount}%):</span>
+                    <span className="font-medium">
+                      {invoiceSettings.currencyType} {calculateTax().toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {invoiceParameters.discount && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Discount:</span>
+                    <span className="font-medium text-red-600">
+                      - {invoiceSettings.currencyType} {calculateDiscount().toFixed(2)}
+                    </span>
+                  </div>
+                )}
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total:</span>
                   <span className="text-orange-600">
-                    {currency} {calculateTotal().toFixed(2)}
+                    {invoiceSettings.currencyType} {calculateTotal().toFixed(2)}
                   </span>
                 </div>
               </div>

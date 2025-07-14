@@ -2,6 +2,56 @@ import { type NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
 import { requireAuth } from "@/lib/auth-server"
 
+// Helper function to format dates for database insertion
+function formatDateForDb(dateValue: string | null | undefined, isRequired: boolean = false): string | null {
+  if (!dateValue || dateValue.trim() === "") {
+    if (isRequired) {
+      // Return today's date as default for required date fields
+      return new Date().toISOString().split('T')[0]
+    }
+    return null
+  }
+  return dateValue
+}
+
+// Add this function to generate invoice numbers
+async function generateInvoiceNumber(userId: string): Promise<string> {
+  try {
+    // Get the latest invoice number for this user
+    const { data: latestInvoice, error } = await supabaseAdmin
+      .from("invoices")
+      .select("invoice_number")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single()
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+      throw error
+    }
+
+    // Extract number from latest invoice or start from 1
+    let nextNumber = 1
+    if (latestInvoice?.invoice_number) {
+      // Extract number from format like "INV-2025-001"
+      const match = latestInvoice.invoice_number.match(/INV-\d{4}-(\d+)/)
+      if (match) {
+        nextNumber = parseInt(match[1]) + 1
+      }
+    }
+
+    // Generate new invoice number
+    const year = new Date().getFullYear()
+    const paddedNumber = nextNumber.toString().padStart(3, '0')
+    return `INV-${year}-${paddedNumber}`
+  } catch (error) {
+    console.error("Error generating invoice number:", error)
+    // Fallback to timestamp-based number
+    const timestamp = Date.now().toString().slice(-6)
+    return `INV-${new Date().getFullYear()}-${timestamp}`
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     const user = await requireAuth()
@@ -36,7 +86,7 @@ export async function GET(request: NextRequest) {
         paidAmount: invoice.paid_amount,
         currency: invoice.currency,
         createdDate: invoice.created_date,
-        dueDate: invoice.due_date,
+        dueDate: invoice.due_date || "", 
         items: invoice.items,
         paymentHistory: invoice.payment_history || [],
         createdBy: user.email,
@@ -64,6 +114,10 @@ export async function POST(request: NextRequest) {
     const invoiceData = await request.json()
 
     console.log("Creating invoice for user:", user.email)
+    console.log("Invoice data dates:", {
+      createdDate: invoiceData.invoiceData.createdDate,
+      dueDate: invoiceData.invoiceData.dueDate
+    })
 
     if (
       !invoiceData.invoiceData.clientName ||
@@ -76,10 +130,14 @@ export async function POST(request: NextRequest) {
 
     const invoice = invoiceData.invoiceData
 
+    // Generate invoice number if not provided
+    const invoiceNumber = invoice.number || await generateInvoiceNumber(user.userId)
+    console.log("Generated invoice number:", invoiceNumber)
+
     const { data: newInvoice, error } = await supabaseAdmin
       .from("invoices")
       .insert({
-        invoice_number: invoice.number,
+        invoice_number: invoiceNumber,
         user_id: user.userId,
         contact_id: invoice.clientId,
         client_name: invoice.clientName,
@@ -93,8 +151,8 @@ export async function POST(request: NextRequest) {
         tax_rate: invoice.taxRate || 0,
         paid_amount: invoice.paidAmount || 0,
         currency: invoice.currency || "EUR",
-        created_date: invoice.createdDate,
-        due_date: invoice.dueDate,
+        created_date: formatDateForDb(invoice.createdDate, true),
+        due_date: formatDateForDb(invoice.dueDate, true),
         items: invoice.items,
         payment_history: invoice.paymentHistory || [],
         discount_amount: invoice.discountAmount || 0,
@@ -126,7 +184,7 @@ export async function POST(request: NextRequest) {
       paidAmount: newInvoice.paid_amount,
       currency: newInvoice.currency,
       createdDate: newInvoice.created_date,
-      dueDate: newInvoice.due_date,
+      dueDate: newInvoice.due_date || "",
       items: newInvoice.items,
       paymentHistory: newInvoice.payment_history,
       createdBy: user.email,
@@ -177,7 +235,7 @@ export async function PUT(request: NextRequest) {
         tax_rate: invoice.taxRate,
         paid_amount: invoice.paidAmount,
         currency: invoice.currency,
-        due_date: invoice.dueDate,
+        due_date: formatDateForDb(invoice.dueDate, true),
         items: invoice.items,
         payment_history: invoice.paymentHistory,
         discount_amount: invoice.discountAmount,
@@ -212,7 +270,7 @@ export async function PUT(request: NextRequest) {
       paidAmount: updatedInvoice.paid_amount,
       currency: updatedInvoice.currency,
       createdDate: updatedInvoice.created_date,
-      dueDate: updatedInvoice.due_date,
+      dueDate: updatedInvoice.due_date || "",
       items: updatedInvoice.items,
       paymentHistory: updatedInvoice.payment_history,
       createdBy: user.email,

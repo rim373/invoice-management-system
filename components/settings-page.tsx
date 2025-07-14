@@ -14,6 +14,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Upload, Loader2, X, Folder } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import {
+  fetchSettings,
+  updateSettings,
+  defaultSettings,
+  type ProfileSettings,
+  type InvoiceSettings,
+  type GeneralSettings,
+} from "@/lib/settings"
+import { getCurrentUser } from "@/lib/auth"
 
 interface SettingsPageProps {
   userRole: "admin" | "user"
@@ -24,145 +33,105 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
   const [activeTab, setActiveTab] = useState("profile")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const folderInputRef = useRef<HTMLInputElement>(null)
-  const [invoiceParameters, setInvoiceParameters] = useState({
-  invoiceNumber: true,
-  dueDate: true,
-  currency: true,
-  discount: true,
-  tax: true,
-  notes: true,
-})
-  type ProfileSettings = {
-  logo: File | null;
-  logoPreview: string | null;
-  firstName: string;
-  company: string;
-  address: string;
-  phone: string;
-  email: string;
-  website: string;
-  bankRib: string;
-  bankName: string;
-}
 
   // Profile settings state
-  const [profileSettings, setProfileSettings] = useState({
+  const [profileSettings, setProfileSettings] = useState<ProfileSettings>({
     logo: null,
     logoPreview: null,
-    firstName: "Manta Ray",
-    company: "Omnilink",
-    address: "Incubateur Supcom Technopole Ghazela Ariana Tunis",
-    phone: "+216 54131778",
-    email: "omnilink.tn@gmail.com",
-    website: "http://www.Omnilink.tn/",
+    firstName: "",
+    company: "",
+    address: "",
+    phone: "",
+    email: "",
+    website: "",
     bankRib: "",
     bankName: "",
   })
 
   // Invoice settings state
-  const [invoiceSettings, setInvoiceSettings] = useState({
-    invoiceNumber: true,
-    dueDate:false,
-    dueDateType: "custom", // "custom" ou "term"
-    dueDateDays: "30", // par défaut 30 jours
-    dueDateCustom: new Date().toISOString().split("T")[0],
-    currency: false,
-    discount: false,
-    tax: false,
-    notes: false,
-    // Invoice Number Settings
-    invoiceNumberPrefix: "INV",
-    invoiceNumberStart: "001",
-    // Due Date Settings
-    // Currency Settings
-    vatNumber: "123-456-789",
-    taxAmount: "0",
-    taxMethod: "Default Values",
-    currencyType: "US Dollar",
-    separator: "1,999,000 (Comma & Dot)",
-    signPlacement: "Before Amount",
-    decimals: "2",
-    // Discount Settings
-    discountType: "percentage",
-    discountAmount: "0",
-    // Notes Settings
-    defaultNotes: "",
-    // Other Settings
-    saveLocation: "C:\\Users\\rimba\\OneDrive\\Gambar\\Saved Pictures",
-    template: "Minimal",
-    dateFormat: "07/04/2025 (MM/DD/YYYY)",
-  })
+  const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>(defaultSettings.invoice_settings)
 
   // General settings state
-  const [generalSettings, setGeneralSettings] = useState({
-    sound: "Default Values",
-    language: "English",
-    mute: false,
-    openPdfAfterSave: true,
-  })
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>(defaultSettings.general_settings)
 
-  // Load settings from localStorage on component mount
+  // Load settings and user data on component mount
   useEffect(() => {
-    try {
-      const savedProfile = localStorage.getItem("app_settings_profile")
-      const savedInvoice = localStorage.getItem("app_settings_invoice")
-      const savedGeneral = localStorage.getItem("app_settings_general")
+    const loadInitialData = async () => {
+      setIsLoading(true)
+      try {
+        // Fetch user data
+        const user = await getCurrentUser()
+        if (user) {
+          setProfileSettings((prev) => ({
+            ...prev,
+            firstName: user.name || prev.firstName,
+            company: user.company || prev.company,
+            email: user.email || prev.email,
+            // Assuming user object might have a profile image URL
+            logoPreview: user.image || prev.logoPreview,
+          }))
+        }
 
-      if (savedProfile) {
-        const parsedProfile = JSON.parse(savedProfile)
-        setProfileSettings((prev) => ({ ...prev, ...parsedProfile, logo: null, logoPreview: null }))
+        // Fetch saved settings from backend
+        const result = await fetchSettings()
+        if (result.success && result.settings) {
+          const fetchedSettings = result.settings
+          setProfileSettings((prev) => ({
+            ...prev,
+            ...fetchedSettings.profile_settings,
+            // Ensure logoPreview is correctly set from fetched data
+            logoPreview: fetchedSettings.profile_settings.logoPreview || prev.logoPreview,
+          }))
+          setInvoiceSettings(fetchedSettings.invoice_settings)
+          setGeneralSettings(fetchedSettings.general_settings)
+        }
+      } catch (error) {
+        console.error("Error loading initial data:", error)
+        toast({
+          title: "Error",
+          description: "Failed to load settings. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
       }
-
-      if (savedInvoice) {
-        const parsedInvoice = JSON.parse(savedInvoice)
-        setInvoiceSettings((prev) => ({ ...prev, ...parsedInvoice }))
-      }
-
-      if (savedGeneral) {
-        const parsedGeneral = JSON.parse(savedGeneral)
-        setGeneralSettings((prev) => ({ ...prev, ...parsedGeneral }))
-      }
-    } catch (error) {
-      console.error("Error loading settings:", error)
     }
+
+    loadInitialData()
   }, [])
 
   const handleSave = async () => {
     setIsLoading(true)
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const payload = {
+        profileSettings,
+        invoiceSettings,
+        generalSettings,
+      }
 
-      // Save to localStorage
-      const profileToSave = { ...profileSettings }
-    
+      const result = await updateSettings(payload)
 
-      localStorage.setItem("app_settings_profile", JSON.stringify(profileToSave))
-      localStorage.setItem("app_settings_invoice", JSON.stringify(invoiceSettings))
-      localStorage.setItem("app_settings_general", JSON.stringify(generalSettings))
-
-      // Show success message
-      toast({
-        title: "Settings Saved",
-        description: "Your settings have been saved successfully.",
-      })
-
-      console.log("Settings saved successfully:", {
-        profile: profileToSave,
-        invoice: invoiceSettings,
-        general: generalSettings,
-      })
+      if (result.success) {
+        toast({
+          title: "Settings Saved",
+          description: "Your settings have been saved successfully.",
+        })
+        console.log("Settings saved successfully:", result.settings)
+      } else {
+        throw new Error(result.error || "Failed to save settings.")
+      }
     } catch (error) {
       console.error("Error saving settings:", error)
       toast({
         title: "Error",
-        description: "Failed to save settings. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to save settings. Please try again.",
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
     }
   }
+
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -174,8 +143,8 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
       if (typeof result === "string") {
         setProfileSettings((prev) => ({
           ...prev,
-          logo: file,
-          logoPreview: result,
+          logo: file, // Keep the File object if needed for actual upload, though for Next.js we'll use data URL
+          logoPreview: result, // This is the data URL for display and saving
         }))
       }
     }
@@ -183,18 +152,17 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
     reader.readAsDataURL(file)
   }
 
-
   const handleRemoveLogo = () => {
-  setProfileSettings((prev) => ({
-    ...prev,
-    logo: null,
-    logoPreview: null,
-  }))
+    setProfileSettings((prev) => ({
+      ...prev,
+      logo: null,
+      logoPreview: null,
+    }))
 
-  if (fileInputRef.current) {
-    fileInputRef.current.value = ""
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
   }
-}
 
   const handleFolderSelect = async () => {
     try {
@@ -567,7 +535,6 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                 </div>
               )}
 
-
               {/* Currency Settings */}
               {invoiceSettings.currency && (
                 <div className="space-y-4 border-t pt-4">
@@ -583,9 +550,9 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="US Dollar">US Dollar</SelectItem>
-                          <SelectItem value="Euro">Euro</SelectItem>
-                          <SelectItem value="Tunisian Dinar">Tunisian Dinar</SelectItem>
+                          <SelectItem value="USD">US Dollar</SelectItem>
+                          <SelectItem value="EUR">Euro</SelectItem>
+                          <SelectItem value="TND">Tunisian Dinar</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -599,8 +566,8 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="1,999,000 (Comma & Dot)">1,999,000 (Comma & Dot)</SelectItem>
-                          <SelectItem value="1.999.000 (Dot & Comma)">1.999.000 (Dot & Comma)</SelectItem>
+                          <SelectItem value="comma-dot">1,999.00</SelectItem>
+                          <SelectItem value="dot-comma">1.999,00</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -618,8 +585,8 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Before Amount">Before Amount</SelectItem>
-                          <SelectItem value="After Amount">After Amount</SelectItem>
+                          <SelectItem value="before">Before Amount</SelectItem>
+                          <SelectItem value="after">After Amount</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -628,6 +595,9 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                         DECIMAL PLACES
                       </Label>
                       <Input
+                        type="number"
+                        min={0}
+                        max={3}
                         value={invoiceSettings.decimals}
                         onChange={(e) => setInvoiceSettings({ ...invoiceSettings, decimals: e.target.value })}
                         className="border-gray-300"
@@ -660,6 +630,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                         {invoiceSettings.discountType === "percentage" ? "PERCENTAGE (%)" : "AMOUNT"}
                       </Label>
                       <Input
+                        type="number"
                         value={invoiceSettings.discountAmount}
                         onChange={(e) => setInvoiceSettings({ ...invoiceSettings, discountAmount: e.target.value })}
                         className="border-gray-300"
@@ -687,6 +658,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                       <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">AMOUNT (%)</Label>
                         <Input
+                          type="number"
                           value={invoiceSettings.taxAmount}
                           onChange={(e) => setInvoiceSettings({ ...invoiceSettings, taxAmount: e.target.value })}
                           className="border-gray-300"
@@ -702,8 +674,8 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Default Values">Default Values</SelectItem>
-                            <SelectItem value="Custom">Custom</SelectItem>
+                            <SelectItem value="default">Default Values</SelectItem>
+                            <SelectItem value="inclusive">autoliquidation</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -749,7 +721,10 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                         multiple
                         onChange={handleFolderChange}
                         className="hidden"
-                        accept=""
+                        // directory and webkitdirectory are non-standard but widely supported for folder selection
+                        // @ts-ignore
+                        webkitdirectory=""
+                        directory=""
                       />
                       <Button
                         type="button"
@@ -792,9 +767,9 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="07/04/2025 (MM/DD/YYYY)">07/04/2025 (MM/DD/YYYY)</SelectItem>
-                          <SelectItem value="04/07/2025 (DD/MM/YYYY)">04/07/2025 (DD/MM/YYYY)</SelectItem>
-                          <SelectItem value="2025-07-04 (YYYY-MM-DD)">2025-07-04 (YYYY-MM-DD)</SelectItem>
+                          <SelectItem value="dd/MM/yyyy">07/04/2025 (DD/MM/YYYY)</SelectItem>
+                          <SelectItem value="MM/dd/yyyy">04/07/2025 (MM/DD/YYYY)</SelectItem>
+                          <SelectItem value="yyyy-MM-dd">2025-07-04 (YYYY-MM-DD)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

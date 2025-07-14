@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
 import { requireAuth } from "@/lib/auth-server"
+import { defaultSettings } from "@/lib/settings" // Import default settings
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,53 +23,7 @@ export async function GET(request: NextRequest) {
     // If no settings found, return default settings
     if (!settings) {
       console.log("No settings found, returning defaults")
-      const defaultSettings = {
-        profile_settings: {
-          logo: null,
-          logoPreview: null,
-          firstName: user.name,
-          company: user.company,
-          address: "",
-          phone: "",
-          email: user.email,
-          website: "",
-          bankRib: "",
-          bankName: "",
-        },
-        invoice_settings: {
-          invoiceNumber: true,
-          dueDate: true,
-          dueDateType: "custom",
-          dueDateDays: "30",
-          dueDateCustom: new Date().toISOString().split("T")[0],
-          currency: true,
-          discount: true,
-          tax: true,
-          notes: true,
-          invoiceNumberPrefix: "INV",
-          invoiceNumberStart: "001",
-          vatNumber: "",
-          taxAmount: "0",
-          taxMethod: "default",
-          currencyType: "EUR",
-          separator: "comma-dot",
-          signPlacement: "before",
-          decimals: "2",
-          discountType: "percentage",
-          discountAmount: "0",
-          defaultNotes: "",
-          saveLocation: "",
-          template: "",
-          dateFormat: "dd/MM/yyyy",
-        },
-        general_settings: {
-          sound: "Default Values",
-          language: "English",
-          mute: false,
-          openPdfAfterSave: true,
-        },
-      }
-
+      // Use the imported defaultSettings
       return NextResponse.json({ success: true, settings: defaultSettings })
     }
 
