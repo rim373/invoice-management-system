@@ -923,14 +923,14 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
               <>
                 <div className="flex justify-between py-2">
                   <span style={{ color: customization.labelColor }}>
-                    Discount {invoice.discountType === "percentage" ? `(${invoice.discountAmount}%)` : ""}:
+                    {t("details.discount")} {invoice.discountType === "percentage" ? `(${invoice.discountAmount}%)` : ""}:
                   </span>
                   <span style={{ color: customization.fontColor }}>
                     -{formatCurrencyWithSettings(discountAmount, invoice.currencyType, invoice)}
                   </span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span style={{ color: customization.labelColor }}>{t("details.AfterDiscount")}:</span>
+                  <span style={{ color: customization.labelColor }}>{t("details.afterDiscount")}:</span>
                   <span style={{ color: customization.fontColor }}>
                     {formatCurrencyWithSettings(subtotalAfterDiscount, invoice.currencyType, invoice)}
                   </span>
@@ -940,7 +940,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
 
             <div className="flex justify-between py-2">
               <span style={{ color: customization.labelColor }}>
-                Tax ({invoice.taxRate}%){hasValue(invoice.taxMethod) ? ` - ${invoice.taxMethod}` : ""}:
+                {t("details.tax")} ({invoice.taxRate}%){hasValue(invoice.taxMethod) ? ` - ${invoice.taxMethod}` : ""}:
               </span>
               <span style={{ color: customization.fontColor }}>
                 {formatCurrencyWithSettings(invoice.taxAmount, invoice.currencyType, invoice)}
@@ -1015,7 +1015,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                 />
               )}
               <h1 className="text-3xl font-bold" style={{ color: customization.accentColor }}>
-                INVOICE
+                {t("invoiceTitle")}
               </h1>
               <p className="text-lg mt-2" style={{ color: customization.fontColor }}>
                 #{getInvoiceNumber(invoice)}
@@ -1038,7 +1038,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
               </div>
               <div>
                 <h3 className="font-semibold mb-2" style={{ color: customization.labelColor }}>
-                  To:
+                  {t("templates.standard.to")}:
                 </h3>
                 <p style={{ color: customization.fontColor }}>{invoice.clientName}</p>
                 <p style={{ color: customization.fontColor }}>{invoice.clientCompany}</p>
@@ -1050,7 +1050,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
             <div className="grid grid-cols-2 gap-8 mb-8">
               <div>
                 <p>
-                  <span style={{ color: customization.labelColor }}>Invoice Date: </span>
+                  <span style={{ color: customization.labelColor }}>{t("details.invoiceDate")}: </span>
                   <span style={{ color: customization.fontColor }}>
                     {formatDateWithSettings(invoice.createdDate, invoice)}
                   </span>
@@ -1109,7 +1109,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                 </div>
                 <div className="text-right">
                   <h2 className="text-3xl font-bold mb-2" style={{ color: customization.accentColor }}>
-                    RECHNUNG
+                    {t("templates.continental.title")}
                   </h2>
                   <p className="text-sm" style={{ color: customization.labelColor }}>
                     Nr. {getInvoiceNumber(invoice)}
@@ -1119,18 +1119,18 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
             </div>
 
             <div className="grid grid-cols-2 gap-8 mb-8">
-              <ClientInfo title="Rechnungsempfänger" />
+              <ClientInfo title={t("templates.continental.billTo")} />
               <div>
                 <h3
                   className="font-semibold mb-3 text-sm uppercase tracking-wide"
                   style={{ color: customization.labelColor }}
                 >
-                  Rechnungsdetails
+                  {t("templates.continental.detailsTitle")}
                 </h3>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-sm" style={{ color: customization.labelColor }}>
-                      Rechnungsdatum:
+                      {t("details.invoiceDate")}:
                     </span>
                     <span className="text-sm" style={{ color: customization.fontColor }}>
                       {formatDateWithSettings(invoice.createdDate, invoice)}
@@ -1138,7 +1138,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm" style={{ color: customization.labelColor }}>
-                      Fälligkeitsdatum:
+                      {t("details.dueDate")}:
                     </span>
                     <span className="text-sm" style={{ color: customization.fontColor }}>
                       {formatDateWithSettings(calculateDueDateForDisplay(invoice), invoice)}
@@ -1147,7 +1147,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                   {hasValue(invoice.dueDateType) && invoice.dueDateType !== "custom" && (
                     <div className="flex justify-between">
                       <span className="text-sm" style={{ color: customization.labelColor }}>
-                        Zahlungsbedingungen:
+                        {t("details.terms")}:
                       </span>
                       <span className="text-sm" style={{ color: customization.fontColor }}>
                         {invoice.dueDateType === "days" ? `${invoice.dueDateDays} Tage` : invoice.dueDateType}
@@ -1179,10 +1179,10 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                 )}
                 <div>
                   <h1 className="text-lg font-bold" style={{ color: customization.accentColor }}>
-                    INVOICE #{getInvoiceNumber(invoice)}
+                    {t("invoiceTitle")} #{getInvoiceNumber(invoice)}
                   </h1>
                   <p className="text-xs" style={{ color: customization.fontColor }}>
-                    {formatDateWithSettings(invoice.createdDate, invoice)} | Due:{" "}
+                    {formatDateWithSettings(invoice.createdDate, invoice)} | {t("details.due")}:{" "}
                     {formatDateWithSettings(calculateDueDateForDisplay(invoice), invoice)}
                   </p>
                   {hasValue(invoice.dueDateType) && invoice.dueDateType !== "custom" && (
@@ -1213,7 +1213,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div className="bg-gray-50 p-3 rounded">
                 <h3 className="text-xs font-semibold mb-1" style={{ color: customization.labelColor }}>
-                  BILL TO:
+                  {t("templates.standard.to")}
                 </h3>
                 <p className="text-sm font-medium" style={{ color: customization.fontColor }}>
                   {invoice.clientName}
@@ -1254,14 +1254,14 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                 <>
                   <div className="flex justify-between text-xs mb-1">
                     <span style={{ color: customization.labelColor }}>
-                      Discount {invoice.discountType === "percentage" ? `(${invoice.discountAmount}%)` : ""}:
+                     {t("details.discount")} {invoice.discountType === "percentage" ? `(${invoice.discountAmount}%)` : ""}:
                     </span>
                     <span style={{ color: customization.fontColor }}>
                       -{formatCurrencyWithSettings(discountAmount, invoice.currencyType, invoice)}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span style={{ color: customization.labelColor }}>After Discount:</span>
+                    <span style={{ color: customization.labelColor }}>{t("details.afterDiscount")}:</span>
                     <span style={{ color: customization.fontColor }}>
                       {formatCurrencyWithSettings(subtotalAfterDiscount, invoice.currencyType, invoice)}
                     </span>
@@ -1271,7 +1271,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
 
               <div className="flex justify-between text-xs mb-2">
                 <span style={{ color: customization.labelColor }}>
-                  Tax ({invoice.taxRate}%){hasValue(invoice.taxMethod) ? ` - ${invoice.taxMethod}` : ""}:
+                  { t("details.tax")} ({invoice.taxRate}%){hasValue(invoice.taxMethod) ? ` - ${invoice.taxMethod}` : ""}:
                 </span>
                 <span style={{ color: customization.fontColor }}>
                   {formatCurrencyWithSettings(invoice.taxAmount, invoice.currencyType, invoice)}
@@ -1306,22 +1306,22 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
             <div>
               <DialogTitle className="flex items-center space-x-2">
                 <FileText className="w-5 h-5" />
-                <span>Invoice {invoice.number}</span>
+                <span>{t("invoiceTitle")} {invoice.number}</span>
               </DialogTitle>
-              <DialogDescription>View and customize your invoice template</DialogDescription>
+              <DialogDescription>{t("invoiceViewer.dialogDescription")}</DialogDescription>
             </div>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={() => setShowCustomization(!showCustomization)}>
                 <Settings className="w-4 h-4 mr-2" />
-                Customize
+                {t("actions.customize")}
               </Button>
               <Button variant="outline" size="sm" onClick={handlePrint}>
                 <Printer className="w-4 h-4 mr-2" />
-                Print
+                {t("actions.print")}
               </Button>
               <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
                 <Download className="w-4 h-4 mr-2" />
-                Download
+                {t("actions.download")}
               </Button>
             </div>
           </div>
@@ -1353,7 +1353,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-3">Organization Logo</h3>
+                  <h3 className="font-semibold mb-3">{t("companyLogoAlt")}</h3>
                   <div className="space-y-3">
                     <Select
                       value={customization.logoOption}
@@ -1372,12 +1372,12 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                       }}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select logo option" />
+                        <SelectValue placeholder={t("customization.selectLogoOption")}/>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        <SelectItem value="my-logo">My Logo</SelectItem>
-                        <SelectItem value="upload">Upload Logo</SelectItem>
+                        <SelectItem value="none">{t("customization.none")}</SelectItem>
+                        <SelectItem value="my-logo">{t("customization.myLogo")}</SelectItem>
+                        <SelectItem value="upload">{t("customization.uploadLogo")}</SelectItem>
                       </SelectContent>
                     </Select>
 
@@ -1404,7 +1404,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                     {customization.logoOption === "my-logo" && (
                       <div className="mt-2 p-3 bg-gray-100 rounded-lg">
                         <img src={MY_SETTINGS.image || "/placeholder.svg"} alt={t("companyLogoAlt")} className="h-16 w-auto" />
-                        <p className="text-xs text-gray-600 mt-1">Your saved company logo</p>
+                        <p className="text-xs text-gray-600 mt-1">{t("customization.savedLogo")}</p>
                       </div>
                     )}
                   </div>
@@ -1413,10 +1413,10 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                 
 
                 <div>
-                  <h3 className="font-semibold mb-3">Colors</h3>
+                  <h3 className="font-semibold mb-3">{t("customization.colors")}</h3>
                   <div className="space-y-4">
                     <div>
-                      <Label className="text-sm">Background</Label>
+                      <Label className="text-sm">{t("customization.background")}</Label>
                       <div className="flex items-center space-x-2 mt-1">
                         <input
                           type="color"
@@ -1433,7 +1433,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                     </div>
 
                     <div>
-                      <Label className="text-sm">Labels</Label>
+                      <Label className="text-sm">{t("customization.labels")}</Label>
                       <div className="flex items-center space-x-2 mt-1">
                         <input
                           type="color"
@@ -1450,7 +1450,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                     </div>
 
                     <div>
-                      <Label className="text-sm">Text</Label>
+                      <Label className="text-sm">{t("customization.text")}</Label>
                       <div className="flex items-center space-x-2 mt-1">
                         <input
                           type="color"
@@ -1467,7 +1467,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                     </div>
 
                     <div>
-                      <Label className="text-sm">Accent</Label>
+                      <Label className="text-sm">{t("customization.accent")}</Label>
                       <div className="flex items-center space-x-2 mt-1">
                         <input
                           type="color"

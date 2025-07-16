@@ -1,5 +1,5 @@
 {
-  "sidebare": {
+  "sidebare":{
     "Client Facturation": "Client Facturation",
     "Dashboard": "Dashboard",
     "Home": "Home",
@@ -37,7 +37,8 @@
     "Add Client": "Add Client",
     "Update": "Update",
     "Create": "Create"
-  },"clientsPage":{
+  },
+  "clientsPage":{
         "Client Repository": "Client Repository",
         "Manage and search through your client database": "Manage and search through your client database",
         "Add Client": "Add Client",
@@ -449,7 +450,10 @@
     "templates": {
       "standard": {
         "name": "Standard",
-        "description": "Clean and professional"
+        "description": "Clean and professional",
+        "title": "INVOICE",
+        "from": "From",
+        "to": "To"
       },
       "spreadsheet": {
         "name": "Spreadsheet",
@@ -457,28 +461,19 @@
       },
       "continental": {
         "name": "Continental",
-        "description": "European style"
+        "description": "European style",
+        "title": "INVOICE",
+        "billTo": "Bill To",
+        "detailsTitle": "Invoice Details"
       },
       "compact": {
         "name": "Compact",
-        "description": "Space-efficient"
+        "description": "Space-efficient",
+        "billTo": "Bill To"
       }
     },
     "From":"From",
     "invoiceTitle": "Invoice",
-    "details": {
-      "taxInvoiceTitle": "TAX INVOICE",
-      "invoiceNumber": "Invoice",
-      "invoiceDate": "Invoice Date",
-      "invoiceTotal": "Total Amount",
-      "invoiceSubTotal": "Subtotal",
-      "AfterDiscount": "After Discount",
-      "Total": "Total",
-      "dueDate": "Due Date",
-      "terms": "Terms",
-      "vatLabel": "VAT"
-      
-    },
     "companyLogoAlt": "Company Logo",
     "errors": {
       "pdfFail":"Error generating PDF",
@@ -500,7 +495,119 @@
     "title": "Notes"
   },
   "footer": {
-    "thankYou": "Thank you for your business!"
+    "thankYou": "Thank you for your business"
+  },
+  
+  "invoiceViewer": {
+    "invoice": "Invoice",
+    "dialogDescription": "View and customize your invoice template"
+  },
+  "actions": {
+    "customize": "Customize",
+    "print": "Print",
+    "download": "Download"
+  },
+  "customization": {
+    "template": "Template",
+    "logo": "Organization Logo",
+    "selectLogoOption": "Select logo option",
+    "none": "None",
+    "myLogo": "My Logo",
+    "uploadLogo": "Upload Logo",
+    "savedLogo": "Your saved company logo",
+    "colors": "Colors",
+    "background": "Background",
+    "labels": "Labels",
+    "text": "Text",
+    "accent": "Accent"
+  },
+  
+  "details": {
+  "invoiceDate": "Invoice Date",
+  "dueDate": "Due Date",
+  "due": "Due",
+  "terms": "Terms",
+  "discount": "Discount",
+  "afterDiscount": "After Discount",
+  "vatLabel": "VAT",
+  "Total": "Total",
+  "invoiceTotal": "Total Amount",
+  "invoiceSubTotal": "Subtotal",
+  "taxInvoiceTitle": "INVOICE",
+  "invoiceNumber": "Invoice No",
+  "tax": "Tax"
+}
+  },
+  "stock":{
+    
+    "header": {
+      "title": "Stock Management",
+      "subtitle": "Simple stock control",
+      "add": "Add Product"
+    },
+    "status": {
+      "total": "Total Products",
+      "low": "Low Stock",
+      "empty": "Out of Stock",
+      "in": "In Stock",
+      "badge": {
+        "empty": "Out of Stock",
+        "low": "Low Stock",
+        "good": "In Stock"
+      }
+    },
+    "form": {
+      "name": "Product Name",
+      "myproduct": "My Product",
+      "quantity": "Quantity",
+      "minStock": "Min Stock",
+      "price": "Price",
+      "currency": "Currency",
+      "supplier": "Supplier",
+      "description": "Description",
+      "cancel": "Cancel",
+      "submitAdd": "Add Product",
+      "submitEdit": "Update Product",
+      "placeholderCurrency": "Select currency"
+    },
+    "filter": {
+      "search": "Search products",
+      "all": "All Products",
+      "low": "Low Stock",
+      "in": "In Stock",
+      "out": "Out of Stock",
+      "my": "My Products",
+      "imported": "Imported Products"
+    },
+    "action": {
+      "add":"Add Stock",
+      "edit": "Edit",
+      "restock": "Restock",
+      "delete": "Delete",
+      "successAdd": "Product added successfully",
+      "successEdit": "Product updated successfully",
+      "successDelete": "Product deleted successfully",
+      "successRestockQuantity": "Added ",
+      "successRestockProduict":" units to",
+      "errorMissingFields": "Please fill in all required fields",
+      "errorQuantity": "Please enter a valid quantity"
+    },
+    "empty": {
+      "title": "No products found",
+      "description": "Try adjusting your search or add a new product"
+    },
+    "restock": {
+      "title": "Restock Product",
+      "description": "Add units to ",
+      "quantity": "Quantity to Add",
+      "current": "Current Stock",
+      "after": "After Restock"
+    },
+    "modal": {
+    "addTitle": "Add New Product",
+    "addDescription": "Enter the details for the new product",
+    "editTitle": "Edit Product",
+    "editDescription": "Update the product details"
   }
 
 

@@ -1,5 +1,5 @@
 "use client"
-
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -124,6 +124,9 @@ interface StockItem {
 }
 
 export function StockPage() {
+  //translation
+  const  t  = useTranslations("stock")
+
   const [productOriginFilter, setProductOriginFilter] = useState<"all" | "my" | "imported">("all")
   const [stockItems, setStockItems] = useState<StockItem[]>(initialStockItems)
   const [searchTerm, setSearchTerm] = useState("")
@@ -331,11 +334,11 @@ export function StockPage() {
 
   const getStatusInfo = (item: StockItem) => {
     if (item.quantity === 0) {
-      return { badge: "Out of Stock", variant: "destructive" as const }
+      return { badge: t("status.badge.empty"), variant: "destructive" as const }
     } else if (item.quantity <= item.minStock) {
-      return { badge: "Low Stock", variant: "secondary" as const }
+      return { badge: t("status.badge.low"), variant: "secondary" as const }
     } else {
-      return { badge: "In Stock", variant: "outline" as const }
+      return { badge: t("status.badge.good"), variant: "outline" as const }
     }
   }
 
@@ -350,8 +353,8 @@ export function StockPage() {
                 <Package className="h-6 w-6 text-gray-600" />
               </div>
               <div>
-                <h1 className="text-2xl font-medium text-gray-900">Stock Management</h1>
-                <p className="text-gray-500 text-sm">Simple inventory control</p>
+                <h1 className="text-2xl font-medium text-gray-900">{t("header.title")}</h1>
+                <p className="text-gray-500 text-sm">{t("header.subtitle")}</p>
               </div>
             </div>
 
@@ -360,17 +363,17 @@ export function StockPage() {
               <DialogTrigger asChild>
                 <Button className="bg-gray-900 hover:bg-gray-800 text-white rounded-xl px-6">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Product
+                  {t("header.add")}
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-sm w-full sm:w-[400px] rounded-xl p-4">
                 <DialogHeader>
-                  <DialogTitle>Add New Product</DialogTitle>
-                  <DialogDescription>Enter the details for the new product</DialogDescription>
+                  <DialogTitle>{t("modal.addTitle")}</DialogTitle>
+                  <DialogDescription>{t("modal.addDescription")}</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor="name">Product Name *</Label>
+                    <Label htmlFor="name">{t("form.name")} </Label>
                     <Input
                       id="name"
                       value={formData.name}
@@ -379,7 +382,7 @@ export function StockPage() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="myproduct">My Product</Label>
+                    <Label htmlFor="myproduct">{t("form.myproduct")}</Label>
                     <Switch
                         id="myproduct"
                         checked={formData.myproduct}
@@ -388,7 +391,7 @@ export function StockPage() {
                     </div>
                   <div className="space-y-3">
                     <div>
-                      <Label htmlFor="quantity">Quantity *</Label>
+                      <Label htmlFor="quantity">{t("form.quantity")}</Label>
                       <Input
                         id="quantity"
                         type="number"
@@ -398,7 +401,7 @@ export function StockPage() {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="minStock">Min Stock</Label>
+                      <Label htmlFor="minStock">{t("form.minStock")}</Label>
                       <Input
                         id="minStock"
                         type="number"
@@ -409,7 +412,7 @@ export function StockPage() {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="price">Price *</Label>
+                    <Label htmlFor="price">{t("form.price")} </Label>
                     <Input
                       id="price"
                       type="number"
@@ -420,13 +423,13 @@ export function StockPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="currency">Currency</Label>
+                    <Label htmlFor="currency">{t("form.currency")}</Label>
                     <Select
                         value={formData.currency}
                         onValueChange={(value) => setFormData({ ...formData, currency: value })}
                     >
                         <SelectTrigger className="rounded-xl text-sm h-9">
-                        <SelectValue placeholder="Select currency" />
+                        <SelectValue placeholder={t("form.placeholderCurrency")}/>
                         </SelectTrigger>
                         <SelectContent>
                         <SelectItem value="EUR">€ Euro</SelectItem>
@@ -438,7 +441,7 @@ export function StockPage() {
 
                   {!formData.myproduct && (
                     <div>
-                        <Label htmlFor="supplier">Supplier</Label>
+                        <Label htmlFor="supplier">{t("form.supplier")}</Label>
                         <Input
                         id="supplier"
                         value={formData.supplier}
@@ -448,7 +451,7 @@ export function StockPage() {
                     </div>
                     )}
                   <div>
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="description">{t("form.description")}</Label>
                     <Textarea
                       id="description"
                       value={formData.description}
@@ -463,13 +466,13 @@ export function StockPage() {
                       onClick={() => setIsAddModalOpen(false)}
                       className="flex-1 rounded-xl text-sm h-8"
                     >
-                      Cancel
+                      {t("form.cancel")}
                     </Button>
                     <Button
                       onClick={handleAddProduct}
                       className="flex-1 bg-gray-900 hover:bg-gray-800 rounded-xl text-sm h-8"
                     >
-                      Add Product
+                      {t("form.submitAdd")}
                     </Button>
                   </div>
                 </div>
@@ -486,7 +489,7 @@ export function StockPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Total Products</p>
+                  <p className="text-sm text-gray-500 mb-1">{t("filter.all")}</p>
                   <p className="text-2xl font-semibold text-gray-900">{totalItems}</p>
                 </div>
                 <div className="w-10 h-10 bg-gray-100 rounded-2xl flex items-center justify-center">
@@ -500,7 +503,7 @@ export function StockPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Low Stock</p>
+                  <p className="text-sm text-gray-500 mb-1">{t("filter.low")}</p>
                   <p className="text-2xl font-semibold text-orange-600">{lowStockItems}</p>
                 </div>
                 <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center">
@@ -514,7 +517,7 @@ export function StockPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500 mb-1">Out of Stock</p>
+                  <p className="text-sm text-gray-500 mb-1">{t("filter.out")}</p>
                   <p className="text-2xl font-semibold text-red-600">{outOfStockItems}</p>
                 </div>
                 <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center">
@@ -533,7 +536,7 @@ export function StockPage() {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
-                  placeholder="Search products..."
+                  placeholder={t("filter.search")}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 border-gray-200 rounded-xl"
@@ -545,10 +548,10 @@ export function StockPage() {
                   <SelectValue placeholder="Sort by Status" />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
-                  <SelectItem value="all">All Products</SelectItem>
-                  <SelectItem value="in-stock">In Stock</SelectItem>
-                  <SelectItem value="low-stock">Low Stock</SelectItem>
-                  <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+                  <SelectItem value="all">{t("filter.all")}</SelectItem>
+                  <SelectItem value="in-stock">{t("filter.in")}</SelectItem>
+                  <SelectItem value="low-stock">{t("filter.low")}</SelectItem>
+                  <SelectItem value="out-of-stock">{t("filter.out")}</SelectItem>
                 </SelectContent>
               </Select>
               <div className="flex gap-2">
@@ -557,21 +560,21 @@ export function StockPage() {
                     className="rounded-xl border-gray-200"
                     onClick={() => setProductOriginFilter("my")}
                 >
-                    My Products
+                    {t("filter.my")}
                 </Button>
                 <Button
                     variant={productOriginFilter === "imported" ? "default" : "outline"}
                     className="rounded-xl border-gray-200"
                     onClick={() => setProductOriginFilter("imported")}
                 >
-                    Imported Products
+                    {t("filter.imported")}
                 </Button>
                 <Button
                     variant={productOriginFilter === "all" ? "default" : "outline"}
                     className="rounded-xl border-gray-200"
                     onClick={() => setProductOriginFilter("all")}
                     >
-                    All Products
+                    {t("filter.all")}
                     </Button>
                 </div>
         </div>
@@ -615,15 +618,15 @@ export function StockPage() {
                       <DropdownMenuContent align="end" className="rounded-xl">
                         <DropdownMenuItem onClick={() => openEditModal(item)}>
                           <Edit className="mr-2 h-4 w-4" />
-                          Edit
+                          {t("action.edit")}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openRestockModal(item)}>
                           <ShoppingCart className="mr-2 h-4 w-4" />
-                          Restock
+                          {t("action.restock")}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteProduct(item.id)}>
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
+                          {t("action.delete")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -638,7 +641,7 @@ export function StockPage() {
                     {/* Stock Progress */}
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Stock</span>
+                        <span className="text-sm text-gray-600">{t("header.title")}</span>
                         <span className="text-sm font-medium text-gray-900">{item.quantity} units</span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-2">
@@ -675,7 +678,7 @@ export function StockPage() {
                         onClick={() => openEditModal(item)}
                       >
                         <Edit className="h-4 w-4 mr-1" />
-                        Edit
+                        {t("action.edit")}
                       </Button>
                       <Button
                         size="sm"
@@ -683,7 +686,7 @@ export function StockPage() {
                         onClick={() => openRestockModal(item)}
                       >
                         <ShoppingCart className="h-4 w-4 mr-1" />
-                        Restock
+                        {t("action.restock")}
                       </Button>
                     </div>
                   </div>
@@ -700,14 +703,14 @@ export function StockPage() {
               <div className="w-16 h-16 bg-gray-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
                 <Package className="h-8 w-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-              <p className="text-gray-500 mb-6">Try adjusting your search or add a new product</p>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{t("empty.title")}</h3>
+              <p className="text-gray-500 mb-6">{t("empty.description")}</p>
               <Button
                 className="bg-gray-900 hover:bg-gray-800 text-white rounded-xl"
                 onClick={() => setIsAddModalOpen(true)}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Product
+                {t("header.add")}
               </Button>
             </CardContent>
           </Card>
@@ -718,12 +721,12 @@ export function StockPage() {
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className="max-w-sm w-full sm:w-[400px] rounded-xl p-4">
           <DialogHeader>
-            <DialogTitle>Edit Product</DialogTitle>
-            <DialogDescription>Update the product details</DialogDescription>
+            <DialogTitle>{t("modal.editTitle")}</DialogTitle>
+            <DialogDescription>{t("modal.editDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
-              <Label htmlFor="edit-name">Product Name *</Label>
+              <Label htmlFor="edit-name">{t("form.name")} </Label>
               <Input
                 id="edit-name"
                 value={formData.name}
@@ -732,7 +735,7 @@ export function StockPage() {
               />
             </div>
             <div>
-              <Label htmlFor="edit-myproduct">myproduct *</Label>
+              <Label htmlFor="edit-myproduct">{t("form.myproduct")}</Label>
               <Switch
                 id="edit-myproduct"
                 checked={formData.myproduct}
@@ -741,7 +744,7 @@ export function StockPage() {
             </div>
             <div className="space-y-3">
               <div>
-                <Label htmlFor="edit-quantity">Quantity *</Label>
+                <Label htmlFor="edit-quantity">{t("form.quantity")}</Label>
                 <Input
                   id="edit-quantity"
                   type="number"
@@ -751,7 +754,7 @@ export function StockPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="edit-minStock">Min Stock</Label>
+                <Label htmlFor="edit-minStock">{t("form.minStock")}</Label>
                 <Input
                   id="edit-minStock"
                   type="number"
@@ -762,7 +765,7 @@ export function StockPage() {
               </div>
             </div>
             <div>
-              <Label htmlFor="edit-price">Price *</Label>
+              <Label htmlFor="edit-price">{t("form.price")}</Label>
               <Input
                 id="edit-price"
                 type="number"
@@ -773,13 +776,13 @@ export function StockPage() {
               />
             </div>
             <div>
-                <Label htmlFor="currency">Currency</Label>
+                <Label htmlFor="currency">{t("form.currency")}</Label>
                 <Select
                     value={formData.currency}
                     onValueChange={(value) => setFormData({ ...formData, currency: value })}
                 >
                     <SelectTrigger className="rounded-xl text-sm h-9">
-                    <SelectValue placeholder="Select currency" />
+                    <SelectValue placeholder={t("form.placeholderCurrency")} />
                     </SelectTrigger>
                     <SelectContent>
                     <SelectItem value="EUR">€ Euro</SelectItem>
@@ -791,7 +794,7 @@ export function StockPage() {
 
             {!formData.myproduct && (
                 <div>
-                    <Label htmlFor="supplier">Supplier</Label>
+                    <Label htmlFor="supplier">{t("form.supplier")}</Label>
                     <Input
                     id="supplier"
                     value={formData.supplier}
@@ -801,7 +804,7 @@ export function StockPage() {
                 </div>
                 )}
             <div>
-              <Label htmlFor="edit-description">Description</Label>
+              <Label htmlFor="edit-description">{t("form.description")}</Label>
               <Textarea
                 id="edit-description"
                 value={formData.description}
@@ -816,13 +819,13 @@ export function StockPage() {
                 onClick={() => setIsEditModalOpen(false)}
                 className="flex-1 rounded-xl text-sm h-8"
               >
-                Cancel
+                {t("form.cancel")}
               </Button>
               <Button
                 onClick={handleEditProduct}
                 className="flex-1 bg-gray-900 hover:bg-gray-800 rounded-xl text-sm h-8"
               >
-                Update Product
+                {t("form.submitAdd")}
               </Button>
             </div>
           </div>
@@ -833,12 +836,12 @@ export function StockPage() {
       <Dialog open={isRestockModalOpen} onOpenChange={setIsRestockModalOpen}>
         <DialogContent className="max-w-sm rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Restock Product</DialogTitle>
-            <DialogDescription>Add units to {restockingItem?.name}</DialogDescription>
+            <DialogTitle>{t("restock.title")}</DialogTitle>
+            <DialogDescription>{t("restock.description")} {restockingItem?.name}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="restock-quantity">Quantity to Add *</Label>
+              <Label htmlFor="restock-quantity">{t("restock.quantity")}</Label>
               <Input
                 id="restock-quantity"
                 type="number"
@@ -851,10 +854,10 @@ export function StockPage() {
             </div>
             <div className="bg-gray-50 p-4 rounded-xl">
               <p className="text-sm text-gray-600">
-                Current Stock: <span className="font-medium">{restockingItem?.quantity} units</span>
+                {t("restock.current")}: <span className="font-medium">{restockingItem?.quantity} units</span>
               </p>
               <p className="text-sm text-gray-600">
-                After Restock:{" "}
+                {t("restock.after")}:{" "}
                 <span className="font-medium">
                   {(restockingItem?.quantity || 0) + (Number.parseInt(restockQuantity) || 0)} units
                 </span>
@@ -862,10 +865,10 @@ export function StockPage() {
             </div>
             <div className="flex gap-2 pt-4">
               <Button variant="outline" onClick={() => setIsRestockModalOpen(false)} className="flex-1 rounded-xl">
-                Cancel
+                {t("form.cancel")}
               </Button>
               <Button onClick={handleRestock} className="flex-1 bg-gray-900 hover:bg-gray-800 rounded-xl">
-                Add Stock
+                {t("action.add")}
               </Button>
             </div>
           </div>
