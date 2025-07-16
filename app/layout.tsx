@@ -1,20 +1,14 @@
-import type { Metadata } from 'next'
-import './globals.css'
+'use client';
 
-export const metadata: Metadata = {
-  title: 'Invoice',
-  description: 'Created with v0',
-  generator: 'v0.dev',
-}
+import './globals.css';
+import { I18nProvider } from './i18n-context';
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html>
+      <body>
+        <I18nProvider>{children}</I18nProvider>
+      </body>
     </html>
-  )
+  );
 }

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { HelpDropdown } from "@/components/help-dropdown"
 import { TutorialOverlay } from "@/components/tutorial-overlay"
 import { LearnMoreModal } from "@/components/learn-more-modal"
-
+import { useTranslations } from 'next-intl'
 interface SidebarProps {
   userRole: "user" | "admin" | null
   currentPage: string
@@ -14,6 +14,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ userRole, currentPage, onPageChange }: SidebarProps) {
+  const t  = useTranslations("sidebare")
   const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [showTutorial, setShowTutorial] = useState(false)
   const [showLearnMore, setShowLearnMore] = useState(false)
@@ -83,11 +84,11 @@ export function Sidebar({ userRole, currentPage, onPageChange }: SidebarProps) {
         <div className="p-6 border-b">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">CF</span>
+              <span className="text-white font-bold text-sm"> CF</span>
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">Client Facturation</h1>
-              <p className="text-xs text-gray-500 capitalize">{userRole} Dashboard</p>
+              <h1 className="text-lg font-bold text-gray-900">{t("Client Facturation")}</h1>
+              <p className="text-xs text-gray-500 capitalize">{userRole} {t("Dashboard")}</p>
             </div>
           </div>
         </div>
@@ -110,7 +111,7 @@ export function Sidebar({ userRole, currentPage, onPageChange }: SidebarProps) {
                       )}
                     >
                       <Icon className="w-5 h-5" />
-                      <span>{item.label}</span>
+                      <span>{t(item.label)}</span>
                     </button>
                   </li>
                 )
@@ -134,7 +135,7 @@ export function Sidebar({ userRole, currentPage, onPageChange }: SidebarProps) {
                     )}
                   >
                     <Icon className="w-5 h-5" />
-                    <span>{item.label}</span>
+                    <span>{t(item.label)}</span>
                   </button>
                 </li>
               )

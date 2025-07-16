@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-
+import { useI18n } from '@/app/i18n-context';
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,36 +14,40 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Upload, Loader2, X, Folder } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useTranslations } from "next-intl"
 
 interface SettingsPageProps {
   userRole: "admin" | "user"
 }
 
 export function SettingsPage({ userRole }: SettingsPageProps) {
+  const t = useTranslations("SettingsPage")
+  const { locale, setLocale } = useI18n();
   const [isLoading, setIsLoading] = useState(false)
   const [activeTab, setActiveTab] = useState("profile")
   const fileInputRef = useRef<HTMLInputElement>(null)
   const folderInputRef = useRef<HTMLInputElement>(null)
   const [invoiceParameters, setInvoiceParameters] = useState({
-  invoiceNumber: true,
-  dueDate: true,
-  currency: true,
-  discount: true,
-  tax: true,
-  notes: true,
-})
+    invoiceNumber: true,
+    dueDate: true,
+    currency: true,
+    discount: true,
+    tax: true,
+    notes: true,
+  })
+  
   type ProfileSettings = {
-  logo: File | null;
-  logoPreview: string | null;
-  firstName: string;
-  company: string;
-  address: string;
-  phone: string;
-  email: string;
-  website: string;
-  bankRib: string;
-  bankName: string;
-}
+    logo: File | null;
+    logoPreview: string | null;
+    firstName: string;
+    company: string;
+    address: string;
+    phone: string;
+    email: string;
+    website: string;
+    bankRib: string;
+    bankName: string;
+  }
 
   // Profile settings state
   const [profileSettings, setProfileSettings] = useState({
@@ -62,7 +66,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
   // Invoice settings state
   const [invoiceSettings, setInvoiceSettings] = useState({
     invoiceNumber: true,
-    dueDate:false,
+    dueDate: false,
     dueDateType: "custom", // "custom" ou "term"
     dueDateDays: "30", // par défaut 30 jours
     dueDateCustom: new Date().toISOString().split("T")[0],
@@ -135,7 +139,6 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
 
       // Save to localStorage
       const profileToSave = { ...profileSettings }
-    
 
       localStorage.setItem("app_settings_profile", JSON.stringify(profileToSave))
       localStorage.setItem("app_settings_invoice", JSON.stringify(invoiceSettings))
@@ -143,8 +146,8 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
 
       // Show success message
       toast({
-        title: "Settings Saved",
-        description: "Your settings have been saved successfully.",
+        title: t("toasts.settingsSaved"),
+        description: t("toasts.settingsSavedDescription"),
       })
 
       console.log("Settings saved successfully:", {
@@ -155,14 +158,15 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
     } catch (error) {
       console.error("Error saving settings:", error)
       toast({
-        title: "Error",
-        description: "Failed to save settings. Please try again.",
+        title: t("toasts.error"),
+        description: t("toasts.errorDescription"),
         variant: "destructive",
       })
     } finally {
       setIsLoading(false)
     }
   }
+
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -183,18 +187,17 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
     reader.readAsDataURL(file)
   }
 
-
   const handleRemoveLogo = () => {
-  setProfileSettings((prev) => ({
-    ...prev,
-    logo: null,
-    logoPreview: null,
-  }))
+    setProfileSettings((prev) => ({
+      ...prev,
+      logo: null,
+      logoPreview: null,
+    }))
 
-  if (fileInputRef.current) {
-    fileInputRef.current.value = ""
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""
+    }
   }
-}
 
   const handleFolderSelect = async () => {
     try {
@@ -232,8 +235,8 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
           })
 
           toast({
-            title: "Folder Selected",
-            description: `Selected folder: ${folderPath}`,
+            title: t("toasts.folderSelected"),
+            description: t("toasts.folderSelectedDescription", { path: folderPath }),
           })
         } catch (error) {
           if (error instanceof Error && error.name !== "AbortError") {
@@ -278,8 +281,8 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
         })
 
         toast({
-          title: "Folder Selected",
-          description: `Selected folder: ${completePath}`,
+          title: t("toasts.folderSelected"),
+          description: t("toasts.folderSelectedDescription", { path: completePath }),
         })
       }
     }
@@ -289,15 +292,15 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
         <Button onClick={handleSave} disabled={isLoading} className="bg-blue-500 hover:bg-blue-600 text-white px-6">
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
+              {t("saving")}
             </>
           ) : (
-            "SAVE"
+            t("save")
           )}
         </Button>
       </div>
@@ -305,9 +308,9 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
       {/* Settings Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="invoice">Invoice</TabsTrigger>
-          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="profile">{t("tabs.profile")}</TabsTrigger>
+          <TabsTrigger value="invoice">{t("tabs.invoice")}</TabsTrigger>
+          <TabsTrigger value="general">{t("tabs.general")}</TabsTrigger>
         </TabsList>
 
         {/* Profile Tab */}
@@ -316,8 +319,8 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
             <CardContent className="p-6 space-y-6">
               {/* Logo Upload */}
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">LOGO</Label>
-                <p className="text-sm text-gray-500">Accepts PNG, JPG & SVG (Recommended)</p>
+                <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("profile.logo")}</Label>
+                <p className="text-sm text-gray-500">{t("profile.logoDescription")}</p>
 
                 {profileSettings.logoPreview ? (
                   <div className="relative border-2 border-gray-300 rounded-lg p-4">
@@ -336,7 +339,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                 ) : (
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
                     <Upload className="w-8 h-8 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 mb-4">Drag file here</p>
+                    <p className="text-gray-600 mb-4">{t("profile.dragFile")}</p>
                     <div className="relative">
                       <input
                         ref={fileInputRef}
@@ -346,7 +349,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
                       <Button variant="outline" className="bg-blue-500 text-white hover:bg-blue-600">
-                        OR SELECT PHOTO
+                        {t("profile.selectPhoto")}
                       </Button>
                     </div>
                   </div>
@@ -356,7 +359,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
               {/* Company Information */}
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">FIRST & LAST NAME</Label>
+                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("profile.firstName")}</Label>
                   <Input
                     value={profileSettings.firstName}
                     onChange={(e) => setProfileSettings({ ...profileSettings, firstName: e.target.value })}
@@ -364,7 +367,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">COMPANY</Label>
+                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("profile.company")}</Label>
                   <Input
                     value={profileSettings.company}
                     onChange={(e) => setProfileSettings({ ...profileSettings, company: e.target.value })}
@@ -374,7 +377,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">ADDRESS</Label>
+                <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("profile.address")}</Label>
                 <Textarea
                   value={profileSettings.address}
                   onChange={(e) => setProfileSettings({ ...profileSettings, address: e.target.value })}
@@ -384,7 +387,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">PHONE NUMBER</Label>
+                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("profile.phoneNumber")}</Label>
                   <Input
                     value={profileSettings.phone}
                     onChange={(e) => setProfileSettings({ ...profileSettings, phone: e.target.value })}
@@ -392,7 +395,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">EMAIL</Label>
+                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("profile.email")}</Label>
                   <Input
                     type="email"
                     value={profileSettings.email}
@@ -404,7 +407,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">WEBSITE</Label>
+                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("profile.website")}</Label>
                   <Input
                     value={profileSettings.website}
                     onChange={(e) => setProfileSettings({ ...profileSettings, website: e.target.value })}
@@ -412,7 +415,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">BANK NAME</Label>
+                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("profile.bankName")}</Label>
                   <Input
                     value={profileSettings.bankName}
                     onChange={(e) => setProfileSettings({ ...profileSettings, bankName: e.target.value })}
@@ -422,7 +425,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
               </div>
 
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">BANK RIB</Label>
+                <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("profile.bankRib")}</Label>
                 <Input
                   value={profileSettings.bankRib}
                   onChange={(e) => setProfileSettings({ ...profileSettings, bankRib: e.target.value })}
@@ -439,45 +442,45 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
             <CardContent className="p-6 space-y-6">
               {/* Required Fields */}
               <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">REQUIRED FIELDS</h3>
+                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.requiredFields")}</h3>
                 <div className="grid grid-cols-6 gap-4">
                   <div className="flex flex-col items-center space-y-2">
-                    <Label className="text-xs text-gray-600 text-center">INVOICE NUMBER</Label>
+                    <Label className="text-xs text-gray-600 text-center">{t("invoice.invoiceNumber")}</Label>
                     <Switch
                       checked={invoiceSettings.invoiceNumber}
                       onCheckedChange={(checked) => setInvoiceSettings({ ...invoiceSettings, invoiceNumber: checked })}
                     />
                   </div>
                   <div className="flex flex-col items-center space-y-2">
-                    <Label className="text-xs text-gray-600 text-center">DUE DATE</Label>
+                    <Label className="text-xs text-gray-600 text-center">{t("invoice.dueDate")}</Label>
                     <Switch
                       checked={invoiceSettings.dueDate}
                       onCheckedChange={(checked) => setInvoiceSettings({ ...invoiceSettings, dueDate: checked })}
                     />
                   </div>
                   <div className="flex flex-col items-center space-y-2">
-                    <Label className="text-xs text-gray-600 text-center">CURRENCY</Label>
+                    <Label className="text-xs text-gray-600 text-center">{t("invoice.currency")}</Label>
                     <Switch
                       checked={invoiceSettings.currency}
                       onCheckedChange={(checked) => setInvoiceSettings({ ...invoiceSettings, currency: checked })}
                     />
                   </div>
                   <div className="flex flex-col items-center space-y-2">
-                    <Label className="text-xs text-gray-600 text-center">DISCOUNT</Label>
+                    <Label className="text-xs text-gray-600 text-center">{t("invoice.discount")}</Label>
                     <Switch
                       checked={invoiceSettings.discount}
                       onCheckedChange={(checked) => setInvoiceSettings({ ...invoiceSettings, discount: checked })}
                     />
                   </div>
                   <div className="flex flex-col items-center space-y-2">
-                    <Label className="text-xs text-gray-600 text-center">TAX</Label>
+                    <Label className="text-xs text-gray-600 text-center">{t("invoice.tax")}</Label>
                     <Switch
                       checked={invoiceSettings.tax}
                       onCheckedChange={(checked) => setInvoiceSettings({ ...invoiceSettings, tax: checked })}
                     />
                   </div>
                   <div className="flex flex-col items-center space-y-2">
-                    <Label className="text-xs text-gray-600 text-center">NOTES</Label>
+                    <Label className="text-xs text-gray-600 text-center">{t("invoice.notes")}</Label>
                     <Switch
                       checked={invoiceSettings.notes}
                       onCheckedChange={(checked) => setInvoiceSettings({ ...invoiceSettings, notes: checked })}
@@ -491,10 +494,10 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
               {/* Invoice Number Settings */}
               {invoiceSettings.invoiceNumber && (
                 <div className="space-y-4 border-t pt-4">
-                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">INVOICE NUMBER SETTINGS</h3>
+                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.invoiceNumberSettings")}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">PREFIX</Label>
+                      <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.prefix")}</Label>
                       <Input
                         value={invoiceSettings.invoiceNumberPrefix}
                         onChange={(e) =>
@@ -506,7 +509,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-                        STARTING NUMBER
+                        {t("invoice.startingNumber")}
                       </Label>
                       <Input
                         value={invoiceSettings.invoiceNumberStart}
@@ -522,7 +525,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
               {/* Due Date Settings */}
               {invoiceSettings.dueDate && (
                 <div>
-                  <Label className="mb-2 block">Due Date</Label>
+                  <Label className="mb-2 block">{t("invoice.dueDateSettings")}</Label>
                   <RadioGroup
                     value={invoiceSettings.dueDateType}
                     onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, dueDateType: value }))}
@@ -530,11 +533,11 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                     <div className="flex items-center space-x-4 mb-4">
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="custom" id="customDate" />
-                        <Label htmlFor="customDate">Custom Date</Label>
+                        <Label htmlFor="customDate">{t("invoice.customDate")}</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="term" id="paymentTerm" />
-                        <Label htmlFor="paymentTerm">Select Payment Term</Label>
+                        <Label htmlFor="paymentTerm">{t("invoice.paymentTerm")}</Label>
                       </div>
                     </div>
                   </RadioGroup>
@@ -556,11 +559,11 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="7">7 jours après facturation</SelectItem>
-                        <SelectItem value="10">10 jours après facturation</SelectItem>
-                        <SelectItem value="20">20 jours après facturation</SelectItem>
-                        <SelectItem value="30">30 jours après facturation</SelectItem>
-                        <SelectItem value="60">60 jours après facturation</SelectItem>
+                        <SelectItem value="7">{t("invoice.paymentTerms.7")}</SelectItem>
+                        <SelectItem value="10">{t("invoice.paymentTerms.10")}</SelectItem>
+                        <SelectItem value="20">{t("invoice.paymentTerms.20")}</SelectItem>
+                        <SelectItem value="30">{t("invoice.paymentTerms.30")}</SelectItem>
+                        <SelectItem value="60">{t("invoice.paymentTerms.60")}</SelectItem>
                       </SelectContent>
                     </Select>
                   )}
@@ -571,10 +574,10 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
               {/* Currency Settings */}
               {invoiceSettings.currency && (
                 <div className="space-y-4 border-t pt-4">
-                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">CURRENCY SETTINGS</h3>
+                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.currencySettings")}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">CURRENCY</Label>
+                      <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.currency")}</Label>
                       <Select
                         value={invoiceSettings.currencyType}
                         onValueChange={(value) => setInvoiceSettings({ ...invoiceSettings, currencyType: value })}
@@ -583,14 +586,14 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="US Dollar">US Dollar</SelectItem>
-                          <SelectItem value="Euro">Euro</SelectItem>
-                          <SelectItem value="Tunisian Dinar">Tunisian Dinar</SelectItem>
+                          <SelectItem value="US Dollar">{t("invoice.currencyTypes.usDollar")}</SelectItem>
+                          <SelectItem value="Euro">{t("invoice.currencyTypes.euro")}</SelectItem>
+                          <SelectItem value="Tunisian Dinar">{t("invoice.currencyTypes.tunisianDinar")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">SEPARATOR</Label>
+                      <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.separator")}</Label>
                       <Select
                         value={invoiceSettings.separator}
                         onValueChange={(value) => setInvoiceSettings({ ...invoiceSettings, separator: value })}
@@ -599,8 +602,8 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="1,999,000 (Comma & Dot)">1,999,000 (Comma & Dot)</SelectItem>
-                          <SelectItem value="1.999.000 (Dot & Comma)">1.999.000 (Dot & Comma)</SelectItem>
+                          <SelectItem value="1,999,000 (Comma & Dot)">1,999,000 {t("invoice.commaDot")} </SelectItem>
+                          <SelectItem value="1.999.000 (Dot & Comma)">1.999.000 {t("invoice.dotComma")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -608,7 +611,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-                        SIGN PLACEMENT
+                        {t("invoice.signPlacement")}
                       </Label>
                       <Select
                         value={invoiceSettings.signPlacement}
@@ -618,14 +621,14 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Before Amount">Before Amount</SelectItem>
-                          <SelectItem value="After Amount">After Amount</SelectItem>
+                          <SelectItem value="Before Amount">{t("invoice.signPlacements.before")}</SelectItem>
+                          <SelectItem value="After Amount">{t("invoice.signPlacements.after")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-                        DECIMAL PLACES
+                        {t("invoice.decimalPlaces")}
                       </Label>
                       <Input
                         value={invoiceSettings.decimals}
@@ -640,7 +643,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
               {/* Discount Settings */}
               {invoiceSettings.discount && (
                 <div className="space-y-4 border-t pt-4">
-                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">DISCOUNT SETTINGS</h3>
+                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.discountSettings")}</h3>
                   <div className="space-y-4">
                     <RadioGroup
                       value={invoiceSettings.discountType}
@@ -648,11 +651,11 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                     >
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="percentage" id="percentage" />
-                        <Label htmlFor="percentage">Percentage</Label>
+                        <Label htmlFor="percentage">{t("invoice.percentage")}</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <RadioGroupItem value="fixed" id="fixed" />
-                        <Label htmlFor="fixed">Fixed Amount</Label>
+                        <Label htmlFor="fixed">{t("invoice.fixedAmount")}</Label>
                       </div>
                     </RadioGroup>
                     <div className="space-y-2">
@@ -673,10 +676,10 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
               {/* Tax Settings */}
               {invoiceSettings.tax && (
                 <div className="space-y-4 border-t pt-4">
-                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">TAX SETTINGS</h3>
+                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.taxSettings")}</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">VAT NUMBER</Label>
+                      <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.vatNumber")}</Label>
                       <Input
                         value={invoiceSettings.vatNumber}
                         onChange={(e) => setInvoiceSettings({ ...invoiceSettings, vatNumber: e.target.value })}
@@ -685,7 +688,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">AMOUNT (%)</Label>
+                        <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.taxAmount")}</Label>
                         <Input
                           value={invoiceSettings.taxAmount}
                           onChange={(e) => setInvoiceSettings({ ...invoiceSettings, taxAmount: e.target.value })}
@@ -693,7 +696,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">METHOD</Label>
+                        <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.method")}</Label>
                         <Select
                           value={invoiceSettings.taxMethod}
                           onValueChange={(value) => setInvoiceSettings({ ...invoiceSettings, taxMethod: value })}
@@ -702,8 +705,8 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Default Values">Default Values</SelectItem>
-                            <SelectItem value="Custom">Custom</SelectItem>
+                            <SelectItem value="Default Values">{t("invoice.default")}</SelectItem>
+                            <SelectItem value="Custom">{t("invoice.custom")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -715,14 +718,14 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
               {/* Notes Settings */}
               {invoiceSettings.notes && (
                 <div className="space-y-4 border-t pt-4">
-                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">NOTES SETTINGS</h3>
+                  <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.notesSettings")}</h3>
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">DEFAULT NOTES</Label>
+                    <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.defaultNotes")}</Label>
                     <Textarea
                       value={invoiceSettings.defaultNotes}
                       onChange={(e) => setInvoiceSettings({ ...invoiceSettings, defaultNotes: e.target.value })}
                       className="border-gray-300 min-h-[80px]"
-                      placeholder="Enter default notes for invoices..."
+                      placeholder={t("invoice.defaultNotesPlaceholder")}
                     />
                   </div>
                 </div>
@@ -730,18 +733,18 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
 
               {/* Other Settings */}
               <div className="space-y-4 border-t pt-4">
-                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">OTHER SETTINGS</h3>
+                <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.otherSettings")}</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-                      PDF FOLDER SAVE LOCATION
+                      {t("invoice.pdfSaveLocation")}
                     </Label>
                     <div className="flex">
                       <Input
                         value={invoiceSettings.saveLocation}
                         onChange={(e) => setInvoiceSettings({ ...invoiceSettings, saveLocation: e.target.value })}
                         className="border-gray-300 flex-1"
-                        placeholder="Select folder path..."
+                        placeholder={t("invoice.selectFolderPlaceholder")}
                       />
                       <input
                         ref={folderInputRef}
@@ -762,12 +765,12 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                       </Button>
                     </div>
                     <p className="text-xs text-gray-500">
-                      Click the folder icon to browse and select a folder for saving PDF files
+                      {t("invoice.folderSelectDescription")}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">TEMPLATE</Label>
+                      <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.template")}</Label>
                       <Select
                         value={invoiceSettings.template}
                         onValueChange={(value) => setInvoiceSettings({ ...invoiceSettings, template: value })}
@@ -776,14 +779,14 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Minimal">Minimal</SelectItem>
-                          <SelectItem value="Standard">Standard</SelectItem>
-                          <SelectItem value="Professional">Professional</SelectItem>
+                          <SelectItem value="Minimal">{t("invoice.templates.minimal")}</SelectItem>
+                          <SelectItem value="Standard">{t("invoice.templates.standard")}</SelectItem>
+                          <SelectItem value="Professional">{t("invoice.templates.professional")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">DATE FORMAT</Label>
+                      <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("invoice.dateFormat")}</Label>
                       <Select
                         value={invoiceSettings.dateFormat}
                         onValueChange={(value) => setInvoiceSettings({ ...invoiceSettings, dateFormat: value })}
@@ -792,9 +795,9 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="07/04/2025 (MM/DD/YYYY)">07/04/2025 (MM/DD/YYYY)</SelectItem>
-                          <SelectItem value="04/07/2025 (DD/MM/YYYY)">04/07/2025 (DD/MM/YYYY)</SelectItem>
-                          <SelectItem value="2025-07-04 (YYYY-MM-DD)">2025-07-04 (YYYY-MM-DD)</SelectItem>
+                          <SelectItem value="07/04/2025 (MM/DD/YYYY)">{t("invoice.dateFormats.mmddyyyy")}</SelectItem>
+                          <SelectItem value="04/07/2025 (DD/MM/YYYY)">{t("invoice.dateFormats.ddmmyyyy")}</SelectItem>
+                          <SelectItem value="2025-07-04 (YYYY-MM-DD)">{t("invoice.dateFormats.yyyymmdd")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -811,7 +814,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
             <CardContent className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">SOUND</Label>
+                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("general.sound")}</Label>
                   <Select
                     value={generalSettings.sound}
                     onValueChange={(value) => setGeneralSettings({ ...generalSettings, sound: value })}
@@ -820,14 +823,14 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Default Values">Default Values</SelectItem>
-                      <SelectItem value="Custom">Custom</SelectItem>
-                      <SelectItem value="Disabled">Disabled</SelectItem>
+                      <SelectItem value="Default Values">{t("general.soundOptions.default")}</SelectItem>
+                      <SelectItem value="Custom">{t("general.soundOptions.custom")}</SelectItem>
+                      <SelectItem value="Disabled">{t("general.soundOptions.disabled")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">MUTE</Label>
+                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("general.mute")}</Label>
                   <Switch
                     checked={generalSettings.mute}
                     onCheckedChange={(checked) => setGeneralSettings({ ...generalSettings, mute: checked })}
@@ -837,24 +840,28 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
 
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">LANGUAGE</Label>
+                  <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("general.language")}</Label>
                   <Select
                     value={generalSettings.language}
-                    onValueChange={(value) => setGeneralSettings({ ...generalSettings, language: value })}
+                    onValueChange={(value) => {
+                      setGeneralSettings({ ...generalSettings, language: value });
+                      // map UI label to actual locale code
+                      const langCode = value === 'Français' ? 'fr' : 'en';
+                      setLocale(langCode);
+                      }}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="English">English</SelectItem>
-                      <SelectItem value="Français">Français</SelectItem>
-                      <SelectItem value="العربية">العربية</SelectItem>
+                      <SelectItem value="English">{t("general.languages.english")}</SelectItem>
+                      <SelectItem value="Français">{t("general.languages.french")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">
-                    OPEN PDF FILE AFTER SAVE
+                    {t("general.openPdfAfterSave")}
                   </Label>
                   <Switch
                     checked={generalSettings.openPdfAfterSave}

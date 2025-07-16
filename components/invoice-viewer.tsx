@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { FileText, Download, Printer, Settings } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-
+import {useTranslations} from "next-intl"
 // Company Settings Interface
 interface MySettings {
   adress : string
@@ -141,14 +141,38 @@ interface InvoiceViewerProps {
   onClose: () => void
 }
 
-const templates: InvoiceTemplate[] = [
-  { id: "standard", name: "Standard", description: "Clean and professional" },
-  { id: "spreadsheet", name: "Spreadsheet", description: "Table-focused layout" },
-  { id: "continental", name: "Continental", description: "European style" },
-  { id: "compact", name: "Compact", description: "Space-efficient" },
-]
+
+
 
 export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
+  //translation
+  const t = useTranslations("invoiceViewer")
+
+  const templates: InvoiceTemplate[] = [
+    {
+      id: "standard",
+      name: t("templates.standard.name"),
+      description: t("templates.standard.description")
+    },
+    {
+      id: "spreadsheet",
+      name: t("templates.spreadsheet.name"),
+      description: t("templates.spreadsheet.description")
+    },
+    {
+      id: "continental",
+      name: t("templates.continental.name"),
+      description: t("templates.continental.description")
+    },
+    {
+      id: "compact",
+      name: t("templates.compact.name"),
+      description: t("templates.compact.description")
+    }
+  ]
+
+  
+
   const invoice = exampleInvoice // override prop
 
   //UPDATE FOR THE PDF
@@ -271,7 +295,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
       printWindow.document.write(`
       <html>
         <head>
-          <title>Invoice ${invoice.number}</title>
+          <title>${t("invoiceTitle")} ${invoice.number}</title>
           <style>
             
             * {
@@ -718,14 +742,14 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
       // Note: In a browser environment, we can't directly save to a specific local folder
       // The file will be downloaded to the user's default download folder
       // For actual local folder saving, you'd need a desktop app or server-side solution
-      console.log(`PDF would be saved to: ${MY_SETTINGS.storageUrl}/${filename}`)
+      console.log(t("log.pdfPath"),{ path: `${MY_SETTINGS.storageUrl}/${filename}` })
 
       // Download the PDF
       pdf.save(filename)
     } catch (error) {
-      console.error("Error generating PDF:", error)
+      console.error(t("errors.pdfFail"), error)
       // Fallback to print if PDF generation fails
-      alert("PDF generation failed. Opening print dialog instead.")
+      alert(t("errors.pdfGenerationFailed"))
       handlePrint()
     }
   }
@@ -739,7 +763,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
     const CompanyInfo = () => (
       <div className="company-info">
         {customization.logoUrl && (
-          <img src={customization.logoUrl || "/placeholder.svg"} alt="Company Logo" className="h-16 mb-4" />
+          <img src={customization.logoUrl || "/placeholder.svg"} alt={t("companyLogoAlt")}className="h-16 mb-4" />
         )}
         <h1 className="text-2xl font-bold" style={{ color: customization.accentColor }}>
           {MY_SETTINGS.companyName}
@@ -750,7 +774,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
 
         {hasValue(invoice.vatNumber) && (
           <p className="text-gray-600 mt-2">
-            <span className="font-medium">VAT: </span>
+            <span className="font-medium">{t("details.vatLabel")}: </span>
             {invoice.vatNumber}
           </p>
         )}
@@ -763,29 +787,29 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
       return (
         <div className={`invoice-details ${className}`}>
           <h2 className="text-2xl font-bold mb-4" style={{ ...titleStyle, color: customization.labelColor }}>
-            TAX INVOICE
+            {t("details.taxInvoiceTitle")}
           </h2>
           <div className="space-y-2">
             <div className="flex justify-between w-48">
-              <span style={{ color: customization.labelColor }}>Invoice#:</span>
+              <span style={{ color: customization.labelColor }}>{t("details.invoiceNumber")}#:</span>
               <span style={{ color: customization.fontColor }}>{getInvoiceNumber(invoice)}</span>
             </div>
             <div className="flex justify-between w-48">
-              <span style={{ color: customization.labelColor }}>Invoice Date:</span>
+              <span style={{ color: customization.labelColor }}>{t("details.invoiceDate")}:</span>
               <span style={{ color: customization.fontColor }}>
                 {formatDateWithSettings(invoice.createdDate, invoice)}
               </span>
             </div>
             {dueDate && (
               <div className="flex justify-between w-48">
-                <span style={{ color: customization.labelColor }}>Due Date:</span>
+                <span style={{ color: customization.labelColor }}>{t("details.dueDate")}:</span>
                 <span style={{ color: customization.fontColor }}>{formatDateWithSettings(dueDate, invoice)}</span>
               </div>
             )}
 
             {invoice.dueDateType === "term" && invoice.dueDateCustom && (
               <div className="flex justify-between w-48">
-                <span style={{ color: customization.labelColor }}>Terms:</span>
+                <span style={{ color: customization.labelColor }}>{t("details.terms")}:</span>
                 <span style={{ color: customization.fontColor }}>{invoice.dueDateCustom}</span>
               </div>
             )}
@@ -794,7 +818,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
       )
     }
 
-    const ClientInfo = ({ className = "", title = "Bill To:" }) => (
+    const ClientInfo = ({ className = "", title = t("clientInfo.billTo") }) => (
       <div className={`client-info ${className}`}>
         <h3 className="font-semibold mb-2" style={{ color: customization.labelColor }}>
           {title}
@@ -814,10 +838,10 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
       <table className="w-full border-collapse mb-8">
         <thead>
           <tr style={{ backgroundColor: customization.accentColor }}>
-            <th className="text-left p-3 text-white">Item & Description</th>
-            <th className="text-center p-3 text-white">Qty</th>
-            <th className="text-right p-3 text-white">Rate</th>
-            <th className="text-right p-3 text-white">Amount</th>
+            <th className="text-left p-3 text-white">{t("itemsTable.itemAndDescription")}</th>
+            <th className="text-center p-3 text-white">{t("itemsTable.qty")}</th>
+            <th className="text-right p-3 text-white">{t("itemsTable.rate")}</th>
+            <th className="text-right p-3 text-white">{t("itemsTable.amount")}</th>
           </tr>
         </thead>
         <tbody>
@@ -889,7 +913,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
         <div className={isCompact ? "w-64" : "w-80"}>
           <div className="space-y-2">
             <div className="flex justify-between py-2">
-              <span style={{ color: customization.labelColor }}>Subtotal:</span>
+              <span style={{ color: customization.labelColor }}>{t("details.invoiceSubTotal")}:</span>
               <span style={{ color: customization.fontColor }}>
                 {formatCurrencyWithSettings(invoice.subtotalAmount, invoice.currencyType, invoice)}
               </span>
@@ -906,7 +930,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                   </span>
                 </div>
                 <div className="flex justify-between py-2">
-                  <span style={{ color: customization.labelColor }}>After Discount:</span>
+                  <span style={{ color: customization.labelColor }}>{t("details.AfterDiscount")}:</span>
                   <span style={{ color: customization.fontColor }}>
                     {formatCurrencyWithSettings(subtotalAfterDiscount, invoice.currencyType, invoice)}
                   </span>
@@ -925,7 +949,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
 
             <Separator />
             <div className={`flex justify-between py-3 font-bold ${isCompact ? "text-base" : "text-lg"}`}>
-              <span style={{ color: customization.labelColor }}>Total:</span>
+              <span style={{ color: customization.labelColor }}>{t("details.Total")}:</span>
               <span style={{ color: customization.accentColor }}>
                 {formatCurrencyWithSettings(invoice.totalAmount, invoice.currencyType, invoice)}
               </span>
@@ -939,7 +963,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
       hasValue(invoice.defaultNotes) && (
         <div className={`mt-8 p-4 bg-gray-50 rounded-lg ${className}`}>
           <h3 className="font-semibold mb-2" style={{ color: customization.labelColor }}>
-            Notes:
+            {t("notes.title")}:
           </h3>
           <p className="text-sm" style={{ color: customization.fontColor }}>
             {invoice.defaultNotes}
@@ -949,7 +973,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
 
     const Footer = ({ className = "" }) => (
       <div className={`mt-12 pt-8 border-t border-gray-200 ${className}`}>
-        <p className="text-sm text-gray-600 text-center">Thank you for your business!</p>
+        <p className="text-sm text-gray-600 text-center">{t("footer.thankYou")}!</p>
       </div>
     )
 
@@ -986,7 +1010,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
               {customization.logoUrl && (
                 <img
                   src={customization.logoUrl || "/placeholder.svg"}
-                  alt="Company Logo"
+                  alt={t("companyLogoAlt")}
                   className="h-20 mx-auto mb-4"
                 />
               )}
@@ -1001,7 +1025,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
             <div className="grid grid-cols-2 gap-8 mb-8">
               <div>
                 <h3 className="font-semibold mb-2" style={{ color: customization.labelColor }}>
-                  From:
+                  {t("From")}:
                 </h3>
                 <p style={{ color: customization.fontColor }}>{MY_SETTINGS.companyName}</p>
                 <p style={{ color: customization.fontColor }}>123 Business Street</p>
@@ -1009,7 +1033,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                 <p style={{ color: customization.fontColor }}>{MY_SETTINGS.email}</p>
                 <p style={{ color: customization.fontColor }}>{MY_SETTINGS.phoneNumber}</p>
                 {hasValue(invoice.vatNumber) && (
-                  <p style={{ color: customization.fontColor }}>VAT: {invoice.vatNumber}</p>
+                  <p style={{ color: customization.fontColor }}>{t("details.vatLabel")}: {invoice.vatNumber}</p>
                 )}
               </div>
               <div>
@@ -1034,7 +1058,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
               </div>
               <div>
                 <p>
-                  <span style={{ color: customization.labelColor }}>Due Date: </span>
+                  <span style={{ color: customization.labelColor }}>{t("details.dueDate")}: </span>
                   <span style={{ color: customization.fontColor }}>
                     {formatDateWithSettings(calculateDueDateForDisplay(invoice), invoice)}
                   </span>
@@ -1060,7 +1084,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
               <div className="flex justify-between items-start">
                 <div>
                   {customization.logoUrl && (
-                    <img src={customization.logoUrl || "/placeholder.svg"} alt="Company Logo" className="h-16 mb-4" />
+                    <img src={customization.logoUrl || "/placeholder.svg"} alt={t("companyLogoAlt")} className="h-16 mb-4" />
                   )}
                   <h1 className="text-xl font-bold" style={{ color: customization.fontColor }}>
                     {MY_SETTINGS.companyName}
@@ -1079,7 +1103,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                   </p>
                   {hasValue(invoice.vatNumber) && (
                     <p className="text-sm" style={{ color: customization.fontColor }}>
-                      VAT: {invoice.vatNumber}
+                      {t("details.vatLabel")}: {invoice.vatNumber}
                     </p>
                   )}
                 </div>
@@ -1163,7 +1187,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                   </p>
                   {hasValue(invoice.dueDateType) && invoice.dueDateType !== "custom" && (
                     <p className="text-xs" style={{ color: customization.fontColor }}>
-                      Terms: {invoice.dueDateType === "days" ? `${invoice.dueDateDays} days` : invoice.dueDateType}
+                      {t("details.terms")}: {invoice.dueDateType === "days" ? `${invoice.dueDateDays} days` : invoice.dueDateType}
                     </p>
                   )}
                 </div>
@@ -1180,7 +1204,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                 </p>
                 {hasValue(invoice.vatNumber) && (
                   <p className="text-xs" style={{ color: customization.fontColor }}>
-                    VAT: {invoice.vatNumber}
+                    {t("details.vatLabel")}: {invoice.vatNumber}
                   </p>
                 )}
               </div>
@@ -1210,7 +1234,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                     {formatCurrencyWithSettings(invoice.totalAmount, invoice.currencyType, invoice)}
                   </p>
                   <p className="text-xs" style={{ color: customization.labelColor }}>
-                    Total Amount
+                    {t("details.invoiceTotal")}
                   </p>
                 </div>
               </div>
@@ -1220,7 +1244,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
 
             <div className="bg-gray-50 p-3 rounded">
               <div className="flex justify-between text-xs mb-1">
-                <span style={{ color: customization.labelColor }}>Subtotal:</span>
+                <span style={{ color: customization.labelColor }}>{t("details.invoiceSubTotal")}:</span>
                 <span style={{ color: customization.fontColor }}>
                   {formatCurrencyWithSettings(invoice.subtotalAmount, invoice.currencyType, invoice)}
                 </span>
@@ -1254,7 +1278,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                 </span>
               </div>
               <div className="flex justify-between text-sm font-bold pt-2 border-t">
-                <span style={{ color: customization.labelColor }}>TOTAL:</span>
+                <span style={{ color: customization.labelColor }}>{t("details.invoiceTotal")}:</span>
                 <span style={{ color: customization.accentColor }}>
                   {formatCurrencyWithSettings(invoice.totalAmount, invoice.currencyType, invoice)}
                 </span>
@@ -1379,7 +1403,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
 
                     {customization.logoOption === "my-logo" && (
                       <div className="mt-2 p-3 bg-gray-100 rounded-lg">
-                        <img src={MY_SETTINGS.image || "/placeholder.svg"} alt="Company logo" className="h-16 w-auto" />
+                        <img src={MY_SETTINGS.image || "/placeholder.svg"} alt={t("companyLogoAlt")} className="h-16 w-auto" />
                         <p className="text-xs text-gray-600 mt-1">Your saved company logo</p>
                       </div>
                     )}

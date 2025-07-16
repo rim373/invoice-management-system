@@ -1,5 +1,5 @@
 "use client"
-
+import { useTranslations } from "next-intl"
 import { Switch } from "@/components/ui/switch"
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -102,6 +102,7 @@ interface FacturePageProps {
 
 export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps) {
   //i aded this 
+      const t = useTranslations("facturePage")
       const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>({
         invoiceNumber: true,
         dueDate:true,
@@ -379,8 +380,8 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
             <FileText className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Create New Invoice</h1>
-            <p className="text-gray-600">Generate professional invoices for your clients</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t("Create New Invoice")}</h1>
+            <p className="text-gray-600">{t("Generate professional invoices for your clients")}</p>
           </div>
         </div>
       </div>
@@ -395,7 +396,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
             className={activeTab === "facture" ? "" : ""}
           >
             <FileText className="w-4 h-4 mr-2" />
-            Existing Client
+            {t("Existing Client")}
           </Button>
           <Button
             variant={activeTab === "avoir" ? "default" : "ghost"}
@@ -404,7 +405,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
             className={activeTab === "avoir" ? "shadow-sm" : ""}
           >
             <FileText className="w-4 h-4 mr-2" />
-            New Client
+            {t("New Client")}
           </Button>
         </div>
 
@@ -415,7 +416,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
       {Object.keys(formErrors).length > 0 && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-4">
-            <h3 className="font-semibold text-red-800 mb-2">Please fix the following errors:</h3>
+            <h3 className="font-semibold text-red-800 mb-2">{t("Please fix the following errors")}:</h3>
             <ul className="space-y-1">
               {Object.entries(formErrors).map(([field, error]) => (
                 <li key={field} className="text-red-700 text-sm">
@@ -443,9 +444,9 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="font-semibold text-green-800">Facture created successfully!</span>
+              <span className="font-semibold text-green-800">{t("Facture created successfully!")}</span>
             </div>
-            <p className="text-green-700 text-sm mt-1">Your facture has been saved to the Journal.</p>
+            <p className="text-green-700 text-sm mt-1">{t("Your facture has been saved to the Journal")}.</p>
           </CardContent>
         </Card>
       )}
@@ -453,7 +454,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
       {/* Invoice Parameters */}
       <Card>
         <CardContent className="p-6 space-y-6">
-          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">Invoice Parameters</h3>
+          <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("Invoice Parameters")}</h3>
           <div className="grid grid-cols-6 gap-4">
             {[
               { key: "invoiceNumber", label: "Invoice Number" },
@@ -464,7 +465,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
               { key: "notes", label: "Notes" },
             ].map(({ key, label }) => (
               <div key={key} className="flex flex-col items-center space-y-2">
-                <Label className="text-xs text-gray-600 text-center">{label}</Label>
+                <Label className="text-xs text-gray-600 text-center">{t(label)}</Label>
                 <Switch
                   checked={invoiceParameters[key as keyof typeof invoiceParameters]}
                   onCheckedChange={(checked) =>
@@ -485,7 +486,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
       />
     </div>
     <div>
-      <Label>Start Number</Label>
+      <Label>{t("Start Number")}</Label>
       <Input
         value={invoiceSettings.invoiceNumberStart}
         onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, invoiceNumberStart: e.target.value }))}
@@ -496,7 +497,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
 
 {invoiceParameters.dueDate && (
   <div>
-    <Label className="mb-2 block">Due Date</Label>
+    <Label className="mb-2 block">{t("Due Date")}</Label>
     <RadioGroup
       value={invoiceSettings.dueDateType}
       onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, dueDateType: value }))}
@@ -504,11 +505,11 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
       <div className="flex items-center space-x-4 mb-4">
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="custom" id="customDate" />
-          <Label htmlFor="customDate">Custom Date</Label>
+          <Label htmlFor="customDate">{t("Custom Date")}</Label>
         </div>
         <div className="flex items-center space-x-2">
           <RadioGroupItem value="term" id="paymentTerm" />
-          <Label htmlFor="paymentTerm">Select Payment Term</Label>
+          <Label htmlFor="paymentTerm">{t("Select Payment Term")}</Label>
         </div>
       </div>
     </RadioGroup>
@@ -530,11 +531,11 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="7">7 jours après facturation</SelectItem>
-          <SelectItem value="10">10 jours après facturation</SelectItem>
-          <SelectItem value="20">20 jours après facturation</SelectItem>
-          <SelectItem value="30">30 jours après facturation</SelectItem>
-          <SelectItem value="60">60 jours après facturation</SelectItem>
+          <SelectItem value="7">{t("7 jours après facturation")}</SelectItem>
+          <SelectItem value="10">{t("10 jours après facturation")}</SelectItem>
+          <SelectItem value="20">{t("20 jours après facturation")}</SelectItem>
+          <SelectItem value="30">{t("30 jours après facturation")}</SelectItem>
+          <SelectItem value="60">{t("60 jours après facturation")}</SelectItem>
         </SelectContent>
       </Select>
     )}
@@ -545,21 +546,21 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
 {invoiceParameters.currency && (
   <div className="grid grid-cols-2 gap-4">
     <div>
-      <Label>Currency</Label>
+      <Label>{t("Currency")}</Label>
       <Select
         value={invoiceSettings.currencyType}
         onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, currencyType: value }))}
       >
         <SelectTrigger><SelectValue /></SelectTrigger>
         <SelectContent>
-          <SelectItem value="USD">US Dollar</SelectItem>
-          <SelectItem value="EUR">Euro</SelectItem>
-          <SelectItem value="TND">Tunisian Dinar</SelectItem>
+          <SelectItem value="USD">{t("US Dollar")}</SelectItem>
+          <SelectItem value="EUR">{t("Euro")}</SelectItem>
+          <SelectItem value="TND">{t("Tunisian Dinar")}</SelectItem>
         </SelectContent>
       </Select>
     </div>
     <div>
-      <Label>Separator</Label>
+      <Label>{t("Separator")}</Label>
       <Select
         value={invoiceSettings.separator}
         onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, separator: value }))}
@@ -572,20 +573,20 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
       </Select>
     </div>
     <div>
-      <Label>Sign Placement</Label>
+      <Label>{t("Sign Placement")}</Label>
       <Select
         value={invoiceSettings.signPlacement}
         onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, signPlacement: value }))}
       >
         <SelectTrigger><SelectValue /></SelectTrigger>
         <SelectContent>
-          <SelectItem value="before">Before Amount</SelectItem>
-          <SelectItem value="after">After Amount</SelectItem>
+          <SelectItem value="before">{t("Before Amount")}</SelectItem>
+          <SelectItem value="after">{t("After Amount")}</SelectItem>
         </SelectContent>
       </Select>
     </div>
     <div>
-      <Label>Decimal Places</Label>
+      <Label>{t("Decimal Places")}</Label>
       <Input
         type="number"
         min={0}
@@ -600,7 +601,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
 {invoiceParameters.discount && (
   <div className="grid grid-cols-2 gap-4">
     <div>
-      <Label>Discount Type</Label>
+      <Label>{t("Discount Type")}</Label>
       <RadioGroup
         defaultValue={invoiceSettings.discountType}
         onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, discountType: value }))}
@@ -608,17 +609,17 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="percentage" id="percentage" />
-            <Label htmlFor="percentage">Percentage</Label>
+            <Label htmlFor="percentage">{t("Percentage")}</Label>
           </div>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="fixed" id="fixed" />
-            <Label htmlFor="fixed">Fixed Amount</Label>
+            <Label htmlFor="fixed">{t("Fixed Amount")}</Label>
           </div>
         </div>
       </RadioGroup>
     </div>
     <div>
-      <Label>Amount</Label>
+      <Label>{t("Amount")}</Label>
       <Input
         type="number"
         value={invoiceSettings.discountAmount}
@@ -631,14 +632,14 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
 {invoiceParameters.tax && (
   <div className="grid grid-cols-3 gap-4">
     <div>
-      <Label>VAT Number</Label>
+      <Label>{t("VAT Number")}</Label>
       <Input
         value={invoiceSettings.vatNumber}
         onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, vatNumber: e.target.value }))}
       />
     </div>
     <div>
-      <Label>Tax Amount (%)</Label>
+      <Label>{t("Tax Amount (%)")}</Label>
       <Input
         type="number"
         value={invoiceSettings.taxAmount}
@@ -646,15 +647,15 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
       />
     </div>
     <div>
-      <Label>Tax Method</Label>
+      <Label>{t("Tax Method")}</Label>
       <Select
         value={invoiceSettings.taxMethod}
         onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, taxMethod: value }))}
       >
         <SelectTrigger><SelectValue /></SelectTrigger>
         <SelectContent>
-          <SelectItem value="default">Default Values</SelectItem>
-          <SelectItem value="inclusive">autoliquidation</SelectItem>
+          <SelectItem value="default">{t("Default Values")}</SelectItem>
+          <SelectItem value="inclusive">{t("autoliquidation")}</SelectItem>
         </SelectContent>
       </Select>
     </div>
@@ -663,7 +664,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
 
 {invoiceParameters.notes && (
   <div>
-    <Label>Default Notes</Label>
+    <Label>{t("Default Notes")}</Label>
     <Textarea
       placeholder="Enter default notes for invoices..."
       value={invoiceSettings.defaultNotes}
@@ -679,10 +680,10 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
       {/* Client Information */}
       <Card>
         <CardHeader>
-          <CardTitle>Client Information</CardTitle>
+          <CardTitle>{t("Client Information")}</CardTitle>
           {activeTab === "facture" && (
             <p className="text-sm text-gray-600">
-              Available clients: {availableClients.length}
+              {t("Available clients")}: {availableClients.length}
               {availableClients.length === 0 && " - Go to Clients page to add clients"}
             </p>
           )}
@@ -692,16 +693,16 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
             <>
               <div className="space-y-2">
                 <Label htmlFor="client-select">
-                  Select Client <span className="text-red-500">*</span>
+                  {t("Select Client")} <span className="text-red-500">*</span>
                 </Label>
                 <Select value={selectedClient} onValueChange={setSelectedClient}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose a client..." />
+                    <SelectValue placeholder={t("Choose a client")} />
                   </SelectTrigger>
                   <SelectContent>
                     {availableClients.length === 0 ? (
                       <SelectItem value="no-clients" disabled>
-                        No clients available - Add clients first
+                        {t("No clients available")} - {t("Add clients first")}
                       </SelectItem>
                     ) : (
                       availableClients.map((client) => (
@@ -723,23 +724,23 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
                 <div className="bg-gray-50 p-4 rounded-lg space-y-3">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label className="text-sm font-medium text-gray-600">Name & Company</Label>
+                      <Label className="text-sm font-medium text-gray-600">{t("Name & Company")}</Label>
                       <p className="text-gray-900">{getSelectedClientData()?.name}</p>
                       <p className="text-gray-600">{getSelectedClientData()?.company}</p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-600">Contact</Label>
+                      <Label className="text-sm font-medium text-gray-600">{t("Contact")}</Label>
                       <p className="text-gray-900">{getSelectedClientData()?.email}</p>
                       <p className="text-gray-600">{getSelectedClientData()?.phone}</p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-600">Status</Label>
+                      <Label className="text-sm font-medium text-gray-600">{t("Status")}</Label>
                       <p className={`font-medium ${getStatusColor(getSelectedClientData()?.status || "")}`}>
                         {getSelectedClientData()?.status}
                       </p>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-600">Client ID</Label>
+                      <Label className="text-sm font-medium text-gray-600">{t("Client ID")}</Label>
                       <p className="text-gray-900">{getSelectedClientData()?.id}</p>
                     </div>
                   </div>
@@ -749,7 +750,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="new-name">Name</Label>
+                <Label htmlFor="new-name">{t("Name")}</Label>
                 <Input
                   id="new-name"
                   value={newClient.name}
@@ -758,7 +759,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-company">Company</Label>
+                <Label htmlFor="new-company">{t("Company")}</Label>
                 <Input
                   id="new-company"
                   value={newClient.company}
@@ -767,7 +768,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-email">Email</Label>
+                <Label htmlFor="new-email">{t("Email")}</Label>
                 <Input
                   id="new-email"
                   type="email"
@@ -777,7 +778,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-phone">Phone</Label>
+                <Label htmlFor="new-phone">{t("Phone")}</Label>
                 <Input
                   id="new-phone"
                   value={newClient.phone}
@@ -795,17 +796,17 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
       <Card>
         <CardHeader>
           <CardTitle>
-            Products / Services <span className="text-red-500">*</span>
+            {t("Products")} / {t("Services")} <span className="text-red-500">*</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {/* Table Header */}
             <div className="grid grid-cols-12 gap-4 pb-2 border-b text-sm font-medium text-gray-600">
-              <div className="col-span-6">Description</div>
-              <div className="col-span-2">Unit Price</div>
-              <div className="col-span-2">Quantity</div>
-              <div className="col-span-2">Total</div>
+              <div className="col-span-6">{t("Description")}</div>
+              <div className="col-span-2">{t("Unit Price")}</div>
+              <div className="col-span-2">{t("Quantity")}</div>
+              <div className="col-span-2">{("Total")}</div>
             </div>
 
             {/* Invoice Items */}
@@ -862,7 +863,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
               className="w-full border-dashed border-2 border-gray-300 hover:border-orange-300 hover:bg-orange-50 bg-transparent"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Add New Item
+              {t("Add New Item")}
             </Button>
 
             {/* Total */}
@@ -870,26 +871,26 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
             <div className="flex justify-end">
               <div className="w-64 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Subtotal:</span>
+                  <span className="text-gray-600">{t("Subtotal")}:</span>
                   <span className="font-medium">
                     {currency} {calculateSubtotal().toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax ({invoiceSettings.taxAmount}%):</span>
+                  <span className="text-gray-600">{t("Tax")} ({invoiceSettings.taxAmount}%):</span>
                   <span className="font-medium">
                     {currency} {calculateTax().toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Discount:</span>
+                  <span className="text-gray-600">{t("Discount")}:</span>
                   <span className="font-medium text-red-600">
                     - {currency} {calculateDiscount().toFixed(2)}
                   </span>
                 </div>
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
-                  <span>Total:</span>
+                  <span>{t("Total")}:</span>
                   <span className="text-orange-600">
                     {currency} {calculateTotal().toFixed(2)}
                   </span>
@@ -910,12 +911,12 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating...
+              {t("Creating")}...
             </>
           ) : (
             <>
               <Save className="w-4 h-4 mr-2" />
-              Save & Preview
+              {t("Save & Preview")}
             </>
           )}
         </Button>

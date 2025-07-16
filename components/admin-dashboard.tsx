@@ -24,6 +24,7 @@ import {
 import { Label } from "@/components/ui/label"
 import { Mail, Phone, User, MoreHorizontal } from "lucide-react"
 import { useState } from "react"
+import { useTranslations } from "next-intl"
 
 type Client = {
   id: string
@@ -32,10 +33,10 @@ type Client = {
   phone: string
   company: string
   access: number
-  secteur:string
-  location:string
-  company_size :string
-  mdp : string
+  secteur: string
+  location: string
+  company_size: string
+  mdp: string
   date: string
   paiement_method: string
 }
@@ -48,17 +49,18 @@ const initialClients: Client[] = [
     phone: "+15554567890",
     company: "INVERNI BW",
     access: 0,
-    secteur:"IOT",
-    location:"SUPCOM",
-    company_size :"+1000",
-    mdp:"CLT-004",
+    secteur: "IOT",
+    location: "SUPCOM",
+    company_size: "+1000",
+    mdp: "CLT-004",
     date: "2025-07-08",
     paiement_method: "Per Month",
-
   },
 ]
 
 export function AdminDashboard() {
+  const t = useTranslations("adminDashboard")
+
   const [clients, setClients] = useState<Client[]>(initialClients)
   const [search, setSearch] = useState("")
   const [openDialog, setOpenDialog] = useState(false)
@@ -70,13 +72,12 @@ export function AdminDashboard() {
     phone: "",
     company: "",
     access: 0,
-    secteur:"",
-    location:"",
-    company_size :"",
-    mdp :"",
-    date: "", // <-- NEW
+    secteur: "",
+    location: "",
+    company_size: "",
+    mdp: "",
+    date: "",
     paiement_method: "Per Month",
-
   })
 
   const filteredClients = clients.filter((client) =>
@@ -85,27 +86,24 @@ export function AdminDashboard() {
 
   const handleAddOrEdit = () => {
     if (editClientIndex !== null) {
-      // Edit existing client
       const updated = [...clients]
       const existingClient = updated[editClientIndex]
       updated[editClientIndex] = {
         ...formData,
-        id: existingClient.id,   // preserve original ID
-        mdp: existingClient.mdp, // preserve original mdp
+        id: existingClient.id,
+        mdp: existingClient.mdp,
         date: existingClient.date,
       }
       setClients(updated)
     } else {
-      // Create new client
       const lastId = clients[clients.length - 1]?.id || "CLT-000"
       const newIdNumber = parseInt(lastId.split("-")[1]) + 1
       const newId = `CLT-${newIdNumber.toString().padStart(3, "0")}`
-      const today = new Date().toISOString().split("T")[0] // <-- define it here
-      const newClient = { ...formData, id: newId, mdp: newId,date: today  } // mdp = id
+      const today = new Date().toISOString().split("T")[0]
+      const newClient = { ...formData, id: newId, mdp: newId, date: today }
       setClients([...clients, newClient])
     }
 
-    // Reset form
     setFormData({
       id: "",
       name: "",
@@ -116,15 +114,13 @@ export function AdminDashboard() {
       secteur: "",
       location: "",
       company_size: "",
-      mdp: "", // <-- Reset mdp too
-      date: "", // <-- reset
+      mdp: "",
+      date: "",
       paiement_method: "Per Month",
     })
     setEditClientIndex(null)
     setOpenDialog(false)
   }
-
-
 
   const handleDelete = (index: number) => {
     const updated = [...clients]
@@ -156,15 +152,15 @@ export function AdminDashboard() {
   return (
     <Card>
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <CardTitle>Clients</CardTitle>
+        <CardTitle>{t("Clients")}</CardTitle>
         <div className="flex gap-2">
           <Input
-            placeholder="Search clients..."
+            placeholder={t("Search clients")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-64"
           />
-          <Button onClick={() => setOpenDialog(true)}>Add Client</Button>
+          <Button onClick={() => setOpenDialog(true)}>{t("Add Client")}</Button>
         </div>
       </CardHeader>
 
@@ -173,18 +169,17 @@ export function AdminDashboard() {
           <table className="min-w-full text-sm">
             <thead>
               <tr className="text-left text-muted-foreground border-b">
-                <th className="py-2 px-4">Client ID</th>
-                <th className="py-2 px-4">Name</th>
-                <th className="py-2 px-4">Contact</th>
-                <th className="py-2 px-4">Company</th>
-                <th className="py-2 px-4">Number of Access</th>
-                <th className="py-2 px-4">Secteur</th>
-                <th className="py-2 px-4">Location</th>
-                <th className="py-2 px-4">Company Size</th>
-                <th className="py-2 px-4">Participation Date</th>
-                <th className="py-2 px-4">Paiement Method</th>
-                <th className="py-2 px-4">Actions</th>
-                
+                <th className="py-2 px-4">{t("Client ID")}</th>
+                <th className="py-2 px-4">{t("Name")}</th>
+                <th className="py-2 px-4">{t("Contact")}</th>
+                <th className="py-2 px-4">{t("Company")}</th>
+                <th className="py-2 px-4">{t("Number of Access")}</th>
+                <th className="py-2 px-4">{t("Secteur")}</th>
+                <th className="py-2 px-4">{t("Location")}</th>
+                <th className="py-2 px-4">{t("Company Size")}</th>
+                <th className="py-2 px-4">{t("Participation Date")}</th>
+                <th className="py-2 px-4">{t("Paiement Method")}</th>
+                <th className="py-2 px-4">{t("Actions")}</th>
               </tr>
             </thead>
             <tbody>
@@ -211,7 +206,6 @@ export function AdminDashboard() {
                     <span>{client.access}</span>
                     <Button variant="outline" size="icon" onClick={() => changeAccess(index, 1)}>+</Button>
                   </td>
-                  
                   <td className="py-2 px-4 font-semibold">{client.secteur}</td>
                   <td className="py-2 px-4 font-semibold">{client.location}</td>
                   <td className="py-2 px-4 font-semibold">{client.company_size}</td>
@@ -219,14 +213,14 @@ export function AdminDashboard() {
                   <td className="py-2 px-4">
                     <Badge
                       variant={
-                        client.paiement_method === "Per Month "
+                        client.paiement_method === "Per Month"
                           ? "default"
-                          : client.paiement_method === "3 months "
+                          : client.paiement_method === "3 Months"
                           ? "destructive"
                           : "secondary"
                       }
                     >
-                      {client.paiement_method}
+                      {t(client.paiement_method)}
                     </Badge>
                   </td>
                   <td className="py-2 px-4">
@@ -238,24 +232,19 @@ export function AdminDashboard() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => openEditDialog(client, index)}>
-                          Edit
+                          {t("Edit")}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openWhatsApp(client.phone)}>
-                          Call (WhatsApp)
+                          {t("Call (WhatsApp)")}
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEmail(client.email)}>
-                          Email
+                          {t("Email")}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(index)}
-                          className="text-red-600"
-                        >
-                          Delete
+                        <DropdownMenuItem onClick={() => handleDelete(index)} className="text-red-600">
+                          {t("Delete")}
                         </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-red-600"
-                        >
-                          Stop Acess
+                        <DropdownMenuItem className="text-red-600">
+                          {t("Stop Access")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -267,14 +256,15 @@ export function AdminDashboard() {
         </div>
       </CardContent>
 
-      {/* Add/Edit Form Dialog */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editClientIndex !== null ? "Edit Client" : "Add Client"}</DialogTitle>
+            <DialogTitle>
+              {editClientIndex !== null ? t("Edit Client") : t("Add Client")}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
-            {["name", "email", "phone", "company","secteur","location","company_size"].map((field) => (
+            {["name", "email", "phone", "company", "secteur", "location", "company_size"].map((field) => (
               <div key={field} className="space-y-1">
                 <Label>{field.toUpperCase()}</Label>
                 <Input
@@ -285,11 +275,8 @@ export function AdminDashboard() {
                 />
               </div>
             ))}
-
-            
-            {/* Paiement method Dropdown */}
             <div className="space-y-1">
-              <Label>Paiement method</Label>
+              <Label>{t("Paiement method")}</Label>
               <select
                 value={formData.paiement_method}
                 onChange={(e) =>
@@ -297,14 +284,13 @@ export function AdminDashboard() {
                 }
                 className="w-full border px-3 py-2 rounded-md"
               >
-                <option value="Per Month">Per Month</option>
-                <option value="3 Months">3 Months </option>
-                <option value="Per Year">Per Year</option>
+                <option value="Per Month">{t("Per Month")}</option>
+                <option value="3 Months">{t("3 Months")}</option>
+                <option value="Per Year">{t("Per Year")}</option>
               </select>
             </div>
-
             <Button onClick={handleAddOrEdit}>
-              {editClientIndex !== null ? "Update" : "Create"}
+              {editClientIndex !== null ? t("Update") : t("Create")}
             </Button>
           </div>
         </DialogContent>

@@ -1,4 +1,9 @@
 /** @type {import('next').NextConfig} */
+
+
+
+
+
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
@@ -14,7 +19,7 @@ const nextConfig = {
   // Configuration pour React 17 - pas de fonctionnalités expérimentales modernes
   experimental: {
     appDir: false,
-  },
+  }
 }
 
 module.exports = nextConfig
