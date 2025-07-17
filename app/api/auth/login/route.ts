@@ -57,6 +57,101 @@ export async function POST(request: NextRequest) {
       company: user.company,
     })
 
+    // --- Device Access Control Logic ---
+    const clientIp = request.headers.get("x-forwarded-for") || request.ip || "unknown"
+    console.log(`User ${user.email} attempting login from IP: ${clientIp}`)
+
+    // Add console.log for user's access_count
+    console.log(`User ${user.email} access_count:`, user.access_count)
+
+    // Block users with access_count: 0
+    if (user.access_count === 0) {
+      console.log(`Access Denied: User ${user.email} has access_count set to 0. Login blocked.`)
+      return NextResponse.json(
+        {
+          error: "Account access has been disabled. Please contact support.",
+        },
+        { status: 403 },
+      )
+    }
+
+    // Check if a session already exists for this user and IP address
+    const { data: existingSession, error: fetchSessionError } = await supabaseAdmin
+      .from("user_sessions")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("ip_address", clientIp)
+      .single()
+
+    if (fetchSessionError && fetchSessionError.code !== "PGRST116") {
+      // PGRST116 means "no rows found"
+      console.error("Database Error: Failed to fetch existing session", fetchSessionError)
+      return NextResponse.json({ error: "Internal server error during session check" }, { status: 500 })
+    }
+
+    if (existingSession) {
+      // If session exists for this user and IP, update it
+      const { error: updateError } = await supabaseAdmin
+        .from("user_sessions")
+        .update({ session_token: accessToken, last_active: new Date().toISOString() })
+        .eq("id", existingSession.id)
+
+      if (updateError) {
+        console.error("Database Error: Failed to update existing session", updateError)
+        return NextResponse.json({ error: "Internal server error during session update" }, { status: 500 })
+      }
+      console.log(`Existing session for user ${user.email} from IP ${clientIp} updated.`)
+    } else {
+      // If no existing session for this user and IP, check access count before inserting
+      const { count: distinctIpCount, error: sessionsError } = await supabaseAdmin
+        .from("user_sessions")
+        .select("ip_address", { count: "exact" })
+        .eq("user_id", user.id)
+        .neq("ip_address", clientIp) // Exclude current IP if it's being added as new
+        .then(({ data, error, count }) => {
+          // Manually count distinct IPs if data is returned
+          if (data) {
+            const uniqueIps = new Set(data.map((s: any) => s.ip_address))
+            return { count: uniqueIps.size, error }
+          }
+          return { count, error }
+        })
+
+      if (sessionsError) {
+        console.error("Database Error: Failed to count distinct user sessions", sessionsError)
+        return NextResponse.json({ error: "Internal server error during session check" }, { status: 500 })
+      }
+
+      // Add console.log for distinctIpCount
+      console.log(`User ${user.email} distinctIpCount:`, distinctIpCount)
+      console.log(`User ${user.email} has ${distinctIpCount} distinct active sessions. Allowed: ${user.access_count}`)
+
+      if (distinctIpCount >= user.access_count) {
+        console.log(`Access Denied: User ${user.email} has reached maximum device access (${user.access_count}).`)
+        return NextResponse.json(
+          {
+            error: `Maximum device access reached. You can only log in from ${user.access_count} devices simultaneously.`,
+          },
+          { status: 403 },
+        )
+      }
+
+      // Record the new session
+      const { error: insertSessionError } = await supabaseAdmin.from("user_sessions").insert({
+        user_id: user.id,
+        ip_address: clientIp,
+        session_token: accessToken, // Using access token as session identifier
+        last_active: new Date().toISOString(),
+      })
+
+      if (insertSessionError) {
+        console.error("Database Error: Failed to record new user session", insertSessionError)
+        return NextResponse.json({ error: "Internal server error during session recording" }, { status: 500 })
+      }
+      console.log(`New session recorded for user ${user.email} from IP ${clientIp}.`)
+    }
+    // --- End Device Access Control Logic ---
+
     console.log("Tokens generated, setting cookies...")
 
     // Set cookies
@@ -68,6 +163,12 @@ export async function POST(request: NextRequest) {
         name: user.name,
         company: user.company,
         role: user.role,
+        access_count: user.access_count, // Include access_count in user data
+        sector: user.sector,
+        location: user.location,
+        company_size: user.company_size,
+        payment_method: user.payment_method,
+        join_date: user.join_date,
       },
     })
 

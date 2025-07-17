@@ -31,16 +31,25 @@ export interface User {
   company: string
   phone?: string
   role: "user" | "admin"
-  access_count: number
-  sector: string
-  location: string
-  company_size: string
-  payment_method: string
-  join_date: string
-  status: "Active" | "Inactive" | "Pending"
+  access_count: number // Added for device access limit
+  sector: string // Added for user profile
+  location: string // Added for user profile
+  company_size: string // Added for user profile
+  payment_method: string // Added for user profile
+  join_date: string // Added for user profile
+  status: "active" | "inactive" | "pending" // Status in DB is lowercase
   created_at: string
   updated_at: string
   image?: string // Added image field for user profile picture
+}
+
+export interface UserSession {
+  id: string
+  user_id: string
+  ip_address: string
+  session_token: string
+  last_active: string
+  created_at: string
 }
 
 export interface Contact {

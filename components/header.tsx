@@ -1,8 +1,8 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import type React from "react"
 
-import { Edit, LogOut, Loader2 } from "lucide-react"
+import { Edit, LogOut, Loader2, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -16,6 +16,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { useToast } from "@/hooks/use-toast"
 import { useTranslations } from "next-intl"
+import { validatePasswordChange, PASSWORD_VALIDATION } from "@/lib/validation/password-validation"
 
 interface HeaderProps {
   userRole: "admin" | "user"
@@ -30,21 +31,106 @@ export function Header({ userRole, userData, onLogout }: HeaderProps) {
   const [newPassword, setNewPassword] = useState("")
   const [confirmNewPassword, setConfirmNewPassword] = useState("")
   const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const [touched, setTouched] = useState({
+    currentPassword: false,
+    newPassword: false,
+    confirmNewPassword: false
+  })
   const { toast } = useToast()
+
+  // Validate form with touched state consideration
+  const validateForm = () => {
+    const errors: string[] = []
+    
+    // Check required fields only if they've been touched
+    if (touched.currentPassword && !currentPassword) {
+      errors.push("Current password is required.")
+    }
+    if (touched.newPassword && !newPassword) {
+      errors.push("New password is required.")
+    }
+    if (touched.confirmNewPassword && !confirmNewPassword) {
+      errors.push("Password confirmation is required.")
+    }
+    
+    // Check for empty strings after trimming
+    if (currentPassword && currentPassword.trim() === '') {
+      errors.push("Current password cannot be empty.")
+    }
+    if (newPassword && newPassword.trim() === '') {
+      errors.push("New password cannot be empty.")
+    }
+    
+    // Check password length
+    if (newPassword && newPassword.length < PASSWORD_VALIDATION.MIN_LENGTH) {
+      errors.push(`New password must be at least ${PASSWORD_VALIDATION.MIN_LENGTH} characters long.`)
+    }
+    if (newPassword && newPassword.length > PASSWORD_VALIDATION.MAX_LENGTH) {
+      errors.push(`New password must be less than ${PASSWORD_VALIDATION.MAX_LENGTH} characters long.`)
+    }
+    
+    // Only check password match if both fields have values AND confirmNewPassword has been touched
+    if (newPassword && confirmNewPassword && touched.confirmNewPassword && newPassword !== confirmNewPassword) {
+      errors.push("New password and confirmation do not match.")
+    }
+    
+    setValidationErrors(errors)
+    return errors.length === 0
+  }
+
+  // Use effect to validate when values change
+  useEffect(() => {
+    if (touched.currentPassword || touched.newPassword || touched.confirmNewPassword) {
+      const timeoutId = setTimeout(validateForm, 300)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [currentPassword, newPassword, confirmNewPassword, touched])
+
+  // Handle input changes with touched state
+  const handleCurrentPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentPassword(e.target.value)
+    setTouched(prev => ({ ...prev, currentPassword: true }))
+  }
+
+  const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewPassword(e.target.value)
+    setTouched(prev => ({ ...prev, newPassword: true }))
+  }
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setConfirmNewPassword(e.target.value)
+    setTouched(prev => ({ ...prev, confirmNewPassword: true }))
+  }
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsChangingPassword(true)
-
-    if (newPassword !== confirmNewPassword) {
+    
+    // Mark all fields as touched for final validation
+    setTouched({
+      currentPassword: true,
+      newPassword: true,
+      confirmNewPassword: true
+    })
+    
+    // Final validation before submission
+    const finalValidation = validatePasswordChange({
+      currentPassword,
+      newPassword,
+      confirmNewPassword
+    })
+    
+    if (finalValidation.length > 0) {
+      setValidationErrors(finalValidation)
       toast({
-        title: "Error",
-        description: "New password and confirmation do not match.",
+        title: "Validation Error",
+        description: "Please fix the errors before submitting.",
         variant: "destructive",
       })
-      setIsChangingPassword(false)
       return
     }
+
+    setIsChangingPassword(true)
 
     try {
       const response = await fetch("/api/auth/change-password", {
@@ -66,6 +152,12 @@ export function Header({ userRole, userData, onLogout }: HeaderProps) {
         setCurrentPassword("")
         setNewPassword("")
         setConfirmNewPassword("")
+        setValidationErrors([])
+        setTouched({
+          currentPassword: false,
+          newPassword: false,
+          confirmNewPassword: false
+        })
       } else {
         toast({
           title: "Error",
@@ -83,6 +175,39 @@ export function Header({ userRole, userData, onLogout }: HeaderProps) {
     } finally {
       setIsChangingPassword(false)
     }
+  }
+
+  // Reset form when dialog opens/closes
+  const handleDialogChange = (open: boolean) => {
+    setOpenPasswordDialog(open)
+    if (!open) {
+      setCurrentPassword("")
+      setNewPassword("")
+      setConfirmNewPassword("")
+      setValidationErrors([])
+      setTouched({
+        currentPassword: false,
+        newPassword: false,
+        confirmNewPassword: false
+      })
+    }
+  }
+
+  // Get field-specific error
+  const getFieldError = (field: string) => {
+    return validationErrors.find(error => {
+      switch (field) {
+        case 'currentPassword':
+          return error.includes('Current password')
+        case 'newPassword':
+          return (error.includes('New password') && !error.includes('confirmation') && !error.includes('do not match')) ||
+                 error.includes('characters long')
+        case 'confirmPassword':
+          return error.includes('Password confirmation') || error.includes('do not match')
+        default:
+          return false
+      }
+    })
   }
 
   return (
@@ -118,37 +243,83 @@ export function Header({ userRole, userData, onLogout }: HeaderProps) {
           </DropdownMenu>
         </div>
       </div>
-      <Dialog open={openPasswordDialog} onOpenChange={setOpenPasswordDialog}>
-        <DialogContent>
+      
+      <Dialog open={openPasswordDialog} onOpenChange={handleDialogChange}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t("Change Password")}</DialogTitle>
             <DialogDescription>
               Enter your current password and a new password to update your account.
             </DialogDescription>
           </DialogHeader>
+          
+          {/* Display validation errors */}
+          {validationErrors.length > 0 && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4">
+              <div className="flex items-start">
+                <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+                <div className="text-sm text-red-700">
+                  <ul className="space-y-1">
+                    {validationErrors.map((error, index) => (
+                      <li key={index}>• {error}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleChangePassword} className="space-y-4">
-            <Input
-              type="password"
-              placeholder={t("Current Password")}
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-            />
-            <Input
-              type="password"
-              placeholder={t("New Password")}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-            <Input
-              type="password"
-              placeholder={t("Confirm New Password")}
-              value={confirmNewPassword}
-              onChange={(e) => setConfirmNewPassword(e.target.value)}
-              required
-            />
-            <Button type="submit" className="w-full" disabled={isChangingPassword}>
+            <div className="space-y-2">
+              <Input
+                type="password"
+                placeholder={t("Current Password")}
+                value={currentPassword}
+                onChange={handleCurrentPasswordChange}
+                className={getFieldError('currentPassword') ? 'border-red-500 focus:border-red-500' : ''}
+                required
+              />
+              {getFieldError('currentPassword') && (
+                <p className="text-sm text-red-600">{getFieldError('currentPassword')}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Input
+                type="password"
+                placeholder={t("New Password")}
+                value={newPassword}
+                onChange={handleNewPasswordChange}
+                className={getFieldError('newPassword') ? 'border-red-500 focus:border-red-500' : ''}
+                required
+              />
+              {getFieldError('newPassword') && (
+                <p className="text-sm text-red-600">{getFieldError('newPassword')}</p>
+              )}
+              <p className="text-xs text-gray-500">
+                Password must be {PASSWORD_VALIDATION.MIN_LENGTH}-{PASSWORD_VALIDATION.MAX_LENGTH} characters long
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Input
+                type="password"
+                placeholder={t("Confirm New Password")}
+                value={confirmNewPassword}
+                onChange={handleConfirmPasswordChange}
+                className={getFieldError('confirmPassword') ? 'border-red-500 focus:border-red-500' : ''}
+                required
+              />
+              {getFieldError('confirmPassword') && (
+                <p className="text-sm text-red-600">{getFieldError('confirmPassword')}</p>
+              )}
+            </div>
+
+            <Button 
+              type="submit" 
+              className="w-full" 
+              disabled={isChangingPassword || validationErrors.length > 0}
+            >
               {isChangingPassword ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

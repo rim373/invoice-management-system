@@ -18,13 +18,13 @@ type AdminUser = {
   email: string
   phone: string
   company: string
-  access: number
-  secteur: string
+  access: number // Maps to access_count in backend
+  secteur: string // Maps to sector in backend
   location: string
   company_size: string
-  password: string
-  date: string
-  paiement_method: string
+  password?: string // Optional for updates
+  date: string // Maps to join_date in backend
+  paiement_method: string // Maps to payment_method in backend
   status: string
 }
 
@@ -58,7 +58,7 @@ const LOCATIONS = ["North America", "Europe", "Asia Pacific", "Latin America", "
 // Helper function to format date for input
 const formatDateForInput = (dateString: string): string => {
   if (!dateString) return new Date().toISOString().split("T")[0]
-  
+
   try {
     const date = new Date(dateString)
     if (isNaN(date.getTime())) {
@@ -70,10 +70,10 @@ const formatDateForInput = (dateString: string): string => {
   }
 }
 
-// Helper function to format date for display
+// Helper function to format date for display (not used in current table, but good to keep)
 const formatDateForDisplay = (dateString: string): string => {
   if (!dateString) return "N/A"
-  
+
   try {
     const date = new Date(dateString)
     if (isNaN(date.getTime())) return "Invalid Date"
@@ -95,14 +95,14 @@ export function AdminDashboard() {
     email: "",
     phone: "",
     company: "",
-    access: 0,
+    access: 1, // Default access count
     secteur: "Technology",
     location: "Europe",
     company_size: "1-10 employees",
     paiement_method: "Per Month",
     password: "",
     status: "Active",
-    date: new Date().toISOString().split("T")[0], 
+    date: new Date().toISOString().split("T")[0],
   })
 
   // Load users on component mount
@@ -113,14 +113,14 @@ export function AdminDashboard() {
   const loadUsers = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch(`/api/users?role=admin`)
+      const response = await fetch(`/api/users`) // No need for ?role=admin, backend handles auth
       const result = await response.json()
 
       if (result.success) {
-        // Ensure all fields have default values
+        // Ensure all fields have default values and map backend names to frontend names
         const processedUsers = result.data.map((user: any) => ({
           ...user,
-          access: user.access || 0,
+          access: user.access || 1, // Default to 1 if not set
           secteur: user.secteur || "Technology",
           location: user.location || "Europe",
           company_size: user.company_size || "1-10 employees",
@@ -132,9 +132,11 @@ export function AdminDashboard() {
         setUsers(processedUsers)
       } else {
         console.error("Failed to load users:", result.error)
+        alert("Failed to load users: " + result.error)
       }
     } catch (error) {
       console.error("Error loading users:", error)
+      alert("Error loading users.")
     } finally {
       setIsLoading(false)
     }
@@ -147,99 +149,92 @@ export function AdminDashboard() {
       user.company.toLowerCase().includes(search.toLowerCase()),
   )
 
- const handleAddOrEdit = async () => {
-  try {
-    setIsLoading(true)
-    
-    // Validate required fields
-    if (!formData.name || !formData.email || !formData.company) {
-      alert("Please fill in all required fields (Name, Email, Company)")
-      return
+  const handleAddOrEdit = async () => {
+    try {
+      setIsLoading(true)
+
+      // Validate required fields
+      if (!formData.name || !formData.email || !formData.company) {
+        alert("Please fill in all required fields (Name, Email, Company)")
+        return
+      }
+
+      // For new users, password is required
+      if (editUserIndex === null && (!formData.password || formData.password.trim() === "")) {
+        alert("Password is required for new users")
+        return
+      }
+
+      // Prepare the data to send, mapping frontend names to backend names
+      const dataToSend = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || "",
+        company: formData.company,
+        access_count: formData.access || 1, // Map 'access' to 'access_count'
+        sector: formData.secteur || "Technology", // Map 'secteur' to 'sector'
+        location: formData.location || "Europe",
+        company_size: formData.company_size || "1-10 employees",
+        payment_method: formData.paiement_method || "Per Month", // Map 'paiement_method' to 'payment_method'
+        join_date: formData.date || new Date().toISOString().split("T")[0], // Map 'date' to 'join_date'
+        status: formData.status || "Active",
+        ...(formData.password && formData.password.trim() !== "" && { password: formData.password }),
+      }
+
+      let response
+      if (editUserIndex !== null) {
+        // Edit existing user
+        const userId = users[editUserIndex].id
+        response = await fetch("/api/users", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            id: userId,
+            ...dataToSend,
+          }),
+        })
+      } else {
+        // Create new user
+        response = await fetch("/api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(dataToSend),
+        })
+      }
+
+      const result = await response.json()
+      if (result.success) {
+        await loadUsers() // Reload users
+      } else {
+        console.error("Failed to save user:", result.error)
+        alert("Failed to save user: " + result.error)
+      }
+
+      // Reset form and close dialog
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        company: "",
+        access: 1,
+        secteur: "Technology",
+        location: "Europe",
+        company_size: "1-10 employees",
+        paiement_method: "Per Month",
+        password: "",
+        status: "Active",
+        date: new Date().toISOString().split("T")[0],
+      })
+      setEditUserIndex(null)
+      setOpenDialog(false)
+    } catch (error) {
+      console.error("Error saving user:", error)
+      alert("Error saving user")
+    } finally {
+      setIsLoading(false)
     }
-    
-    // For new users, password is required
-    if (editUserIndex === null && !formData.password) {
-      alert("Password is required for new users")
-      return
-    }
-    
-    // Prepare the data to send directly (not nested in userData)
-    const dataToSend = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone || "",
-      company: formData.company,
-      access_count: formData.access || 0,
-      sector: formData.secteur || "Technology",
-      location: formData.location || "Europe",
-      company_size: formData.company_size || "1-10 employees",
-      payment_method: formData.paiement_method || "Per Month",
-      join_date: formData.date || new Date().toISOString().split("T")[0],
-      status: formData.status || "Active",
-      ...(formData.password && { password: formData.password }),
   }
 
-    
-    if (editUserIndex !== null) {
-      // Edit existing user
-      const userId = users[editUserIndex].id
-      const response = await fetch("/api/users", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            id: userId,
-          ...dataToSend, // Spread the data directly instead of nesting in userData
-        }),
-      })
-      
-      const result = await response.json()
-      if (result.success) {
-        await loadUsers() // Reload users
-      } else {
-        console.error(t("errors.1"), result.error)
-        alert(t("errors.1")+ result.error)
-      }
-    } else {
-      // Create new user
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(dataToSend), // Send data directly
-      })
-      
-      const result = await response.json()
-      if (result.success) {
-        await loadUsers() // Reload users
-      } else {
-        console.error(t("errors.2"), result.error)
-        alert(t("errors.2") + result.error)
-      }
-    }
-    
-    // Reset form
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      company: "",
-      access: 0,
-      secteur: "Technology",
-      location: "Europe",
-      company_size: "1-10 employees",
-      paiement_method: "Per Month",
-      password: "",
-      status: "Active",
-      date: new Date().toISOString().split("T")[0]
-    })
-    setEditUserIndex(null)
-    setOpenDialog(false)
-  } catch (error) {
-    console.error(t("errors.3"), error)
-    alert(t("errors.3"))
-  } finally {
-    setIsLoading(false)
-  }
-}
   const openEditDialog = (user: AdminUser, index: number) => {
     setFormData({
       name: user.name,
@@ -265,7 +260,7 @@ export function AdminDashboard() {
       email: "",
       phone: "",
       company: "",
-      access: 0,
+      access: 1, // Default for new user
       secteur: "Technology",
       location: "Europe",
       company_size: "1-10 employees",
@@ -289,26 +284,71 @@ export function AdminDashboard() {
   }
 
   const changeAccess = async (index: number, delta: number) => {
-    const user = users[index]
-    const newAccess = Math.max(0, user.access + delta)
+    const userToUpdate = users[index]
+    const newAccess = Math.max(0, userToUpdate.access + delta)
 
     try {
+      setIsLoading(true)
       const response = await fetch("/api/users", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userRole: "admin",
-          userId: user.id,
-          userData: { ...user, access: newAccess },
+          id: userToUpdate.id,
+          name: userToUpdate.name,
+          email: userToUpdate.email, // Email is typically not updated via PUT, but included for completeness if backend expects it
+          phone: userToUpdate.phone,
+          company: userToUpdate.company,
+          access_count: newAccess, // Send the updated access count
+          sector: userToUpdate.secteur, // Map to backend field name
+          location: userToUpdate.location,
+          company_size: userToUpdate.company_size,
+          payment_method: userToUpdate.paiement_method, // Map to backend field name
+          join_date: userToUpdate.date, // Map to backend field name
+          status: userToUpdate.status,
+          // Do NOT send password here unless it's explicitly being changed
         }),
       })
 
       const result = await response.json()
       if (result.success) {
-        await loadUsers() // Reload users
+        await loadUsers() // Reload users to reflect the change
+      } else {
+        console.error("Failed to update access:", result.error)
+        alert("Failed to update access: " + result.error)
       }
     } catch (error) {
       console.error("Error updating access:", error)
+      alert("Error updating access")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDelete = async (index: number) => {
+    const userToDelete = users[index]
+    if (!confirm(`Are you sure you want to delete user ${userToDelete.name}?`)) {
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      const response = await fetch(`/api/users?userId=${userToDelete.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        await loadUsers() // Reload users after deletion
+      } else {
+        console.error("Failed to delete user:", result.error)
+        alert("Failed to delete user: " + result.error)
+      }
+    } catch (error) {
+      console.error("Error deleting user:", error)
+      alert("Error deleting user")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -378,7 +418,7 @@ export function AdminDashboard() {
                   <td className="py-2 px-4 font-semibold">{user.secteur}</td>
                   <td className="py-2 px-4 font-semibold">{user.location}</td>
                   <td className="py-2 px-4 font-semibold">{user.company_size}</td>
-                  <td className="py-2 px-4 font-semibold">{user.date}</td>
+                  <td className="py-2 px-4 font-semibold">{formatDateForDisplay(user.date)}</td>{" "}
                   <td className="py-2 px-4">
                     <Badge
                       variant={
@@ -418,6 +458,8 @@ export function AdminDashboard() {
                         <DropdownMenuItem className="text-red-600">
                           {t("Stop Access")}
                         </DropdownMenuItem>
+                        {/* The "Stop Access" functionality is now handled by setting access_count to 0 or managing status */}
+                        {/* <DropdownMenuItem className="text-red-600">Stop Access</DropdownMenuItem> */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
@@ -595,6 +637,17 @@ export function AdminDashboard() {
                   value={formData.password || ""}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder={t("placeholders.pwd")}
+                />
+              </div>
+            )}
+            {editUserIndex !== null && (
+              <div className="space-y-2 col-span-2">
+                <Label>New Password (optional)</Label>
+                <Input
+                  type="password"
+                  value={formData.password || ""}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Enter new password to change"
                 />
               </div>
             )}

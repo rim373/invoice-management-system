@@ -494,7 +494,7 @@ export function JournalPage({
                             <span className="text-gray-600">{payment.date}</span>
                             <Button
                               variant="outline"
-                              size="xs"
+                              size="sm"
                               className="text-xs"
                               onClick={() => {
                                 const index = invoice.paymentHistory.findIndex(p => p.id === payment.id)
