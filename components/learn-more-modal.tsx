@@ -4,8 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
-import { BookOpen, Video, MessageCircle, Mail, HelpCircle, ExternalLink, X } from "lucide-react"
 import { useTranslations } from "next-intl"
+import { BookOpen, Video, MessageCircle, Mail, Keyboard, HelpCircle, ExternalLink, X } from "lucide-react"
 
 interface LearnMoreModalProps {
   isOpen: boolean
@@ -82,7 +82,6 @@ export function LearnMoreModal({ isOpen, onClose }: LearnMoreModalProps) {
                 </CardContent>
               </Card>
 
-              {/* Video Tutorials */}
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-4">
                   <div className="flex items-start space-x-3">
@@ -101,7 +100,6 @@ export function LearnMoreModal({ isOpen, onClose }: LearnMoreModalProps) {
                 </CardContent>
               </Card>
 
-              {/* Community */}
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-4">
                   <div className="flex items-start space-x-3">
@@ -120,7 +118,6 @@ export function LearnMoreModal({ isOpen, onClose }: LearnMoreModalProps) {
                 </CardContent>
               </Card>
 
-              {/* Email Support */}
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-4">
                   <div className="flex items-start space-x-3">

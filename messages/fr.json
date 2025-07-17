@@ -11,6 +11,42 @@
     "Help": "Aide"
   },
   "adminDashboard": {
+    "form": {
+        "name": "Nom",
+        "email": "Email",
+        "phone": "Téléphone",
+        "company": "Entreprise",
+        "sector": "Secteur",
+        "location": "Emplacement",
+        "size": "Taille de l'entreprise",
+        "acess": "Nombre d'accès",
+        "stat": "Statut",
+        "Join": "Date d'adhésion",
+        "pwd": "Mot de passe"
+        },
+    "placeholders": {
+        "name": "Entrez le nom complet",
+        "email": "Entrez l'adresse e-mail",
+        "phone": "Entrez votre numéro de téléphone",
+        "company": "Entrez le nom de votre entreprise",
+        "sector": "Sélectionnez un secteur",
+        "location": "Sélectionnez un emplacement",
+        "size": "Sélectionnez la taille de l'entreprise",
+        "acess": "Entrez le nombre d'accès",
+        "pwd": "Entrez votre mot de passe"
+        },
+    "select paiment method": "Sélectionnez le mode de paiement",
+    "status": {
+        "1": "Actif",
+        "2": "Inactif",
+        "3": "En attente"
+        },
+
+    "errors": {
+        "1": "Échec de la mise à jour de l'utilisateur",
+        "2": "Échec de la création de l'utilisateur",
+        "3": "Erreur lors de l'enregistrement de l'utilisateur"
+    },
     "Clients": "Clients",
     "Search clients": "Rechercher des clients",
     "Client ID": "ID de Client",
@@ -39,6 +75,8 @@
     "Create": "Créer"
   }
   ,"clientsPage":{
+        "view":"Voir Factures",
+        "createINV":"Créer Facture",
         "Client Repository": "Répertoire des clients",
         "Manage and search through your client database": "Gérez et recherchez dans votre base de données clients",
         "Add Client": "Ajouter un client",
@@ -77,6 +115,10 @@
         "Are you sure you want to delete this client?": "Êtes-vous sûr de vouloir supprimer ce client ?"
     },
     "facturePage":{
+        "updated":"Mise à jour de Facture ",
+        "update":"Mettre à jour",
+        "sucess":"avec succes",
+        "invoice":"Facture",
         "Start Number":"Numéro de départ",
         "Your facture has been saved to the Journal":"Votre facture a été enregistrée dans le journal",
         "Facture created successfully":"Facture créée avec succès",

@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { X, ArrowRight, ArrowLeft } from "lucide-react"
 
-
 interface TutorialStep {
   id: number
   title: string

@@ -152,7 +152,7 @@ const ProfileInvoiceSettings = () => {
         </div>
       </section>
     </div>
-  )
-}
+  );
+};
 
-export default ProfileInvoiceSettings
+export default ProfileInvoiceSettings;

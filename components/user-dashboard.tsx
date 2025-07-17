@@ -62,21 +62,49 @@ export function UserDashboard() {
     <div className="space-y-6">
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {metrics.map((metric, index) => (
-          <Card key={index}>
-            <CardContent className="p-6 text-center">
-              <div className="text-sm text-gray-600 mb-1">{t(metric.key)}</div>
-              <div className="text-2xl font-bold text-gray-900">{metric.value}</div>
-              <div className="text-sm text-gray-600 mt-1">{t(metric.subtitleKey)}</div>
-            </CardContent>
-          </Card>
-        ))}
+  {metrics.map((metric, index) => (
+    <Card key={index} className="relative overflow-hidden">
+      <CardContent className="p-6 text-center">
+        <div className="text-sm text-gray-600 mb-1">{t(metric.key)}</div>
+        <div className="text-2xl font-bold text-gray-900">{metric.value}</div>
+        <div className="text-sm text-gray-600 mt-1">{t(metric.subtitleKey)}</div>
+      </CardContent>
+    </Card>
+  ))}
+</div>
+
+      <div className="grid grid-cols-1  gap-6">
+        {/* Monthly Activity Chart */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Monthly Monetary Activity</CardTitle>
+            <Button variant="ghost" size="icon">
+              <MoreHorizontal className="w-4 h-4" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-[400px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyActivity} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                  <XAxis dataKey="month" stroke="#888888" />
+                  <YAxis stroke="#888888" />
+                  <Tooltip
+                    formatter={(value: number) => `$${value.toLocaleString()}`}
+                  />
+                  <Legend />
+                  <Bar dataKey="revenue" fill="#fb923c" radius={[4, 4, 0, 0]} name="Revenue" barSize={50} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+        
       </div>
 
-      {/* Monthly Activity Chart */}
+      {/* Revenue par client and product */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t("monthlyMonetaryActivity")}</CardTitle>
+          <CardTitle>Revenue by Client & Product</CardTitle>
           <Button variant="ghost" size="icon">
             <MoreHorizontal className="w-4 h-4" />
           </Button>
@@ -84,46 +112,23 @@ export function UserDashboard() {
         <CardContent>
           <div className="w-full h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyActivity} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
-                <XAxis dataKey="month" stroke="#888888" />
-                <YAxis stroke="#888888" />
-                <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
-                <Legend />
-                <Bar
-                  dataKey="revenue"
-                  fill="#fb923c"
-                  radius={[4, 4, 0, 0]}
-                  name={t("revenue")}
-                  barSize={50}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Revenue by Client & Product */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t("revenueByClientAndProduct")}</CardTitle>
-          <Button variant="ghost" size="icon">
-            <MoreHorizontal className="w-4 h-4" />
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="w-full h-[400px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={revenueByClientProduct} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+              <ComposedChart
+                data={revenueByClientProduct}
+                margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+              >
                 <XAxis dataKey="client" stroke="#888888" />
                 <YAxis stroke="#888888" />
-                <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+                <Tooltip
+                  formatter={(value: number) => `$${value.toLocaleString()}`}
+                />
                 <Legend />
                 <Bar dataKey="ProductA" name="Product A" fill="#60a5fa" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="ProductB" name="Product B" fill="#fb923c" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="ProductC" name="Product C" fill="#34d399" radius={[4, 4, 0, 0]} />
+                {/* Example: Line for total revenue */}
                 <Line
                   type="monotone"
-                  dataKey={(d: any) => d.ProductA + d.ProductB + d.ProductC}
+                  dataKey={(data) => data.ProductA + data.ProductB + data.ProductC}
                   name={t("totalRevenue")}
                   stroke="#8b5cf6"
                   strokeWidth={2}

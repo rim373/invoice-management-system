@@ -28,10 +28,12 @@ import {
   User,
   Building2,
   ArrowUpDown,
+  Eye,
 } from "lucide-react"
 
 interface Client {
   id: string
+  contact_id: string
   name: string
   email: string
   phone: string
@@ -41,30 +43,21 @@ interface Client {
   lastActivity: string
 }
 
-// Add these props to the ClientsPage component:
 interface ClientsPageProps {
-  clients?: Client[]
-  onClientUpdate?: (clients: Client[]) => void
-  onClientDelete?: (clientId: string) => void
+  userEmail?: string
+  userRole?: string
+  onCreateInvoice?: (client: Client) => void
+  onViewInvoices?: (clientName: string) => void
 }
 
-export function ClientsPage({ clients: externalClients, onClientUpdate, onClientDelete }: ClientsPageProps = {}) {
+export function ClientsPage({ userEmail, userRole, onCreateInvoice, onViewInvoices }: ClientsPageProps) {
   const t = useTranslations("clientsPage")
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddClientOpen, setIsAddClientOpen] = useState(false)
   const [isEditClientOpen, setIsEditClientOpen] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
-  // Replace the existing clientsData useState with:
   const [clientsData, setClientsData] = useState<Client[]>([])
-
-  // Add useEffect to sync with external clients:
-  useEffect(() => {
-    if (externalClients) {
-      console.log("ClientsPage received clients:", externalClients)
-      setClientsData(externalClients)
-    }
-  }, [externalClients])
-
+  const [isLoading, setIsLoading] = useState(false)
   const [sortBy, setSortBy] = useState<"name" | "status">("name")
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc")
   const [newClient, setNewClient] = useState({
@@ -74,6 +67,33 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
     company: "",
     status: "Active" as "Active" | "Inactive" | "Pending",
   })
+
+  // Load contacts on component mount
+  useEffect(() => {
+    if (userEmail && userRole === "user") {
+      loadContacts()
+    }
+  }, [userEmail, userRole])
+
+  const loadContacts = async () => {
+    if (!userEmail || userRole !== "user") return
+
+    try {
+      setIsLoading(true)
+      const response = await fetch(`/api/contacts?userEmail=${encodeURIComponent(userEmail)}&userRole=${userRole}`)
+      const result = await response.json()
+
+      if (result.success) {
+        setClientsData(result.data)
+      } else {
+        console.error("Failed to load contacts:", result.error)
+      }
+    } catch (error) {
+      console.error("Error loading contacts:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const filteredClients = clientsData
     .filter(
@@ -115,6 +135,18 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
     setIsEditClientOpen(true)
   }
 
+  const handleCreateInvoice = (client: Client) => {
+    if (onCreateInvoice) {
+      onCreateInvoice(client)
+    }
+  }
+
+  const handleViewInvoices = (client: Client) => {
+    if (onViewInvoices) {
+      onViewInvoices(client.name)
+    }
+  }
+
   const handleSendEmail = (email: string) => {
     window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${email}`, "_blank")
   }
@@ -124,71 +156,109 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
     window.open(`https://wa.me/${cleanPhone}`, "_blank")
   }
 
-  // Replace the handleDeleteClient function:
-  const handleDeleteClient = (clientId: string) => {
-    if (window.confirm("Are you sure you want to delete this client?")) {
-      const updatedClients = clientsData.filter((client) => client.id !== clientId)
-      setClientsData(updatedClients)
+  const handleDeleteClient = async (clientId: string) => {
+    if (!window.confirm("Are you sure you want to delete this contact?")) return
 
-      // Notify parent component about the deletion
-      if (onClientDelete) {
-        onClientDelete(clientId)
-      }
+    try {
+      setIsLoading(true)
+      const response = await fetch(
+        `/api/contacts?userEmail=${encodeURIComponent(userEmail!)}&userRole=${userRole}&contactId=${clientId}`,
+        {
+          method: "DELETE",
+        },
+      )
 
-      if (onClientUpdate) {
-        onClientUpdate(updatedClients)
+      const result = await response.json()
+      if (result.success) {
+        await loadContacts() // Reload contacts
+      } else {
+        console.error("Failed to delete contact:", result.error)
       }
+    } catch (error) {
+      console.error("Error deleting contact:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  // Replace the handleSaveEdit function:
-  const handleSaveEdit = () => {
-    if (editingClient) {
-      const updatedClients = clientsData.map((client) => (client.id === editingClient.id ? editingClient : client))
-      setClientsData(updatedClients)
-
-      // Notify parent component about the update
-      if (onClientUpdate) {
-        onClientUpdate(updatedClients)
-      }
-
-      setIsEditClientOpen(false)
-      setEditingClient(null)
-    }
-  }
-
-  // Replace the handleAddClient function:
-  const handleAddClient = () => {
-    if (newClient.name && newClient.email && newClient.phone && newClient.company) {
-      const clientId = `CLT-${String(clientsData.length + 1).padStart(3, "0")}`
-      const client: Client = {
-        id: clientId,
-        name: newClient.name,
-        email: newClient.email,
-        phone: newClient.phone,
-        company: newClient.company,
-        status: newClient.status,
-        projects: 0,
-        lastActivity: "Just added",
-      }
-
-      const updatedClients = [...clientsData, client]
-      setClientsData(updatedClients)
-
-      // Notify parent component about the addition
-      if (onClientUpdate) {
-        onClientUpdate(updatedClients)
-      }
-
-      setNewClient({
-        name: "",
-        email: "",
-        phone: "",
-        company: "",
-        status: "Active",
+  const handleSaveEdit = async () => {
+    if (!editingClient || !userEmail) return
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/contacts", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: editingClient.id,
+          name: editingClient.name,
+          email: editingClient.email,
+          phone: editingClient.phone,
+          company: editingClient.company,
+          address: editingClient.address,
+          status: editingClient.status,
+        }),
       })
-      setIsAddClientOpen(false)
+      const result = await response.json()
+      if (result.success) {
+        await loadContacts()
+        setIsEditClientOpen(false)
+        setEditingClient(null)
+      } else {
+        console.error("Failed to update contact:", result.error)
+      }
+    } catch (error) {
+      console.error("Error updating contact:", error)
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  const handleAddClient = async () => {
+    if (!newClient.name || !newClient.email || !newClient.phone || !newClient.company || !userEmail) return
+
+    try {
+      setIsLoading(true)
+      const response = await fetch("/api/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          // Send the contact data directly, not nested in contactData
+          name: newClient.name,
+          email: newClient.email,
+          phone: newClient.phone,
+          company: newClient.company,
+          status: newClient.status,
+        }),
+      })
+
+      const result = await response.json()
+      if (result.success) {
+        await loadContacts()
+        setNewClient({
+          name: "",
+          email: "",
+          phone: "",
+          company: "",
+          status: "Active",
+        })
+        setIsAddClientOpen(false)
+      } else {
+        console.error("Failed to create contact:", result.error)
+      }
+    } catch (error) {
+      console.error("Error creating contact:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (userRole !== "user") {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+        <p className="text-gray-600">Contacts page is only available for users.</p>
+      </div>
+    )
   }
 
   return (
@@ -215,7 +285,7 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
           }}
         >
           <DialogTrigger asChild>
-            <Button className="bg-gray-900 hover:bg-gray-800 text-white">
+            <Button className="bg-gray-900 hover:bg-gray-800 text-white" disabled={isLoading}>
               <Plus className="w-4 h-4 mr-2" />
               {t("Add Client")}
             </Button>
@@ -296,8 +366,8 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
               <Button variant="outline" onClick={() => setIsAddClientOpen(false)}>
                 Cancel
               </Button>
-              <Button className="bg-orange-500 hover:bg-orange-600" onClick={handleAddClient}>
-                Add Client
+              <Button className="bg-orange-500 hover:bg-orange-600" onClick={handleAddClient} disabled={isLoading}>
+                {isLoading ? "Adding..." : "Add Contact"}
               </Button>
             </div>
           </DialogContent>
@@ -319,7 +389,12 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
                 <Label htmlFor="edit-name" className="text-right">
                   {t("Name")}
                 </Label>
-                <Input id="edit-name" className="col-span-3" value={editingClient?.name || ""} disabled />
+                <Input
+                  id="edit-name"
+                  className="col-span-3"
+                  value={editingClient?.name || ""}
+                  onChange={(e) => setEditingClient((prev) => (prev ? { ...prev, name: e.target.value } : null))}
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="edit-email" className="text-right">
@@ -387,8 +462,8 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
               <Button variant="outline" onClick={() => setIsEditClientOpen(false)}>
                 Cancel
               </Button>
-              <Button className="bg-orange-500 hover:bg-orange-600" onClick={handleSaveEdit}>
-                {t("Save Changes")}
+              <Button className="bg-orange-500 hover:bg-orange-600" onClick={handleSaveEdit} disabled={isLoading}>
+                {isLoading ? "Saving..." : t("Save Changes")}
               </Button>
             </div>
           </DialogContent>
@@ -397,7 +472,7 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 justify-center">
-        {/* Total Clients Card */}
+        {/* Total Contacts Card */}
         <Card className="rounded-lg shadow-sm w-80 h-40 mx-auto">
           <CardContent className="flex flex-col items-center justify-center p-2 h-full">
             <div className="w-10 h-10 bg-orange-500 rounded-md flex items-center justify-center mb-1">
@@ -451,7 +526,7 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
         </CardContent>
       </Card>
 
-      {/* Client Directory */}
+      {/* Contact Directory */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{t("Client Directory")}</CardTitle>
@@ -501,6 +576,8 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
           </div>
         </CardHeader>
         <CardContent>
+          {isLoading && <div className="text-center py-4">Loading contacts...</div>}
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -516,7 +593,7 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
               <tbody>
                 {filteredClients.map((client) => (
                   <tr key={client.id} className="border-b hover:bg-gray-50">
-                    <td className="py-4 px-4 font-medium text-gray-900">{client.id}</td>
+                    <td className="py-4 px-4 font-medium text-gray-900">{client.contact_id}</td>
                     <td className="py-4 px-4">
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
@@ -544,7 +621,7 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
                     <td className="py-4 px-4">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" disabled={isLoading}>
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -553,9 +630,13 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
                             <Edit className="mr-2 h-4 w-4" />
                             {t("Edit Client")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleCreateInvoice(client)}>
                             <FileText className="mr-2 h-4 w-4 text-orange-500" />
-                            <span className="text-orange-500">{t("Facture")}</span>
+                            <span className="text-orange-500">{t("createINV")}</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleViewInvoices(client)}>
+                            <Eye className="mr-2 h-4 w-4 text-blue-500" />
+                            <span className="text-blue-500">{t("view")}</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleSendEmail(client.email)}>
                             <Mail className="mr-2 h-4 w-4" />
@@ -577,6 +658,18 @@ export function ClientsPage({ clients: externalClients, onClientUpdate, onClient
               </tbody>
             </table>
           </div>
+
+          {filteredClients.length === 0 && !isLoading && (
+            <div className="text-center py-8">
+              <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No contacts found</h3>
+              <p className="text-gray-600">
+                {clientsData.length === 0
+                  ? "You haven't added any contacts yet. Click 'Add Contact' to get started."
+                  : "No contacts match your current search."}
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

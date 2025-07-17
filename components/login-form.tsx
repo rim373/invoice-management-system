@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,28 +8,11 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Building2 } from "lucide-react"
+import { loginUser } from "@/lib/auth"
 
 interface LoginFormProps {
   onLogin: (userRole: "user" | "admin", userData: any) => void
 }
-
-// Mock user database
-const users = [
-  {
-    email: "demo@user.com",
-    password: "demo",
-    role: "user" as const,
-    name: "user",
-    company: "Demo Startup",
-  },
-  {
-    email: "demo@admin.com",
-    password: "demo",
-    role: "admin" as const,
-    name: "admin",
-    company: "admin",
-  },
-]
 
 export function LoginForm({ onLogin }: LoginFormProps) {
   const [email, setEmail] = useState("")
@@ -44,19 +26,20 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     setIsLoading(true)
     setError("")
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    try {
+      console.log("Login form submitting for:", email)
+      const result = await loginUser(email, password)
 
-    const user = users.find((u) => u.email === email && u.password === password)
-
-    if (user) {
-      onLogin(user.role, {
-        name: user.name,
-        email: user.email,
-        company: user.company,
-      })
-    } else {
-      setError("Invalid email or password")
+      if (result.success && result.user) {
+        console.log("Login form success, redirecting to dashboard")
+        onLogin(result.user.role as "user" | "admin", result.user)
+      } else {
+        console.log("Login form error:", result.error)
+        setError(result.error || "Login failed")
+      }
+    } catch (error) {
+      console.log("Login form exception:", error)
+      setError("Network error. Please try again.")
     }
 
     setIsLoading(false)
@@ -124,10 +107,10 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               <p className="font-medium mb-2">Demo Accounts:</p>
               <div className="space-y-1 text-xs">
                 <p>
-                  <strong>client:</strong> demo@user.com / demo
+                  <strong>User:</strong> user@demo.com / demo
                 </p>
                 <p>
-                  <strong>admin:</strong> demo@admin.com / demo
+                  <strong>Admin:</strong> admin@demo.com / demo
                 </p>
               </div>
             </div>

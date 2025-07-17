@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { ChevronDown, BookOpen, ExternalLink } from "lucide-react"
+import { ChevronDown, Download, BookOpen, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTranslations } from "next-intl"
 

@@ -11,6 +11,44 @@
     "Help": "Help"
   },
   "adminDashboard": {
+    "form":{
+      "name":"Name",
+      "email":"Email",
+      "phone":"Phone",
+      "company":"Company",
+      "sector":"sector",
+      "location":"Location",
+      "size":"Company Size",
+      "acess":"Acess Count",
+      "stat":"Status",
+      "Join":"Join Date",
+      "pwd":"Password"
+
+    },
+    "placeholders":{
+      "name":"Enter full name",
+      "email":"Enter email address",
+      "phone":"Enter your phone number",
+      "company":"enter your company name",
+      "sector":"Select sector",
+      "location":"Select location",
+      "size":"Select Company size",
+      "acess":"Enter access count",
+      "pwd":"Enter your password"
+    },
+    "select paiment method":"Select payment method",
+    "status":{
+      "1":"Active",
+      "2":"Inactive",
+      "3":"Pending"
+    },
+    "errors":{
+      "1":"Failed to update user",
+      "2":"Failed to create user",
+      "3":"Error saving user"
+
+    },
+
     "Clients": "Clients",
     "Search clients": "Search clients",
     "Client ID": "Client ID",
@@ -39,6 +77,7 @@
     "Create": "Create"
   },
   "clientsPage":{
+        "view":"View Invoices",
         "Client Repository": "Client Repository",
         "Manage and search through your client database": "Manage and search through your client database",
         "Add Client": "Add Client",
@@ -73,10 +112,15 @@
         "Status (Active → Inactive)": "Status (Active → Inactive)",
         "Status (Inactive → Active)": "Status (Inactive → Active)",
         "Facture": "Invoice",
+        "createINV":"Create Invoice",
         "Call Client": "Call client",
         "Send Email": "Send Email"
         },
     "facturePage":{
+      "updated":"Update Invoice",
+      "update":"Updating",
+      "invoice":"Invoice",
+      "sucess":"successfully",
       "Start Number":"Start Number",
       "Your facture has been saved to the Journal":"Your facture has been saved to the Journal",
       "Facture created successfully":"Facture created successfully",

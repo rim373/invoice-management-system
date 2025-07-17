@@ -1,7 +1,8 @@
 "use client"
-
 import { useState } from "react"
-import { Edit, LogOut } from "lucide-react"
+import type React from "react"
+
+import { Edit, LogOut, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -12,12 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { useToast } from "@/hooks/use-toast"
 import { useTranslations } from "next-intl"
 
 interface HeaderProps {
@@ -27,9 +24,66 @@ interface HeaderProps {
 }
 
 export function Header({ userRole, userData, onLogout }: HeaderProps) {
-  const t  = useTranslations("HeaderPage")
   const [openPasswordDialog, setOpenPasswordDialog] = useState(false)
-  
+  const t  = useTranslations("HeaderPage")
+  const [currentPassword, setCurrentPassword] = useState("")
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmNewPassword, setConfirmNewPassword] = useState("")
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const { toast } = useToast()
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsChangingPassword(true)
+
+    if (newPassword !== confirmNewPassword) {
+      toast({
+        title: "Error",
+        description: "New password and confirmation do not match.",
+        variant: "destructive",
+      })
+      setIsChangingPassword(false)
+      return
+    }
+
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ currentPassword, newPassword, confirmNewPassword }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: data.message,
+        })
+        setOpenPasswordDialog(false)
+        setCurrentPassword("")
+        setNewPassword("")
+        setConfirmNewPassword("")
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to change password.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Password change network error:", error)
+      toast({
+        title: "Error",
+        description: "Network error. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsChangingPassword(false)
+    }
+  }
 
   return (
     <header className="bg-white shadow-sm border-b px-6 py-4">
@@ -68,20 +122,41 @@ export function Header({ userRole, userData, onLogout }: HeaderProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t("Change Password")}</DialogTitle>
+            <DialogDescription>
+              Enter your current password and a new password to update your account.
+            </DialogDescription>
           </DialogHeader>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              // 🔒 TODO: handle password change logic
-              setOpenPasswordDialog(false)
-            }}
-            className="space-y-4"
-          >
-            <Input type="password" placeholder={t("Current Password")} required />
-            <Input type="password" placeholder={t("New Password")} required />
-            <Input type="password" placeholder={t("Confirm New Password")} required />
-            <Button type="submit" className="w-full">
-              {t("Update Password")}
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <Input
+              type="password"
+              placeholder={t("Current Password")}
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              required
+            />
+            <Input
+              type="password"
+              placeholder={t("New Password")}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+            />
+            <Input
+              type="password"
+              placeholder={t("Confirm New Password")}
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+              required
+            />
+            <Button type="submit" className="w-full" disabled={isChangingPassword}>
+              {isChangingPassword ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {t("Update Password")}...
+                </>
+              ) : (
+                "Update Password"
+              )}
             </Button>
           </form>
         </DialogContent>

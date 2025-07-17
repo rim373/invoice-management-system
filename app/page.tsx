@@ -65,119 +65,52 @@ interface Invoice {
   notes?: string
 }
 
-const getStorageKeys = (userRole: "user" | "admin", userEmail: string) => ({
-  INVOICES: `client_facturation_invoices_${userRole}_${userEmail}`,
-  CLIENTS: `client_facturation_clients_${userRole}`,
-})
-
 export default function Home() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const rawPage = searchParams.get("page")
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const currentPage = isAuthenticated ? (rawPage || "home") : "home"
   const [userRole, setUserRole] = useState<"user" | "admin">("admin")
   const [userData, setUserData] = useState<any>(null)
+  const [currentPage, setCurrentPage] = useState("home")
   const [clientsData, setClientsData] = useState<Client[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isDataLoaded, setIsDataLoaded] = useState(false)
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
+  const [prefilledClient, setPrefilledClient] = useState<Client | null>(null)
+  const [journalSearchTerm, setJournalSearchTerm] = useState("")
 
-  // Load data from localStorage on component mount
+  // Load data from backend on authentication
   useEffect(() => {
-
-    if (!isAuthenticated && new URLSearchParams(window.location.search).get("page")) {
-    router.replace("/")
-    return        // stop the rest of the effect
-  }
-    
     if (!isAuthenticated || !userData) return
 
-    const loadStoredData = () => {
+    const loadData = async () => {
       try {
-        console.log(`Loading stored data for ${userRole}: ${userData.email}`)
+        console.log(`Loading data for ${userRole}: ${userData.email}`)
 
-        const storageKeys = getStorageKeys(userRole, userData.email)
+        // Load invoices from backend
+        const invoicesResponse = await fetch("/api/invoices")
+        const invoicesResult = await invoicesResponse.json()
 
-        // Load invoices
-        const storedInvoices = localStorage.getItem(storageKeys.INVOICES)
-        if (storedInvoices) {
-          const parsedInvoices = JSON.parse(storedInvoices)
-          setInvoices(parsedInvoices)
+        if (invoicesResult.success) {
+          setInvoices(invoicesResult.data)
+          console.log(`Loaded ${invoicesResult.data.length} invoices`)
         } else {
+          console.log("Failed to load invoices:", invoicesResult.error)
           setInvoices([])
         }
 
-        // Load clients (user only)
+        // Load contacts for users (admin manages users, not contacts)
         if (userRole === "user") {
-          const storedClients = localStorage.getItem(storageKeys.CLIENTS)
-          if (storedClients) {
-            const parsedClients = JSON.parse(storedClients)
-            setClientsData(parsedClients)
+          const contactsResponse = await fetch("/api/contacts")
+          const contactsResult = await contactsResponse.json()
+
+          if (contactsResult.success) {
+            setClientsData(contactsResult.data)
+            console.log(`Loaded ${contactsResult.data.length} contacts`)
           } else {
-            const defaultClients: Client[] = [
-              {
-                id: "CLT-001",
-                name: "John Smith",
-                email: "john.smith@email.com",
-                phone: "+1 (555) 123-4567",
-                company: "Tech Solutions Inc",
-                status: "Active",
-                projects: 3,
-                lastActivity: "2 days ago",
-              },
-              {
-                id: "CLT-002",
-                name: "Sarah Johnson",
-                email: "sarah.j@company.com",
-                phone: "+1 (555) 234-5678",
-                company: "Marketing Pro",
-                status: "Active",
-                projects: 2,
-                lastActivity: "1 week ago",
-              },
-              {
-                id: "CLT-003",
-                name: "Michael Brown",
-                email: "m.brown@business.com",
-                phone: "+1 (555) 345-6789",
-                company: "Digital Dynamics",
-                status: "Pending",
-                projects: 1,
-                lastActivity: "3 days ago",
-              },
-              {
-                id: "CLT-004",
-                name: "Emily Davis",
-                email: "emily@startup.io",
-                phone: "+1 (555) 456-7890",
-                company: "INVERNI BW",
-                status: "Active",
-                projects: 5,
-                lastActivity: "Today",
-              },
-              {
-                id: "CLT-005",
-                name: "Robert Wilson",
-                email: "r.wilson@corp.com",
-                phone: "+1 (555) 567-8901",
-                company: "EVBALT Corp",
-                status: "Inactive",
-                projects: 1,
-                lastActivity: "2 months ago",
-              },
-              {
-                id: "CLT-006",
-                name: "Lisa Anderson",
-                email: "lisa@agency.com",
-                phone: "+1 (555) 678-9012",
-                company: "STATUE TEMPUR",
-                status: "Active",
-                projects: 4,
-                lastActivity: "5 days ago",
-              },
-            ]
-            setClientsData(defaultClients)
-            localStorage.setItem(storageKeys.CLIENTS, JSON.stringify(defaultClients))
+            console.log("Failed to load contacts:", contactsResult.error)
+            setClientsData([])
           }
         } else {
           setClientsData([])
@@ -185,47 +118,26 @@ export default function Home() {
 
         setIsDataLoaded(true)
       } catch (error) {
-        console.error("Error loading stored data:", error)
+        console.log("Error loading data:", error)
         setInvoices([])
+        setClientsData([])
         setIsDataLoaded(true)
       }
     }
 
-    loadStoredData()
+    loadData()
   }, [isAuthenticated, userData, userRole])
 
-  // Save invoices to localStorage
-  useEffect(() => {
-    if (isDataLoaded && isAuthenticated && userData) {
-      try {
-        const storageKeys = getStorageKeys(userRole, userData.email)
-        localStorage.setItem(storageKeys.INVOICES, JSON.stringify(invoices))
-      } catch (error) {
-        console.error("Error saving invoices to localStorage:", error)
-      }
-    }
-  }, [invoices, isDataLoaded, isAuthenticated, userData, userRole])
-
-  // Save clients to localStorage
-  useEffect(() => {
-    if (clientsData.length > 0 && userRole === "user" && userData) {
-      try {
-        const storageKeys = getStorageKeys(userRole, userData.email)
-        localStorage.setItem(storageKeys.CLIENTS, JSON.stringify(clientsData))
-      } catch (error) {
-        console.error("Error saving clients to localStorage:", error)
-      }
-    }
-  }, [clientsData, userRole, userData])
-
   const handleLogin = (role: "user" | "admin", data: any) => {
+    console.log("Login successful, setting user data:", role, data.email)
     setUserRole(role)
     setUserData(data)
     setIsAuthenticated(true)
-    router.push("/?page=home")
+    setCurrentPage("home")
   }
 
   const handleLogout = () => {
+    console.log("Logging out user")
     setIsAuthenticated(false)
     setUserRole("admin")
     setUserData(null)
@@ -299,31 +211,44 @@ export default function Home() {
         if (userRole === "user") {
           return (
             <ClientsPage
-              clients={clientsData}
-              onClientUpdate={handleClientUpdate}
-              onClientDelete={handleClientDelete}
+              userEmail={userData?.email}
+              userRole={userRole}
+              onCreateInvoice={handleCreateInvoiceForClient}
+              onViewInvoices={handleViewClientInvoices}
             />
           )
         } else {
           router.push("/?page=home")
-          return  <AdminDashboard />
+          return <AdminDashboard />
         }
       case "facture":
-        return <FacturePage clients={userRole === "user" ? clientsData : []} onInvoiceCreate={handleInvoiceCreate} />
+        return (
+          <FacturePage
+            clients={userRole === "user" ? clientsData : []}
+            onInvoiceCreate={handleInvoiceCreate}
+            onInvoiceUpdate={handleInvoiceUpdate}
+            editInvoice={editingInvoice}
+            prefilledClient={prefilledClient}
+            userEmail={userData?.email}
+            userRole={userRole}
+          />
+        )
       case "journal":
         return (
           <JournalPage
             invoices={invoices}
-            onInvoiceUpdate={handleInvoiceUpdate}
+            onInvoiceUpdate={setInvoices}
             onInvoiceDelete={handleInvoiceDelete}
+            onInvoiceEdit={handleInvoiceEdit}
             userRole={userRole}
             userData={userData}
+            searchTerm={journalSearchTerm}
           />
         )
       case "stock":
-        return <StockPage userRole={"user"} />  
+        return <StockPage userRole={userRole} />
       case "settings":
-        return <SettingsPage userRole={userRole} />
+        return <SettingsPage userRole={userRole} userEmail={userData?.email} />
       case "help":
         return (
           <div className="text-center py-12">

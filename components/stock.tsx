@@ -1,6 +1,6 @@
 "use client"
 import { useTranslations } from "next-intl"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,91 +27,17 @@ import {
   Edit,
   Trash2,
   Eye,
+  Currency,
   ShoppingCart,
   Filter,
-  Currency,
+  Loader2,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
 
-// Initial stock data
-const initialStockItems = [
-  {
-    id: 1,
-    name: "MacBook Pro 16",
-    myproduct:true,
-    quantity: 25,
-    minStock: 10,
-    price: 2499.99,
-    currency: "EUR",
-    source: "entreprise x",
-    description: "High-performance laptop for professionals",
-  },
-  {
-    id: 2,
-    name: "Ergonomic Office Chair",
-    myproduct:true,
-    quantity: 5,
-    minStock: 15,
-    price: 299.99,
-    currency: "EUR",
-    supplier: "Herman Miller",
-    description: "Comfortable office chair with lumbar support",
-
-  },
-  {
-    id: 3,
-    name: "Wireless Mouse",
-    myproduct:true,
-    quantity: 0,
-    minStock: 20,
-    price: 99.99,
-    currency: "EUR",
-    supplier: "Logitech",
-    description: "Precision wireless mouse",
-
-  },
-  {
-    id: 4,
-    name: "iPhone 15 Pro",
-    myproduct:true,
-    quantity: 45,
-    minStock: 20,
-    price: 999.99,
-    currency: "EUR",
-    supplier: "Apple Inc.",
-    description: "Latest iPhone with advanced features",
-
-  },
-  {
-    id: 5,
-    name: "Standing Desk",
-    myproduct:false,
-    quantity: 8,
-    minStock: 10,
-    price: 799.99,
-    currency: "EUR",
-    supplier: "Uplift Desk",
-    description: "Adjustable height standing desk",
-
-  },
-  {
-    id: 6,
-    name: "AirPods Pro",
-    myproduct:true,
-    quantity: 32,
-    minStock: 25,
-    price: 249.99,
-    currency: "EUR",
-    supplier: "Apple Inc.",
-    description: "Noise-cancelling wireless earbuds",
-
-  },
-]
-
 interface StockItem {
-  id: number
+  id: string
   name: string
   myproduct: boolean
   quantity: number
@@ -121,14 +47,16 @@ interface StockItem {
   supplier?: string
   description: string
 
+
 }
 
-export function StockPage() {
-  //translation
-  const  t  = useTranslations("stock")
 
+
+export function StockPage() {
+  const  t  = useTranslations("stock")
   const [productOriginFilter, setProductOriginFilter] = useState<"all" | "my" | "imported">("all")
-  const [stockItems, setStockItems] = useState<StockItem[]>(initialStockItems)
+  const [stockItems, setStockItems] = useState<StockItem[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -137,29 +65,53 @@ export function StockPage() {
   const [editingItem, setEditingItem] = useState<StockItem | null>(null)
   const [restockingItem, setRestockingItem] = useState<StockItem | null>(null)
   const [restockQuantity, setRestockQuantity] = useState("")
+  const [submitting, setSubmitting] = useState(false)
   const { toast } = useToast()
 
   // Form state for adding/editing products
   const [formData, setFormData] = useState({
     name: "",
-    myproduct: false,
+    myproduct: true,
     quantity: "",
     minStock: "",
     price: "",
-    currency: "",
+    currency: "EUR",
     supplier: "",
     description: "",
   })
 
-  // Get next available ID
-  const getNextId = () => {
-    return Math.max(...stockItems.map((item) => item.id)) + 1
+  // Fetch stock items from API
+  const fetchStockItems = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/stock")
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch stock items")
+      }
+
+      const data = await response.json()
+      setStockItems(data.stockItems || [])
+    } catch (error) {
+      console.error("Error fetching stock items:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load stock items",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
+
+  // Load stock items on component mount
+  useEffect(() => {
+    fetchStockItems()
+  }, [])
 
   // Filter items based on search and status
   const filteredItems = stockItems.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
     let matchesStatus = true
     if (selectedStatus === "in-stock") {
       matchesStatus = item.quantity > item.minStock
@@ -171,35 +123,34 @@ export function StockPage() {
 
     let matchesOrigin = true
     if (productOriginFilter === "my") {
-        matchesOrigin = item.myproduct === true
+      matchesOrigin = item.myproduct === true
     } else if (productOriginFilter === "imported") {
-        matchesOrigin = item.myproduct === false
+      matchesOrigin = item.myproduct === false
     }
 
-    return matchesSearch && matchesStatus&& matchesOrigin
+    return matchesSearch && matchesStatus && matchesOrigin
   })
 
   const totalItems = stockItems.length
   const lowStockItems = stockItems.filter((item) => item.quantity <= item.minStock && item.quantity > 0).length
   const outOfStockItems = stockItems.filter((item) => item.quantity === 0).length
-  const totalValue = stockItems.reduce((sum, item) => sum + item.quantity * item.price, 0)
 
   // Reset form
   const resetForm = () => {
     setFormData({
       name: "",
-      myproduct:true,
+      myproduct: true,
       quantity: "",
       minStock: "",
       price: "",
-      currency: "",
+      currency: "EUR",
       supplier: "",
       description: "",
     })
   }
 
   // Add new product
-  const handleAddProduct = () => {
+  const handleAddProduct = async () => {
     if (!formData.name || !formData.quantity || !formData.price) {
       toast({
         title: "Error",
@@ -209,30 +160,42 @@ export function StockPage() {
       return
     }
 
-    const newItem: StockItem = {
-      id: getNextId(),
-      name: formData.name,
-      myproduct: formData.myproduct,
-      quantity: Number.parseInt(formData.quantity),
-      minStock: Number.parseInt(formData.minStock) || 0,
-      price: Number.parseFloat(formData.price),
-      currency: formData.currency,
-      supplier: formData.supplier,
-      description: formData.description,
-      
-    }
+    try {
+      setSubmitting(true)
+      const response = await fetch("/api/stock", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
 
-    setStockItems([...stockItems, newItem])
-    resetForm()
-    setIsAddModalOpen(false)
-    toast({
-      title: "Success",
-      description: "Product added successfully",
-    })
+      if (!response.ok) {
+        throw new Error("Failed to add product")
+      }
+
+      const data = await response.json()
+      setStockItems([data.stockItem, ...stockItems])
+      resetForm()
+      setIsAddModalOpen(false)
+      toast({
+        title: "Success",
+        description: "Product added successfully",
+      })
+    } catch (error) {
+      console.error("Error adding product:", error)
+      toast({
+        title: "Error",
+        description: "Failed to add product",
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   // Edit product
-  const handleEditProduct = () => {
+  const handleEditProduct = async () => {
     if (!editingItem || !formData.name || !formData.quantity || !formData.price) {
       toast({
         title: "Error",
@@ -242,34 +205,43 @@ export function StockPage() {
       return
     }
 
-    const updatedItems = stockItems.map((item) =>
-      item.id === editingItem.id
-        ? {
-            ...item,
-            name: formData.name,
-            myproduct: formData.myproduct,
-            quantity: Number.parseInt(formData.quantity),
-            minStock: Number.parseInt(formData.minStock) || 0,
-            price: Number.parseFloat(formData.price),
-            currency: formData.currency,
-            supplier: formData.supplier,
-            description: formData.description,
-          }
-        : item,
-    )
+    try {
+      setSubmitting(true)
+      const response = await fetch(`/api/stock/${editingItem.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
 
-    setStockItems(updatedItems)
-    resetForm()
-    setIsEditModalOpen(false)
-    setEditingItem(null)
-    toast({
-      title: "Success",
-      description: "Product updated successfully",
-    })
+      if (!response.ok) {
+        throw new Error("Failed to update product")
+      }
+
+      const data = await response.json()
+      setStockItems(stockItems.map((item) => (item.id === editingItem.id ? data.stockItem : item)))
+      resetForm()
+      setIsEditModalOpen(false)
+      setEditingItem(null)
+      toast({
+        title: "Success",
+        description: "Product updated successfully",
+      })
+    } catch (error) {
+      console.error("Error updating product:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update product",
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   // Restock product
-  const handleRestock = () => {
+  const handleRestock = async () => {
     if (!restockingItem || !restockQuantity || Number.parseInt(restockQuantity) <= 0) {
       toast({
         title: "Error",
@@ -279,27 +251,65 @@ export function StockPage() {
       return
     }
 
-    const updatedItems = stockItems.map((item) =>
-      item.id === restockingItem.id ? { ...item, quantity: item.quantity + Number.parseInt(restockQuantity) } : item,
-    )
+    try {
+      setSubmitting(true)
+      const response = await fetch(`/api/stock/${restockingItem.id}/restock`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ quantity: restockQuantity }),
+      })
 
-    setStockItems(updatedItems)
-    setRestockQuantity("")
-    setIsRestockModalOpen(false)
-    setRestockingItem(null)
-    toast({
-      title: "Success",
-      description: `Added ${restockQuantity} units to ${restockingItem.name}`,
-    })
+      if (!response.ok) {
+        throw new Error("Failed to restock product")
+      }
+
+      const data = await response.json()
+      setStockItems(stockItems.map((item) => (item.id === restockingItem.id ? data.stockItem : item)))
+      setRestockQuantity("")
+      setIsRestockModalOpen(false)
+      setRestockingItem(null)
+      toast({
+        title: "Success",
+        description: `Added ${restockQuantity} units to ${restockingItem.name}`,
+      })
+    } catch (error) {
+      console.error("Error restocking product:", error)
+      toast({
+        title: "Error",
+        description: "Failed to restock product",
+        variant: "destructive",
+      })
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   // Delete product
-  const handleDeleteProduct = (id: number) => {
-    setStockItems(stockItems.filter((item) => item.id !== id))
-    toast({
-      title: "Success",
-      description: "Product deleted successfully",
-    })
+  const handleDeleteProduct = async (id: string) => {
+    try {
+      const response = await fetch(`/api/stock/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to delete product")
+      }
+
+      setStockItems(stockItems.filter((item) => item.id !== id))
+      toast({
+        title: "Success",
+        description: "Product deleted successfully",
+      })
+    } catch (error) {
+      console.error("Error deleting product:", error)
+      toast({
+        title: "Error",
+        description: "Failed to delete product",
+        variant: "destructive",
+      })
+    }
   }
 
   // Open edit modal
@@ -311,8 +321,8 @@ export function StockPage() {
       quantity: item.quantity.toString(),
       minStock: item.minStock.toString(),
       price: item.price.toString(),
-      currency: item.currency, 
-      supplier: item.supplier ?? "", 
+      currency: item.currency,
+      supplier: item.supplier ?? "",
       description: item.description,
     })
     setIsEditModalOpen(true)
@@ -340,6 +350,17 @@ export function StockPage() {
     } else {
       return { badge: t("status.badge.good"), variant: "outline" as const }
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading stock items...</span>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -526,7 +547,6 @@ export function StockPage() {
               </div>
             </CardContent>
           </Card>
-
         </div>
 
         {/* Search & Filters */}

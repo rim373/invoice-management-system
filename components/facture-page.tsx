@@ -9,16 +9,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import {
-  FileText,
-  Plus,
-  Trash2,
-  Save,
-  CheckCircle,
-  Loader2,
-} from "lucide-react"
+import { FileText, Plus, Trash2, Save, CheckCircle, Loader2 } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-
+import { fetchSettings, type InvoiceSettings, defaultSettings } from "@/lib/settings" // Import defaultSettings
 
 interface InvoiceItem {
   id: string
@@ -98,55 +91,43 @@ interface Invoice {
 interface FacturePageProps {
   clients?: Client[]
   onInvoiceCreate?: (invoice: Invoice) => Promise<void>
+  editInvoice?: Invoice | null
+  prefilledClient?: Client | null
+  onInvoiceUpdate?: (invoice: Invoice) => Promise<void>
 }
 
-export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps) {
-  //i aded this 
-      const t = useTranslations("facturePage")
-      const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>({
-        invoiceNumber: true,
-        dueDate:true,
-        dueDateType: "custom", // "custom" ou "term"
-        dueDateDays: "30", // par défaut 30 jours
-        dueDateCustom: new Date().toISOString().split("T")[0],
-        currency: true,
-        discount: true,
-        tax: true,
-        notes: true,
-        invoiceNumberPrefix: "INV",
-        invoiceNumberStart: "001",
-        vatNumber: "",
-        taxAmount: "0",
-        taxMethod: "default",
-        currencyType: "EUR",
-        separator: "comma-dot",
-        signPlacement: "before",
-        decimals: "2",
-        discountType: "percentage",
-        discountAmount: "0",
-        defaultNotes: "",
-        saveLocation: "",
-        template: "",
-        dateFormat: "dd/MM/yyyy",
-      })
+export function FacturePage({
+  clients = [],
+  onInvoiceCreate,
+  editInvoice,
+  prefilledClient,
+  onInvoiceUpdate,
+}: FacturePageProps) {
+  const t = useTranslations("facturePage")
+  // State for invoice settings, initialized with default values
+  const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>(defaultSettings.invoice_settings)
+
+  // State for invoice parameters (switches), initialized from invoiceSettings
   const [invoiceParameters, setInvoiceParameters] = useState({
-  invoiceNumber: true,
-  dueDate: true,
-  currency: true,
-  discount: true,
-  tax: true,
-  notes: true,
-})
+    invoiceNumber: defaultSettings.invoice_settings.invoiceNumber,
+    dueDate: defaultSettings.invoice_settings.dueDate,
+    currency: defaultSettings.invoice_settings.currency,
+    discount: defaultSettings.invoice_settings.discount,
+    tax: defaultSettings.invoice_settings.tax,
+    notes: defaultSettings.invoice_settings.notes,
+  })
 
   const [newClient, setNewClient] = useState({
-  name: "",
-  company: "",
-  email: "",
-  phone: "",
-})
+    name: "",
+    company: "",
+    email: "",
+    phone: "",
+  })
+
   const [activeTab, setActiveTab] = useState<"facture" | "avoir">("facture")
   const [selectedClient, setSelectedClient] = useState<string>("")
   const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([{ id: "1", description: "", price: 0, quantity: 1 }])
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
 
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -156,14 +137,97 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
   const [invoiceNumber, setInvoiceNumber] = useState("")
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0])
   const [dueDate, setDueDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
-  const [currency] = useState("EUR")
-  
+  const [currency] = useState("EUR") // This seems hardcoded, but invoiceSettings.currencyType is used for display
 
-  // Default clients if none provided (fallback)
-  // Use provided clients or empty array as fallback
+  // Load settings on component mount
+  useEffect(() => {
+    loadSettings()
+  }, [])
+
+  // Load invoice data if editing
+  useEffect(() => {
+    if (editInvoice) {
+      loadInvoiceForEdit(editInvoice)
+    }
+  }, [editInvoice])
+
+  // Handle prefilled client
+  useEffect(() => {
+    if (prefilledClient) {
+      setActiveTab("facture")
+      setSelectedClient(prefilledClient.id)
+      // Clear any editing invoice when using prefilled client
+      setEditingInvoice(null)
+    }
+  }, [prefilledClient])
+
+  const loadSettings = async () => {
+    try {
+      const result = await fetchSettings()
+      if (result.success && result.settings) {
+        const fetchedInvoiceSettings = result.settings.invoice_settings
+        setInvoiceSettings(fetchedInvoiceSettings)
+        // Update invoiceParameters based on fetched settings
+        setInvoiceParameters({
+          invoiceNumber: fetchedInvoiceSettings.invoiceNumber,
+          dueDate: fetchedInvoiceSettings.dueDate,
+          currency: fetchedInvoiceSettings.currency,
+          discount: fetchedInvoiceSettings.discount,
+          tax: fetchedInvoiceSettings.tax,
+          notes: fetchedInvoiceSettings.notes,
+        })
+        // Set initial due date based on fetched settings
+        if (fetchedInvoiceSettings.dueDate) {
+          if (fetchedInvoiceSettings.dueDateType === "custom") {
+            setDueDate(fetchedInvoiceSettings.dueDateCustom)
+          } else if (fetchedInvoiceSettings.dueDateType === "term") {
+            const days = Number.parseInt(fetchedInvoiceSettings.dueDateDays, 10)
+            const newDueDate = new Date()
+            newDueDate.setDate(newDueDate.getDate() + days)
+            setDueDate(newDueDate.toISOString().split("T")[0])
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error loading settings:", error)
+    }
+  }
+
+  const loadInvoiceForEdit = (invoice: Invoice) => {
+    // Set form data from invoice
+    setInvoiceNumber(invoice.number)
+    setInvoiceDate(invoice.createdDate)
+    setDueDate(invoice.dueDate)
+
+    // Find and select the client
+    const client = clients.find((c) => c.id === invoice.clientId)
+    if (client) {
+      setSelectedClient(client.id)
+      setActiveTab("facture")
+    } else {
+      // If client not found, use new client form
+      setNewClient({
+        name: invoice.clientName,
+        company: invoice.clientCompany,
+        email: invoice.clientEmail,
+        phone: invoice.clientPhone,
+      })
+      setActiveTab("avoir")
+    }
+
+    // Set invoice items
+    const items = invoice.items.map((item) => ({
+      id: item.id,
+      description: item.description,
+      price: item.unitPrice,
+      quantity: item.quantity,
+    }))
+    setInvoiceItems(items)
+    setEditingInvoice(invoice)
+  }
+
   const availableClients = clients && clients.length > 0 ? clients : []
 
-  // Add useEffect to log when clients change:
   useEffect(() => {
     console.log("FacturePage received clients:", clients)
   }, [clients])
@@ -189,6 +253,9 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
   }
 
   const getSelectedClientData = () => {
+    if (prefilledClient && selectedClient === prefilledClient.id) {
+      return prefilledClient
+    }
     return availableClients.find((client) => client.id === selectedClient)
   }
   const calculateSubtotal = () => {
@@ -198,7 +265,11 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
     const { discountType, discountAmount } = invoiceSettings
     const subtotal = calculateSubtotal()
 
-    const parsedAmount = parseFloat(discountAmount || "0")
+  const calculateDiscount = () => {
+    const { discountType, discountAmount } = invoiceSettings
+    const subtotal = calculateSubtotal()
+
+    const parsedAmount = Number.parseFloat(discountAmount || "0")
 
     if (parsedAmount <= 0 || !invoiceParameters.discount) {
       return 0
@@ -214,8 +285,10 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
 
     return 0
   }
+
   const calculateTax = () => {
-    const rate = parseFloat(invoiceSettings.taxAmount || "0")
+    const rate = Number.parseFloat(invoiceSettings.taxAmount || "0")
+    if (!invoiceParameters.tax) return 0 // Only apply tax if enabled by parameter
     return (calculateSubtotal() * rate) / 100
   }
 
@@ -244,7 +317,6 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
         errors.client = "Please select a client"
       }
     } else {
-      // We're using the "new client" form — validate its fields
       if (!newClient.name || !newClient.company || !newClient.email || !newClient.phone) {
         errors.client = "Please fill all new client fields"
       }
@@ -271,8 +343,11 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
 
 
   const generateInvoiceNumber = () => {
-    if (invoiceNumber) return invoiceNumber
-    return `INV-${Date.now()}`
+    if (invoiceParameters.invoiceNumber && invoiceNumber) return invoiceNumber // Use user-entered if available and enabled
+    if (invoiceParameters.invoiceNumber) {
+      return `${invoiceSettings.invoiceNumberPrefix}-${invoiceSettings.invoiceNumberStart}`
+    }
+    return `INV-${Date.now()}` // Fallback if invoice number is disabled
   }
 
   const handleSaveInvoice = useCallback(async () => {
@@ -281,7 +356,6 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
     setSubmitSuccess(false)
 
     try {
-      // Validation du formulaire
       if (!validateForm()) {
         throw new Error("Form validation failed")
       }
@@ -294,7 +368,6 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
           throw new Error("Client data not found")
         }
       } else {
-        // Validate new client input
         const { name, company, email, phone } = newClient
         if (!name || !company || !email || !phone) {
           throw new Error("All new client fields must be filled")
@@ -315,24 +388,26 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
       const finalInvoiceNumber = generateInvoiceNumber()
       const subtotal = calculateSubtotal()
       const tax = calculateTax()
+      const discount = calculateDiscount()
       const total = calculateTotal()
 
-      const newInvoice = {
-        id: `INV-${Date.now()}`,
+      const invoiceData = {
+        id: editInvoice?.id || `INV-${Date.now()}`,
         number: finalInvoiceNumber,
         clientName: clientData.name,
         clientId: clientData.id,
         clientCompany: clientData.company,
         clientEmail: clientData.email,
         clientPhone: clientData.phone,
-        status: "pending" as const,
+        status: (editInvoice?.status || "pending") as const,
         totalAmount: total,
         subtotalAmount: subtotal,
         taxAmount: tax,
-        paidAmount: 0,
-        currency: currency,
+        discountAmount: discount,
+        paidAmount: editInvoice?.paidAmount || 0,
+        currency: invoiceSettings.currencyType, // Use currency from settings
         createdDate: invoiceDate,
-        dueDate: dueDate,
+        dueDate: invoiceParameters.dueDate ? dueDate : "", // Only include due date if enabled
         items: invoiceItems.map((item) => ({
           id: item.id,
           description: item.description,
@@ -340,36 +415,58 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
           unitPrice: item.price,
           totalPrice: item.price * item.quantity,
         })),
-        paymentHistory: [],
+        paymentHistory: editInvoice?.paymentHistory || [],
       }
 
-      // Appel API classique au lieu de Server Action
-      if (onInvoiceCreate) {
-        await onInvoiceCreate(newInvoice)
+      if (editInvoice && onInvoiceUpdate) {
+        await onInvoiceUpdate(invoiceData)
+      } else if (onInvoiceCreate) {
+        await onInvoiceCreate(invoiceData)
       }
 
       setSubmitSuccess(true)
 
-      // Reset form
+      // Reset form after delay
       setTimeout(() => {
-        setSelectedClient("")
-        setInvoiceItems([{ id: "1", description: "", price: 0, quantity: 1 }])
-        setInvoiceNumber("")
-        setInvoiceDate(new Date().toISOString().split("T")[0])
-        setDueDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
-        setSubmitSuccess(false)
-        // 🔁 Reset new client fields
-        setNewClient({ name: "", company: "", email: "", phone: "" })
+        if (!editInvoice) {
+          setSelectedClient("")
+          setInvoiceItems([{ id: "1", description: "", price: 0, quantity: 1 }])
+          setInvoiceNumber("")
+          setInvoiceDate(new Date().toISOString().split("T")[0])
+          // Reset due date based on current settings
+          if (invoiceSettings.dueDateType === "custom") {
+            setDueDate(invoiceSettings.dueDateCustom)
+          } else {
+            const days = Number.parseInt(invoiceSettings.dueDateDays, 10)
+            const newDueDate = new Date()
+            newDueDate.setDate(newDueDate.getDate() + days)
+            setDueDate(newDueDate.toISOString().split("T")[0])
+          }
+          setSubmitSuccess(false)
+          setNewClient({ name: "", company: "", email: "", phone: "" })
+        }
       }, 2000)
     } catch (error) {
-      console.error("Invoice creation failed:", error)
+      console.error("Invoice operation failed:", error)
       setFormErrors({
-        submit: error instanceof Error ? error.message : "Failed to create invoice",
+        submit: error instanceof Error ? error.message : "Failed to save invoice",
       })
     } finally {
       setIsSubmitting(false)
     }
-  }, [selectedClient, invoiceItems, invoiceDate, dueDate, currency, onInvoiceCreate])
+  }, [
+    selectedClient,
+    invoiceItems,
+    invoiceDate,
+    dueDate,
+    invoiceSettings, // Added invoiceSettings to dependencies
+    invoiceParameters, // Added invoiceParameters to dependencies
+    onInvoiceCreate,
+    onInvoiceUpdate,
+    editInvoice,
+    prefilledClient,
+    newClient, // Added newClient to dependencies
+  ])
 
   return (
     <div className="space-y-6">
@@ -380,8 +477,16 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
             <FileText className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{t("Create New Invoice")}</h1>
-            <p className="text-gray-600">{t("Generate professional invoices for your clients")}</p>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {editInvoice ? "Modify Invoice" : t("Create New Invoice")}
+            </h1>
+            <p className="text-gray-600">
+              {editInvoice
+                ? "Update invoice details"
+                : prefilledClient
+                  ? `Creating invoice for ${prefilledClient.name}`
+                  : t("Generate professional invoices for your clients")}
+            </p>
           </div>
         </div>
       </div>
@@ -408,8 +513,6 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
             {t("New Client")}
           </Button>
         </div>
-
-        
       </div>
 
       {/* Error/Success Messages */}
@@ -444,7 +547,9 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="font-semibold text-green-800">{t("Facture created successfully!")}</span>
+              <span className="font-semibold text-green-800">
+                {t("invoice")} {editInvoice ? "updated" : "created"} {t("sucess")}!
+              </span>
             </div>
             <p className="text-green-700 text-sm mt-1">{t("Your facture has been saved to the Journal")}.</p>
           </CardContent>
@@ -683,8 +788,10 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
           <CardTitle>{t("Client Information")}</CardTitle>
           {activeTab === "facture" && (
             <p className="text-sm text-gray-600">
-              {t("Available clients")}: {availableClients.length}
-              {availableClients.length === 0 && " - Go to Clients page to add clients"}
+              {prefilledClient
+                ? `Selected: ${prefilledClient.name} - ${prefilledClient.company}`
+                : `${t("Available clients")}: ${availableClients.length}`}
+              {availableClients.length === 0 && !prefilledClient && " - Go to Clients page to add clients"}
             </p>
           )}
         </CardHeader>
@@ -697,24 +804,38 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
                 </Label>
                 <Select value={selectedClient} onValueChange={setSelectedClient}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t("Choose a client")} />
+                    <SelectValue placeholder={t("Choose a client")}  />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableClients.length === 0 ? (
+                    {prefilledClient && (
+                      <SelectItem key={prefilledClient.id} value={prefilledClient.id}>
+                        <div className="flex items-center justify-between w-full">
+                          <span>
+                            {prefilledClient.name} - {prefilledClient.company}
+                          </span>
+                          <span className={`text-xs ml-2 ${getStatusColor(prefilledClient.status)}`}>
+                            {prefilledClient.status}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    )}
+                    {availableClients.length === 0 && !prefilledClient ? (
                       <SelectItem value="no-clients" disabled>
                         {t("No clients available")} - {t("Add clients first")}
                       </SelectItem>
                     ) : (
-                      availableClients.map((client) => (
-                        <SelectItem key={client.id} value={client.id}>
-                          <div className="flex items-center justify-between w-full">
-                            <span>
-                              {client.name} - {client.company}
-                            </span>
-                            <span className={`text-xs ml-2 ${getStatusColor(client.status)}`}>{client.status}</span>
-                          </div>
-                        </SelectItem>
-                      ))
+                      availableClients
+                        .filter((client) => !prefilledClient || client.id !== prefilledClient.id)
+                        .map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            <div className="flex items-center justify-between w-full">
+                              <span>
+                                {client.name} - {client.company}
+                              </span>
+                              <span className={`text-xs ml-2 ${getStatusColor(client.status)}`}>{client.status}</span>
+                            </div>
+                          </SelectItem>
+                        ))
                     )}
                   </SelectContent>
                 </Select>
@@ -838,7 +959,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
                 </div>
                 <div className="col-span-1 flex items-center justify-between">
                   <span className="font-medium text-gray-900">
-                    {currency} {(item.price * item.quantity).toFixed(2)}
+                    {invoiceSettings.currencyType} {(item.price * item.quantity).toFixed(2)}
                   </span>
                 </div>
                 <div className="col-span-1 flex justify-end">
@@ -847,7 +968,7 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
                       variant="ghost"
                       size="icon"
                       onClick={() => removeInvoiceItem(item.id)}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 bg-transparent"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -873,26 +994,30 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">{t("Subtotal")}:</span>
                   <span className="font-medium">
-                    {currency} {calculateSubtotal().toFixed(2)}
+                    {invoiceSettings.currencyType} {calculateSubtotal().toFixed(2)}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">{t("Tax")} ({invoiceSettings.taxAmount}%):</span>
-                  <span className="font-medium">
-                    {currency} {calculateTax().toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">{t("Discount")}:</span>
-                  <span className="font-medium text-red-600">
-                    - {currency} {calculateDiscount().toFixed(2)}
-                  </span>
-                </div>
+                {invoiceParameters.tax && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">{t("Tax")}({invoiceSettings.taxAmount}%):</span>
+                    <span className="font-medium">
+                      {invoiceSettings.currencyType} {calculateTax().toFixed(2)}
+                    </span>
+                  </div>
+                )}
+                {invoiceParameters.discount && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">{t("Discount")}:</span>
+                    <span className="font-medium text-red-600">
+                      - {invoiceSettings.currencyType} {calculateDiscount().toFixed(2)}
+                    </span>
+                  </div>
+                )}
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
                   <span>{t("Total")}:</span>
                   <span className="text-orange-600">
-                    {currency} {calculateTotal().toFixed(2)}
+                    {invoiceSettings.currencyType} {calculateTotal().toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -911,16 +1036,16 @@ export function FacturePage({ clients = [], onInvoiceCreate }: FacturePageProps)
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              {t("Creating")}...
+              {editInvoice ? t("updating"): t("Creating")}
             </>
           ) : (
             <>
               <Save className="w-4 h-4 mr-2" />
-              {t("Save & Preview")}
+              {editInvoice ? t("updated") : t("Save & Preview")}
             </>
           )}
         </Button>
       </div>
     </div>
-  )
-}
+  );
+}}

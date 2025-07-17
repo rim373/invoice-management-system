@@ -735,9 +735,9 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
         heightLeft -= pdfHeight - 20
       }
 
-      // Generate filename 
-      const invoiceNumber = getInvoiceNumber(invoice)
-      const filename = `invoice-${invoice.clientCompany}-${invoiceNumber}.pdf`
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+      const filename = `invoice-${invoice.number}-${timestamp}.pdf`
 
       // Note: In a browser environment, we can't directly save to a specific local folder
       // The file will be downloaded to the user's default download folder
