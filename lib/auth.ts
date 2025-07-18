@@ -1,10 +1,12 @@
 // Client-side authentication utilities
 const ACTIVITY_CHECK_INTERVAL = 60000 // 1 minute
 const INACTIVITY_WARNING_TIME = 25 * 60 * 1000 // 25 minutes
-const INACTIVITY_LOGOUT_TIME = 30 * 60 * 1000 // 30 minutes
+const INACTIVITY_LOGOUT_TIME = 2 * 60 * 60 * 1000 // 2 hours in milliseconds
+const SESSION_CHECK_INTERVAL = 10 * 1000 // 10 seconds
 
 let activityTimer: NodeJS.Timeout | null = null
 let warningTimer: NodeJS.Timeout | null = null
+let sessionCheckTimer: NodeJS.Timeout | null = null // New timer for periodic session checks
 let lastActivity = Date.now()
 
 // Track user activity
@@ -13,25 +15,31 @@ function updateActivity() {
 }
 
 // Check for inactivity
-function checkInactivity() {
+function checkInactivity(onWarning: () => void, onLogout: () => void) {
   const now = Date.now()
   const timeSinceActivity = now - lastActivity
 
   if (timeSinceActivity >= INACTIVITY_LOGOUT_TIME) {
-    // Auto logout after 30 minutes
-    logoutUser()
+    // Auto logout after 2 hours
+    onLogout()
     return
   }
 
-  if (timeSinceActivity >= INACTIVITY_WARNING_TIME) {
+  if (timeSinceActivity >= INACTIVITY_WARNING_TIME && !warningTimer) {
     // Show warning at 25 minutes
-    const remainingTime = Math.ceil((INACTIVITY_LOGOUT_TIME - timeSinceActivity) / 1000 / 60)
-    console.warn(`Session will expire in ${remainingTime} minutes due to inactivity`)
+    onWarning()
+    warningTimer = setTimeout(() => {
+      warningTimer = null // Clear warning after it's shown
+    }, INACTIVITY_LOGOUT_TIME - INACTIVITY_WARNING_TIME) // Don't show again until next cycle
   }
 }
 
 // Start activity tracking
-export function startActivityTracking() {
+export function startActivityTracking(
+  onWarning: () => void,
+  onLogout: () => void,
+  onPeriodicCheck: () => void, // New callback for periodic session check
+) {
   // Track mouse, keyboard, and touch events
   const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"]
 
@@ -41,7 +49,11 @@ export function startActivityTracking() {
 
   // Start periodic inactivity checks
   if (activityTimer) clearInterval(activityTimer)
-  activityTimer = setInterval(checkInactivity, ACTIVITY_CHECK_INTERVAL)
+  activityTimer = setInterval(() => checkInactivity(onWarning, onLogout), ACTIVITY_CHECK_INTERVAL)
+
+  // Start periodic session validity checks
+  if (sessionCheckTimer) clearInterval(sessionCheckTimer)
+  sessionCheckTimer = setInterval(onPeriodicCheck, SESSION_CHECK_INTERVAL)
 }
 
 // Stop activity tracking
@@ -60,6 +72,11 @@ export function stopActivityTracking() {
   if (warningTimer) {
     clearTimeout(warningTimer)
     warningTimer = null
+  }
+
+  if (sessionCheckTimer) {
+    clearInterval(sessionCheckTimer)
+    sessionCheckTimer = null
   }
 }
 
@@ -85,7 +102,6 @@ export async function loginUser(email: string, password: string) {
 
     if (data.success) {
       console.log("Login successful for:", email)
-      startActivityTracking()
       return { success: true, user: data.user }
     }
 
@@ -122,6 +138,7 @@ export async function getCurrentUser() {
     const response = await fetch("/api/auth/me")
 
     if (!response.ok) {
+      console.log("getCurrentUser: API returned not ok", response.status)
       return null
     }
 
@@ -141,6 +158,7 @@ export async function refreshToken() {
     })
 
     if (!response.ok) {
+      console.log("refreshToken: API returned not ok", response.status)
       throw new Error("Token refresh failed")
     }
 
@@ -149,5 +167,38 @@ export async function refreshToken() {
   } catch (error) {
     console.log("Token refresh error:", error)
     return false
+  }
+}
+
+// New function to check authentication status and handle redirection
+export async function checkAuthStatus(
+  onAuthenticated: (user: any) => void,
+  onUnauthenticated: () => void,
+): Promise<any | null> {
+  try {
+    const user = await getCurrentUser()
+    if (user) {
+      onAuthenticated(user)
+      return user
+    } else {
+      // If access token is invalid, try to refresh
+      console.log("Access token invalid, attempting to refresh...")
+      const refreshSuccess = await refreshToken()
+      if (refreshSuccess) {
+        console.log("Token refreshed successfully, re-fetching user...")
+        const refreshedUser = await getCurrentUser()
+        if (refreshedUser) {
+          onAuthenticated(refreshedUser)
+          return refreshedUser
+        }
+      }
+      console.log("Refresh token invalid or expired, logging out.")
+      onUnauthenticated()
+      return null
+    }
+  } catch (error) {
+    console.error("Error during authentication status check:", error)
+    onUnauthenticated()
+    return null
   }
 }
