@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 // Company Settings Interface
 interface MySettings {
-  adress : string
+  adress: string
   image: string
   storageUrl: string
   name: string
@@ -24,7 +24,7 @@ interface MySettings {
 
 // Default Company Settings
 const MY_SETTINGS: MySettings = {
-  adress : "technopol el ghazela",
+  adress: "technopol el ghazela",
   image: "/placeholder.svg?height=80&width=200&text=Your+Company+Logo",
   storageUrl: "C:/Users/rimba/Downloads/invoices", // Local folder path for PDF storage
   name: "rim",
@@ -33,57 +33,14 @@ const MY_SETTINGS: MySettings = {
   phoneNumber: "+1 (555) 123-4567",
 }
 
-const exampleInvoice: Invoice = {
-  id: "inv-001",
-  number: "01",
-  clientName: "John Doe",
-  clientId: "client-123",
-  clientCompany: "Doe Consulting",
-  clientEmail: "john@doe.com",
-  clientPhone: "+123456789",
-  status: "pending",
-  totalAmount: 1100,
-  subtotalAmount: 1000,
-  taxAmount: 100,
-  taxRate: 10,
-  createdDate: "2025-07-01",
-  items: [
-    {
-      id: "item-1",
-      description: "Web development services",
-      quantity: 1,
-      unitPrice: 1000,
-      totalPrice: 1000,
-    },
-    {
-      id: "item-2",
-      description: "IOT",
-      quantity: 5,
-      unitPrice: 100,
-      totalPrice: 500,
-    },
-  ],
+// Removed exampleInvoice as it will now come from props
 
-  
-
-  // Fixed the logic - now using correct fields
-  discount: true,
-  tax: true,
-  notes: true,
-  dueDateType: "costum", // Using "costum" type
-  dueDateDays: "2025-09-01", // This is the actual due date for "costum"
-  dueDateCustom: "", // This would be used for "term" type
-  vatNumber: "VAT12345678",
-  taxMethod: "exclusive",
-  currencyType: "DT",
-  separator: ".",
-  signPlacement: "before",
-  decimals: "2",
-  discountType: "amount",
-  discountAmount: "20",
-  defaultNotes: "Thank you for your business.",
-  saveLocation: "local",
-  dateFormat: "US",
+interface PaymentHistory {
+  id: string
+  amount: number
+  date: string
+  method: string
+  note?: string
 }
 
 interface Invoice {
@@ -99,7 +56,10 @@ interface Invoice {
   subtotalAmount: number
   taxAmount: number
   taxRate: number
+  paidAmount: number
+  currency: string
   createdDate: string
+  dueDate: string
   items: Array<{
     id: string
     description: string
@@ -107,18 +67,17 @@ interface Invoice {
     unitPrice: number
     totalPrice: number
   }>
-  
-
+  paymentHistory: PaymentHistory[]
   // New optional settings fields
   discount?: boolean
   tax?: boolean
   notes?: boolean
-  dueDateType: string
-  dueDateDays: string
-  dueDateCustom: string
+  dueDateType?: string // Made optional as it might not always be present
+  dueDateDays?: string // Made optional
+  dueDateCustom?: string // Made optional
   vatNumber?: string
   taxMethod?: string
-  currencyType: string
+  currencyType?: string // Made optional
   separator?: string
   signPlacement?: string
   decimals?: string
@@ -148,10 +107,9 @@ const templates: InvoiceTemplate[] = [
   { id: "compact", name: "Compact", description: "Space-efficient" },
 ]
 
-export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
-  const invoice = exampleInvoice // override prop
+export function InvoicePreview({ invoice, isOpen, onClose }: InvoiceViewerProps) {
+  // const invoice = exampleInvoice // override prop - REMOVED THIS LINE
 
-  //UPDATE FOR THE PDF
   // Add these helper functions inside your InvoiceViewer component
 
   const hasValue = (value: any): boolean => {
@@ -161,7 +119,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
   const formatCurrencyWithSettings = (amount: number, currencyType: string, invoice: Invoice) => {
     const decimals = invoice.decimals ? Number.parseInt(invoice.decimals) : 2
     const separator = invoice.separator || "."
-    const unit = invoice.currencyType || "DT" // currency symbol, e.g. '$', 'DT'
+    const unit = invoice.currencyType || "EUR" // Default to EUR if not provided
     const placement = invoice.signPlacement || "before"
 
     const formattedAmount = amount.toFixed(decimals).replace(".", separator)
@@ -214,9 +172,9 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
   }
 
   const getInvoiceNumber = (invoice: Invoice) => {
-    if (hasValue(invoice.id)) {
-      return `${invoice.id}${invoice.number}`
-    }
+    // Assuming invoice.id is part of the invoice number or a unique identifier
+    // If invoice.number is already the full number, just return that.
+    // Otherwise, combine them if needed.
     return invoice.number
   }
 
@@ -845,13 +803,13 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                 {item.quantity}
               </td>
               <td className={`p-3 text-right ${isCompact ? "text-sm" : ""}`} style={{ color: customization.fontColor }}>
-                {formatCurrencyWithSettings(item.unitPrice, invoice.currencyType, invoice)}
+                {formatCurrencyWithSettings(item.unitPrice, invoice.currencyType || "EUR", invoice)}
               </td>
               <td
                 className={`p-3 text-right font-medium ${isCompact ? "text-sm" : ""}`}
                 style={{ color: customization.fontColor }}
               >
-                {formatCurrencyWithSettings(item.totalPrice, invoice.currencyType, invoice)}
+                {formatCurrencyWithSettings(item.totalPrice, invoice.currencyType || "EUR", invoice)}
               </td>
             </tr>
           ))}
@@ -871,12 +829,12 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                 {item.description.split("\n")[0]}
               </p>
               <p className="text-xs text-gray-600">
-                {item.quantity} × {formatCurrencyWithSettings(item.unitPrice, invoice.currencyType, invoice)}
+                {item.quantity} × {formatCurrencyWithSettings(item.unitPrice, invoice.currencyType || "EUR", invoice)}
               </p>
             </div>
             <div className="text-right">
               <p className={`font-semibold ${isCompact ? "text-sm" : ""}`} style={{ color: customization.fontColor }}>
-                {formatCurrencyWithSettings(item.totalPrice, invoice.currencyType, invoice)}
+                {formatCurrencyWithSettings(item.totalPrice, invoice.currencyType || "EUR", invoice)}
               </p>
             </div>
           </div>
@@ -891,7 +849,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
             <div className="flex justify-between py-2">
               <span style={{ color: customization.labelColor }}>Subtotal:</span>
               <span style={{ color: customization.fontColor }}>
-                {formatCurrencyWithSettings(invoice.subtotalAmount, invoice.currencyType, invoice)}
+                {formatCurrencyWithSettings(invoice.subtotalAmount, invoice.currencyType || "EUR", invoice)}
               </span>
             </div>
 
@@ -902,13 +860,13 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                     Discount {invoice.discountType === "percentage" ? `(${invoice.discountAmount}%)` : ""}:
                   </span>
                   <span style={{ color: customization.fontColor }}>
-                    -{formatCurrencyWithSettings(discountAmount, invoice.currencyType, invoice)}
+                    -{formatCurrencyWithSettings(discountAmount, invoice.currencyType || "EUR", invoice)}
                   </span>
                 </div>
                 <div className="flex justify-between py-2">
                   <span style={{ color: customization.labelColor }}>After Discount:</span>
                   <span style={{ color: customization.fontColor }}>
-                    {formatCurrencyWithSettings(subtotalAfterDiscount, invoice.currencyType, invoice)}
+                    {formatCurrencyWithSettings(subtotalAfterDiscount, invoice.currencyType || "EUR", invoice)}
                   </span>
                 </div>
               </>
@@ -919,7 +877,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                 Tax ({invoice.taxRate}%){hasValue(invoice.taxMethod) ? ` - ${invoice.taxMethod}` : ""}:
               </span>
               <span style={{ color: customization.fontColor }}>
-                {formatCurrencyWithSettings(invoice.taxAmount, invoice.currencyType, invoice)}
+                {formatCurrencyWithSettings(invoice.taxAmount, invoice.currencyType || "EUR", invoice)}
               </span>
             </div>
 
@@ -927,7 +885,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
             <div className={`flex justify-between py-3 font-bold ${isCompact ? "text-base" : "text-lg"}`}>
               <span style={{ color: customization.labelColor }}>Total:</span>
               <span style={{ color: customization.accentColor }}>
-                {formatCurrencyWithSettings(invoice.totalAmount, invoice.currencyType, invoice)}
+                {formatCurrencyWithSettings(invoice.totalAmount, invoice.currencyType || "EUR", invoice)}
               </span>
             </div>
           </div>
@@ -1207,7 +1165,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
               <div className="text-right">
                 <div className="bg-gray-50 p-3 rounded">
                   <p className="text-2xl font-bold" style={{ color: customization.accentColor }}>
-                    {formatCurrencyWithSettings(invoice.totalAmount, invoice.currencyType, invoice)}
+                    {formatCurrencyWithSettings(invoice.totalAmount, invoice.currencyType || "EUR", invoice)}
                   </p>
                   <p className="text-xs" style={{ color: customization.labelColor }}>
                     Total Amount
@@ -1222,7 +1180,7 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
               <div className="flex justify-between text-xs mb-1">
                 <span style={{ color: customization.labelColor }}>Subtotal:</span>
                 <span style={{ color: customization.fontColor }}>
-                  {formatCurrencyWithSettings(invoice.subtotalAmount, invoice.currencyType, invoice)}
+                  {formatCurrencyWithSettings(invoice.subtotalAmount, invoice.currencyType || "EUR", invoice)}
                 </span>
               </div>
 
@@ -1233,13 +1191,13 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                       Discount {invoice.discountType === "percentage" ? `(${invoice.discountAmount}%)` : ""}:
                     </span>
                     <span style={{ color: customization.fontColor }}>
-                      -{formatCurrencyWithSettings(discountAmount, invoice.currencyType, invoice)}
+                      -{formatCurrencyWithSettings(discountAmount, invoice.currencyType || "EUR", invoice)}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs mb-1">
                     <span style={{ color: customization.labelColor }}>After Discount:</span>
                     <span style={{ color: customization.fontColor }}>
-                      {formatCurrencyWithSettings(subtotalAfterDiscount, invoice.currencyType, invoice)}
+                      {formatCurrencyWithSettings(subtotalAfterDiscount, invoice.currencyType || "EUR", invoice)}
                     </span>
                   </div>
                 </>
@@ -1250,13 +1208,13 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                   Tax ({invoice.taxRate}%){hasValue(invoice.taxMethod) ? ` - ${invoice.taxMethod}` : ""}:
                 </span>
                 <span style={{ color: customization.fontColor }}>
-                  {formatCurrencyWithSettings(invoice.taxAmount, invoice.currencyType, invoice)}
+                  {formatCurrencyWithSettings(invoice.taxAmount, invoice.currencyType || "EUR", invoice)}
                 </span>
               </div>
               <div className="flex justify-between text-sm font-bold pt-2 border-t">
                 <span style={{ color: customization.labelColor }}>TOTAL:</span>
                 <span style={{ color: customization.accentColor }}>
-                  {formatCurrencyWithSettings(invoice.totalAmount, invoice.currencyType, invoice)}
+                  {formatCurrencyWithSettings(invoice.totalAmount, invoice.currencyType || "EUR", invoice)}
                 </span>
               </div>
             </div>
@@ -1385,8 +1343,6 @@ export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
                     )}
                   </div>
                 </div>
-
-                
 
                 <div>
                   <h3 className="font-semibold mb-3">Colors</h3>

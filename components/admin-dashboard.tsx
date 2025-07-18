@@ -448,8 +448,7 @@ export function AdminDashboard() {
                         <DropdownMenuItem onClick={() => handleDelete(index)} className="text-red-600">
                           Delete
                         </DropdownMenuItem>
-                        {/* The "Stop Access" functionality is now handled by setting access_count to 0 or managing status */}
-                        {/* <DropdownMenuItem className="text-red-600">Stop Access</DropdownMenuItem> */}
+                        
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
@@ -460,7 +459,7 @@ export function AdminDashboard() {
         </div>
       </CardContent>
 
-      {/* Add/Edit Form Dialog */}
+      
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
