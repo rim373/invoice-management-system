@@ -365,20 +365,20 @@
             }
             },
         "general": {
-        "sound": "SON",
-        "mute": "MUET",
-        "language": "LANGUE",
-        "openPdfAfterSave": "OUVRIR LE FICHIER PDF APRÈS SAUVEGARDE",
-        "soundOptions": {
-            "default": "Valeurs par défaut",
-            "custom": "Personnalisé",
-            "disabled": "Désactivé"
-        },
-        "languages": {
-            "english": "Anglais",
-            "french": "Français"
-        }
-        },
+            "sound": "SON",
+            "mute": "MUET",
+            "language": "LANGUE",
+            "openPdfAfterSave": "OUVRIR LE FICHIER PDF APRÈS SAUVEGARDE",
+            "soundOptions": {
+                "default": "Valeurs par défaut",
+                "custom": "Personnalisé",
+                "disabled": "Désactivé"
+            },
+            "languages": {
+                "english": "Anglais",
+                "french": "Français"
+            }
+            },
         "toasts": {
         "settingsSaved": "Paramètres sauvegardés",
         "settingsSavedDescription": "Vos paramètres ont été sauvegardés avec succès.",

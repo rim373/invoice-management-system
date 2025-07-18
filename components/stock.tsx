@@ -1,4 +1,5 @@
 "use client"
+import { useClickSound } from "@/lib/playClickSound"
 import { useTranslations } from "next-intl"
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
@@ -53,6 +54,12 @@ interface StockItem {
 
 
 export function StockPage() {
+  //sound effect
+    const playClickSound = useClickSound()
+    const handlesound = () => {
+      playClickSound()
+    }
+  //transalation
   const  t  = useTranslations("stock")
   const [productOriginFilter, setProductOriginFilter] = useState<"all" | "my" | "imported">("all")
   const [stockItems, setStockItems] = useState<StockItem[]>([])
@@ -490,7 +497,7 @@ export function StockPage() {
                       {t("form.cancel")}
                     </Button>
                     <Button
-                      onClick={handleAddProduct}
+                      onClick={() => { handleAddProduct(); handlesound(); }}
                       className="flex-1 bg-gray-900 hover:bg-gray-800 rounded-xl text-sm h-8"
                     >
                       {t("form.submitAdd")}
@@ -887,7 +894,7 @@ export function StockPage() {
               <Button variant="outline" onClick={() => setIsRestockModalOpen(false)} className="flex-1 rounded-xl">
                 {t("form.cancel")}
               </Button>
-              <Button onClick={handleRestock} className="flex-1 bg-gray-900 hover:bg-gray-800 rounded-xl">
+              <Button onClick={() => { handleRestock(); handlesound(); }} className="flex-1 bg-gray-900 hover:bg-gray-800 rounded-xl">
                 {t("action.add")}
               </Button>
             </div>

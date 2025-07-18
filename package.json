@@ -66,6 +66,7 @@
     "sonner": "latest",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "use-sound": "^5.0.0",
     "vaul": "latest",
     "zod": "^3.24.1"
   },

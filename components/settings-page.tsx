@@ -1,5 +1,6 @@
 "use client"
-
+import { useSoundContext } from "@/app/sound-context"
+import { useClickSound } from "@/lib/playClickSound"
 import type React from "react"
 import { useI18n } from '@/app/i18n-context';
 import { useState, useRef, useEffect } from "react"
@@ -30,6 +31,14 @@ interface SettingsPageProps {
 }
 
 export function SettingsPage({ userRole }: SettingsPageProps) {
+  //sound effect application
+    const playClickSound = useClickSound()
+    const handlesound = () => {
+      playClickSound()
+    }
+  //sound effect setup
+  const { setSoundSetting } = useSoundContext()
+  //translation
   const t = useTranslations("SettingsPage")
   const { locale, setLocale } = useI18n();
   const [isLoading, setIsLoading] = useState(false)
@@ -261,7 +270,7 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">{t("title")}</h1>
-        <Button onClick={handleSave} disabled={isLoading} className="bg-blue-500 hover:bg-blue-600 text-white px-6">
+        <Button onClick={() => { {handleSave(); handlesound(); }}} disabled={isLoading} className="bg-blue-500 hover:bg-blue-600 text-white px-6">
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -788,8 +797,12 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("general.sound")}</Label>
                   <Select
-                    value={generalSettings.sound}
-                    onValueChange={(value) => setGeneralSettings({ ...generalSettings, sound: value })}
+                     value={generalSettings.sound}
+                     disabled={generalSettings.mute}
+                     onValueChange={(value) => {
+                      setGeneralSettings({ ...generalSettings, sound: value })
+                      setSoundSetting(value as SoundSetting) // update context too
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />

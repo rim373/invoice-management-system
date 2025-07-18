@@ -1,5 +1,5 @@
 "use client"
-
+import { useClickSound } from "@/lib/playClickSound"
 import html2canvas from "html2canvas"
 import jsPDF from "jspdf"
 import { useState, useEffect,useRef  } from "react"
@@ -81,6 +81,11 @@ export function JournalPage({
   onInvoiceEdit,
   searchTerm: externalSearchTerm,
 }: JournalPageProps) {
+  //sound effect
+  const playClickSound = useClickSound()
+  const handlesound = () => {
+    playClickSound()
+  }
   //TRANSLATION FUNCTION 
   const t = useTranslations("journalPage")
   // invoice pdf
@@ -385,9 +390,6 @@ export function JournalPage({
                     <span>{getStatusLabel(invoice.status)}</span>
                   </Badge>
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <FileText className="w-4 h-4 text-gray-400" />
-                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -603,7 +605,7 @@ export function JournalPage({
                     {t("modify")}
                   </Button>
                     
-                    <Button variant="outline" size="sm" onClick={() => handleViewInvoice(invoice)}>
+                    <Button variant="outline" size="sm" onClick={() => { handleViewInvoice(invoice); handlesound(); }}>
                       <Eye className="w-4 h-4 mr-2" />
                       {t("view")}
                     </Button>
@@ -719,7 +721,7 @@ export function JournalPage({
             <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
               {t("cancel")}
             </Button>
-            <Button className="bg-blue-500 hover:bg-blue-600" onClick={handleSavePayment}>
+            <Button className="bg-blue-500 hover:bg-blue-600" onClick={() => { handleSavePayment(); handlesound(); }}>
               <CreditCard className="w-4 h-4 mr-2" />
               {t("addPaymentDialog")}
             </Button>

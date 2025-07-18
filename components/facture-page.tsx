@@ -1,4 +1,5 @@
 "use client"
+import { useClickSound } from "@/lib/playClickSound"
 import { toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css';
 import { useTranslations } from "next-intl"
@@ -79,6 +80,11 @@ export function FacturePage({
   prefilledClient,
   onInvoiceUpdate,
 }: FacturePageProps) {
+  //sound
+  const playClickSound = useClickSound()
+  const handlesound = () => {
+    playClickSound()
+  }
   //translation:
   const t = useTranslations("facturePage")
   // State for invoice settings, initialized with default values
@@ -1006,7 +1012,7 @@ export function FacturePage({
       <div className="flex justify-end space-x-3">
         <Button
           className="bg-orange-500 hover:bg-orange-600 text-white"
-          onClick={handleSaveInvoice}
+          onClick={() => { handlesound(); handleSaveInvoice(); }}
           disabled={isSubmitting}
         >
           {isSubmitting ? (

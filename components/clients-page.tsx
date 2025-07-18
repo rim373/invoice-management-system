@@ -1,4 +1,5 @@
 "use client"
+import { useClickSound } from "@/lib/playClickSound"
 import { useTranslations } from "next-intl"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -51,6 +52,12 @@ interface ClientsPageProps {
 }
 
 export function ClientsPage({ userEmail, userRole, onCreateInvoice, onViewInvoices }: ClientsPageProps) {
+  //sound effect
+  const playClickSound = useClickSound()
+  const handlesound = () => {
+    playClickSound()
+  }
+  //translation
   const t = useTranslations("clientsPage")
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddClientOpen, setIsAddClientOpen] = useState(false)
@@ -366,7 +373,14 @@ export function ClientsPage({ userEmail, userRole, onCreateInvoice, onViewInvoic
               <Button variant="outline" onClick={() => setIsAddClientOpen(false)}>
                 Cancel
               </Button>
-              <Button className="bg-orange-500 hover:bg-orange-600" onClick={handleAddClient} disabled={isLoading}>
+              <Button
+                  className="bg-orange-500 hover:bg-orange-600"
+                  onClick={() => {
+                    handleAddClient();
+                    handlesound();
+                  }}
+                  disabled={isLoading}
+                >
                 {isLoading ? "Adding..." : "Add Contact"}
               </Button>
             </div>
@@ -646,7 +660,7 @@ export function ClientsPage({ userEmail, userRole, onCreateInvoice, onViewInvoic
                             <Phone className="mr-2 h-4 w-4" />
                             {t("Call Client")}
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClient(client.id)}>
+                          <DropdownMenuItem className="text-red-600" onClick={() => {handleDeleteClient(client.id); handlesound();}}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             {t("Delete Client")}
                           </DropdownMenuItem>
