@@ -117,6 +117,10 @@
         "Send Email": "Send Email"
         },
     "facturePage":{
+      "Please select a client": "Please select a client",
+      "Please fill all new client fields": "Please fill all new client fields",
+      "Please add at least one item": "Please add at least one item",
+      "All items must have description valid price and quantity": "All items must have description valid price and quantity",
       "updated":"Update Invoice",
       "update":"Updating",
       "invoice":"Invoice",

@@ -570,8 +570,8 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="1,999,000 (Comma & Dot)">1,999,000 {t("invoice.commaDot")} </SelectItem>
-                          <SelectItem value="1.999.000 (Dot & Comma)">1.999.000 {t("invoice.dotComma")}</SelectItem>
+                          <SelectItem value="1,999,000 (Comma & Dot)">1,999,000 {t("invoice.separatorTypes.commaDot")} </SelectItem>
+                          <SelectItem value="1.999.000 (Dot & Comma)">1.999.000 {t("invoice.separatorTypes.dotComma")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -674,8 +674,8 @@ export function SettingsPage({ userRole }: SettingsPageProps) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Default Values">{t("invoice.default")}</SelectItem>
-                            <SelectItem value="Custom">{t("invoice.custom")}</SelectItem>
+                            <SelectItem value="Default Values">{t("invoice.taxMethods.default")}</SelectItem>
+                            <SelectItem value="Custom">{t("invoice.taxMethods.custom")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

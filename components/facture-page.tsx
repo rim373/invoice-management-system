@@ -1,4 +1,6 @@
 "use client"
+import { toast } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css';
 import { useTranslations } from "next-intl"
 import { Switch } from "@/components/ui/switch"
 import { useState, useEffect, useCallback } from "react"
@@ -35,32 +37,6 @@ interface PaymentHistory {
   date: string
   method: string
   note?: string
-}
-interface InvoiceSettings {
-  invoiceNumber: boolean
-  dueDate: boolean
-  currency: boolean
-  discount: boolean
-  tax: boolean
-  notes: boolean
-  invoiceNumberPrefix: string
-  invoiceNumberStart: string
-  dueDateType: string
-  dueDateDays: string
-  dueDateCustom : string
-  vatNumber: string
-  taxAmount: string
-  taxMethod: string
-  currencyType: string
-  separator: string
-  signPlacement: string
-  decimals: string
-  discountType: string
-  discountAmount: string
-  defaultNotes: string
-  saveLocation: string
-  template: string
-  dateFormat: string
 }
 
 interface Invoice {
@@ -103,6 +79,7 @@ export function FacturePage({
   prefilledClient,
   onInvoiceUpdate,
 }: FacturePageProps) {
+  //translation:
   const t = useTranslations("facturePage")
   // State for invoice settings, initialized with default values
   const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>(defaultSettings.invoice_settings)
@@ -258,12 +235,10 @@ export function FacturePage({
     }
     return availableClients.find((client) => client.id === selectedClient)
   }
+
   const calculateSubtotal = () => {
     return invoiceItems.reduce((total, item) => total + item.price * item.quantity, 0)
   }
-  const calculateDiscount = () => {
-    const { discountType, discountAmount } = invoiceSettings
-    const subtotal = calculateSubtotal()
 
   const calculateDiscount = () => {
     const { discountType, discountAmount } = invoiceSettings
@@ -314,22 +289,22 @@ export function FacturePage({
 
     if (activeTab === "facture") {
       if (!selectedClient) {
-        errors.client = "Please select a client"
+        errors.client = t("Please select a client")
       }
     } else {
       if (!newClient.name || !newClient.company || !newClient.email || !newClient.phone) {
-        errors.client = "Please fill all new client fields"
+        errors.client = t("Please fill all new client fields")
       }
     }
 
     if (invoiceItems.length === 0) {
-      errors.items = "Please add at least one item"
+      errors.items = t("Please add at least one item")
     } else {
       const hasEmptyItems = invoiceItems.some(
         (item) => !item.description.trim() || item.price <= 0 || item.quantity <= 0,
       )
       if (hasEmptyItems) {
-        errors.items = "All items must have description, valid price and quantity"
+        errors.items = t("All items must have description valid price and quantity")
       }
     }
 
@@ -340,7 +315,6 @@ export function FacturePage({
     setFormErrors(errors)
     return Object.keys(errors).length === 0
   }
-
 
   const generateInvoiceNumber = () => {
     if (invoiceParameters.invoiceNumber && invoiceNumber) return invoiceNumber // Use user-entered if available and enabled
@@ -357,7 +331,8 @@ export function FacturePage({
 
     try {
       if (!validateForm()) {
-        throw new Error("Form validation failed")
+        toast.error("Please fill in the form before submitting.")
+        return
       }
 
       let clientData: Client | null = null
@@ -365,12 +340,14 @@ export function FacturePage({
       if (activeTab === "facture") {
         clientData = getSelectedClientData() || null
         if (!clientData) {
-          throw new Error("Client data not found")
+          toast.error("Client data not found")
+          return
         }
       } else {
         const { name, company, email, phone } = newClient
         if (!name || !company || !email || !phone) {
-          throw new Error("All new client fields must be filled")
+          toast.error("Please fill all new client fields")
+          return
         }
 
         clientData = {
@@ -382,8 +359,6 @@ export function FacturePage({
           status: "Active",
         }
       }
-      
-
 
       const finalInvoiceNumber = generateInvoiceNumber()
       const subtotal = calculateSubtotal()
@@ -447,10 +422,9 @@ export function FacturePage({
         }
       }, 2000)
     } catch (error) {
-      console.error("Invoice operation failed:", error)
-      setFormErrors({
-        submit: error instanceof Error ? error.message : "Failed to save invoice",
-      })
+        const message = error instanceof Error ? error.message : "Failed to save invoice"
+        toast.error(`Error: ${message}`)
+        console.error("Invoice operation failed:", error)
     } finally {
       setIsSubmitting(false)
     }
@@ -478,13 +452,13 @@ export function FacturePage({
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              {editInvoice ? "Modify Invoice" : t("Create New Invoice")}
+              {editInvoice ? t("updated") : t("Create New Invoice")}
             </h1>
             <p className="text-gray-600">
               {editInvoice
-                ? "Update invoice details"
+                ? t("update") + " " + t("invoice")
                 : prefilledClient
-                  ? `Creating invoice for ${prefilledClient.name}`
+                  ? `${t("Creating")} ${t("invoice")} for ${prefilledClient.name}`
                   : t("Generate professional invoices for your clients")}
             </p>
           </div>
@@ -519,7 +493,7 @@ export function FacturePage({
       {Object.keys(formErrors).length > 0 && (
         <Card className="border-red-200 bg-red-50">
           <CardContent className="p-4">
-            <h3 className="font-semibold text-red-800 mb-2">{t("Please fix the following errors")}:</h3>
+            <h3 className="font-semibold text-red-800 mb-2">Please fix the following errors:</h3>
             <ul className="space-y-1">
               {Object.entries(formErrors).map(([field, error]) => (
                 <li key={field} className="text-red-700 text-sm">
@@ -548,10 +522,10 @@ export function FacturePage({
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-5 h-5 text-green-600" />
               <span className="font-semibold text-green-800">
-                {t("invoice")} {editInvoice ? "updated" : "created"} {t("sucess")}!
+                {editInvoice ? t("updated") + " " + t("sucess") : t("Facture created successfully")}
               </span>
             </div>
-            <p className="text-green-700 text-sm mt-1">{t("Your facture has been saved to the Journal")}.</p>
+            <p className="text-green-700 text-sm mt-1">{t("Your facture has been saved to the Journal")}</p>
           </CardContent>
         </Card>
       )}
@@ -562,225 +536,228 @@ export function FacturePage({
           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("Invoice Parameters")}</h3>
           <div className="grid grid-cols-6 gap-4">
             {[
-              { key: "invoiceNumber", label: "Invoice Number" },
-              { key: "dueDate", label: "Due Date" },
-              { key: "currency", label: "Currency" },
-              { key: "discount", label: "Discount" },
-              { key: "tax", label: "Tax" },
-              { key: "notes", label: "Notes" },
+              { key: "invoiceNumber", label: t("Invoice Number") },
+              { key: "dueDate", label: t("Due Date") },
+              { key: "currency", label: t("Currency") },
+              { key: "discount", label: t("Discount") },
+              { key: "tax", label: t("Tax") },
+              { key: "notes", label: t("Notes") },
             ].map(({ key, label }) => (
               <div key={key} className="flex flex-col items-center space-y-2">
-                <Label className="text-xs text-gray-600 text-center">{t(label)}</Label>
+                <Label className="text-xs text-gray-600 text-center">{label}</Label>
                 <Switch
                   checked={invoiceParameters[key as keyof typeof invoiceParameters]}
-                  onCheckedChange={(checked) =>
-                    setInvoiceParameters((prev) => ({ ...prev, [key]: checked }))
-                  }
-                  
+                  onCheckedChange={(checked) => setInvoiceParameters((prev) => ({ ...prev, [key]: checked }))}
                 />
               </div>
             ))}
           </div>
+
           {invoiceParameters.invoiceNumber && (
-  <div className="grid grid-cols-2 gap-4">
-    <div>
-      <Label>Prefix</Label>
-      <Input
-        value={invoiceSettings.invoiceNumberPrefix}
-        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, invoiceNumberPrefix: e.target.value }))}
-      />
-    </div>
-    <div>
-      <Label>{t("Start Number")}</Label>
-      <Input
-        value={invoiceSettings.invoiceNumberStart}
-        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, invoiceNumberStart: e.target.value }))}
-      />
-    </div>
-  </div>
-)}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Prefix</Label>
+                <Input
+                  value={invoiceSettings.invoiceNumberPrefix}
+                  onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, invoiceNumberPrefix: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>{t("Start Number")}</Label>
+                <Input
+                  value={invoiceSettings.invoiceNumberStart}
+                  onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, invoiceNumberStart: e.target.value }))}
+                />
+              </div>
+            </div>
+          )}
 
-{invoiceParameters.dueDate && (
-  <div>
-    <Label className="mb-2 block">{t("Due Date")}</Label>
-    <RadioGroup
-      value={invoiceSettings.dueDateType}
-      onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, dueDateType: value }))}
-    >
-      <div className="flex items-center space-x-4 mb-4">
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="custom" id="customDate" />
-          <Label htmlFor="customDate">{t("Custom Date")}</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <RadioGroupItem value="term" id="paymentTerm" />
-          <Label htmlFor="paymentTerm">{t("Select Payment Term")}</Label>
-        </div>
-      </div>
-    </RadioGroup>
+          {invoiceParameters.dueDate && (
+            <div>
+              <Label className="mb-2 block">{t("Due Date")}</Label>
+              <RadioGroup
+                value={invoiceSettings.dueDateType}
+                onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, dueDateType: value }))}
+              >
+                <div className="flex items-center space-x-4 mb-4">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="custom" id="customDate" />
+                    <Label htmlFor="customDate">{t("Custom Date")}</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="term" id="paymentTerm" />
+                    <Label htmlFor="paymentTerm">{t("Select Payment Term")}</Label>
+                  </div>
+                </div>
+              </RadioGroup>
 
-    {invoiceSettings.dueDateType === "custom" && (
-      <Input
-        type="date"
-        value={invoiceSettings.dueDateCustom}
-        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, dueDateCustom: e.target.value }))}
-      />
-    )}
+              {invoiceSettings.dueDateType === "custom" && (
+                <Input
+                  type="date"
+                  value={invoiceSettings.dueDateCustom}
+                  onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, dueDateCustom: e.target.value }))}
+                />
+              )}
 
-    {invoiceSettings.dueDateType === "term" && (
-      <Select
-        value={invoiceSettings.dueDateDays}
-        onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, dueDateDays: value }))}
-      >
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="7">{t("7 jours après facturation")}</SelectItem>
-          <SelectItem value="10">{t("10 jours après facturation")}</SelectItem>
-          <SelectItem value="20">{t("20 jours après facturation")}</SelectItem>
-          <SelectItem value="30">{t("30 jours après facturation")}</SelectItem>
-          <SelectItem value="60">{t("60 jours après facturation")}</SelectItem>
-        </SelectContent>
-      </Select>
-    )}
-  </div>
-)}
+              {invoiceSettings.dueDateType === "term" && (
+                <Select
+                  value={invoiceSettings.dueDateDays}
+                  onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, dueDateDays: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">{t("7 jours après facturation")}</SelectItem>
+                    <SelectItem value="10">{t("10 jours après facturation")}</SelectItem>
+                    <SelectItem value="20">{t("20 jours après facturation")}</SelectItem>
+                    <SelectItem value="30">{t("30 jours après facturation")}</SelectItem>
+                    <SelectItem value="60">{t("60 jours après facturation")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
 
+          {invoiceParameters.currency && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>{t("Currency")}</Label>
+                <Select
+                  value={invoiceSettings.currencyType}
+                  onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, currencyType: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USD">{t("US Dollar")}</SelectItem>
+                    <SelectItem value="EUR">{t("Euro")}</SelectItem>
+                    <SelectItem value="TND">{t("Tunisian Dinar")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>{t("Separator")}</Label>
+                <Select
+                  value={invoiceSettings.separator}
+                  onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, separator: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="comma-dot">1,999.00</SelectItem>
+                    <SelectItem value="dot-comma">1.999,00</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>{t("Sign Placement")}</Label>
+                <Select
+                  value={invoiceSettings.signPlacement}
+                  onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, signPlacement: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="before">{t("Before Amount")}</SelectItem>
+                    <SelectItem value="after">{t("After Amount")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>{t("Decimal Places")}</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={3}
+                  value={invoiceSettings.decimals}
+                  onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, decimals: e.target.value }))}
+                />
+              </div>
+            </div>
+          )}
 
-{invoiceParameters.currency && (
-  <div className="grid grid-cols-2 gap-4">
-    <div>
-      <Label>{t("Currency")}</Label>
-      <Select
-        value={invoiceSettings.currencyType}
-        onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, currencyType: value }))}
-      >
-        <SelectTrigger><SelectValue /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="USD">{t("US Dollar")}</SelectItem>
-          <SelectItem value="EUR">{t("Euro")}</SelectItem>
-          <SelectItem value="TND">{t("Tunisian Dinar")}</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-    <div>
-      <Label>{t("Separator")}</Label>
-      <Select
-        value={invoiceSettings.separator}
-        onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, separator: value }))}
-      >
-        <SelectTrigger><SelectValue /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="comma-dot">1,999.00</SelectItem>
-          <SelectItem value="dot-comma">1.999,00</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-    <div>
-      <Label>{t("Sign Placement")}</Label>
-      <Select
-        value={invoiceSettings.signPlacement}
-        onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, signPlacement: value }))}
-      >
-        <SelectTrigger><SelectValue /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="before">{t("Before Amount")}</SelectItem>
-          <SelectItem value="after">{t("After Amount")}</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-    <div>
-      <Label>{t("Decimal Places")}</Label>
-      <Input
-        type="number"
-        min={0}
-        max={3}
-        value={invoiceSettings.decimals}
-        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, decimals: e.target.value }))}
-      />
-    </div>
-  </div>
-)}
+          {invoiceParameters.discount && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>{t("Discount Type")}</Label>
+                <RadioGroup
+                  defaultValue={invoiceSettings.discountType}
+                  onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, discountType: value }))}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="percentage" id="percentage" />
+                      <Label htmlFor="percentage">{t("Percentage")}</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="fixed" id="fixed" />
+                      <Label htmlFor="fixed">{t("Fixed Amount")}</Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div>
+                <Label>{t("Amount")}</Label>
+                <Input
+                  type="number"
+                  value={invoiceSettings.discountAmount}
+                  onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, discountAmount: e.target.value }))}
+                />
+              </div>
+            </div>
+          )}
 
-{invoiceParameters.discount && (
-  <div className="grid grid-cols-2 gap-4">
-    <div>
-      <Label>{t("Discount Type")}</Label>
-      <RadioGroup
-        defaultValue={invoiceSettings.discountType}
-        onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, discountType: value }))}
-      >
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="percentage" id="percentage" />
-            <Label htmlFor="percentage">{t("Percentage")}</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="fixed" id="fixed" />
-            <Label htmlFor="fixed">{t("Fixed Amount")}</Label>
-          </div>
-        </div>
-      </RadioGroup>
-    </div>
-    <div>
-      <Label>{t("Amount")}</Label>
-      <Input
-        type="number"
-        value={invoiceSettings.discountAmount}
-        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, discountAmount: e.target.value }))}
-      />
-    </div>
-  </div>
-)}
+          {invoiceParameters.tax && (
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label>{t("VAT Number")}</Label>
+                <Input
+                  value={invoiceSettings.vatNumber}
+                  onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, vatNumber: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>{t("Tax Amount (%)")}</Label>
+                <Input
+                  type="number"
+                  value={invoiceSettings.taxAmount}
+                  onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, taxAmount: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>{t("Tax Method")}</Label>
+                <Select
+                  value={invoiceSettings.taxMethod}
+                  onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, taxMethod: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="default">{t("Default Values")}</SelectItem>
+                    <SelectItem value="inclusive">{t("autoliquidation")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
 
-{invoiceParameters.tax && (
-  <div className="grid grid-cols-3 gap-4">
-    <div>
-      <Label>{t("VAT Number")}</Label>
-      <Input
-        value={invoiceSettings.vatNumber}
-        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, vatNumber: e.target.value }))}
-      />
-    </div>
-    <div>
-      <Label>{t("Tax Amount (%)")}</Label>
-      <Input
-        type="number"
-        value={invoiceSettings.taxAmount}
-        onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, taxAmount: e.target.value }))}
-      />
-    </div>
-    <div>
-      <Label>{t("Tax Method")}</Label>
-      <Select
-        value={invoiceSettings.taxMethod}
-        onValueChange={(value) => setInvoiceSettings((prev) => ({ ...prev, taxMethod: value }))}
-      >
-        <SelectTrigger><SelectValue /></SelectTrigger>
-        <SelectContent>
-          <SelectItem value="default">{t("Default Values")}</SelectItem>
-          <SelectItem value="inclusive">{t("autoliquidation")}</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-  </div>
-)}
-
-{invoiceParameters.notes && (
-  <div>
-    <Label>{t("Default Notes")}</Label>
-    <Textarea
-      placeholder="Enter default notes for invoices..."
-      value={invoiceSettings.defaultNotes}
-      onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, defaultNotes: e.target.value }))}
-    />
-  </div>
-)}
-
+          {invoiceParameters.notes && (
+            <div>
+              <Label>{t("Default Notes")}</Label>
+              <Textarea
+                placeholder={t("Default Notes") + "..."}
+                value={invoiceSettings.defaultNotes}
+                onChange={(e) => setInvoiceSettings((prev) => ({ ...prev, defaultNotes: e.target.value }))}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
-      
 
       {/* Client Information */}
       <Card>
@@ -791,7 +768,7 @@ export function FacturePage({
               {prefilledClient
                 ? `Selected: ${prefilledClient.name} - ${prefilledClient.company}`
                 : `${t("Available clients")}: ${availableClients.length}`}
-              {availableClients.length === 0 && !prefilledClient && " - Go to Clients page to add clients"}
+              {availableClients.length === 0 && !prefilledClient && ` - ${t("Go to Clients page to add clients")}`}
             </p>
           )}
         </CardHeader>
@@ -804,7 +781,7 @@ export function FacturePage({
                 </Label>
                 <Select value={selectedClient} onValueChange={setSelectedClient}>
                   <SelectTrigger>
-                    <SelectValue placeholder={t("Choose a client")}  />
+                    <SelectValue placeholder={t("Choose a client") + "..."} />
                   </SelectTrigger>
                   <SelectContent>
                     {prefilledClient && (
@@ -821,7 +798,7 @@ export function FacturePage({
                     )}
                     {availableClients.length === 0 && !prefilledClient ? (
                       <SelectItem value="no-clients" disabled>
-                        {t("No clients available")} - {t("Add clients first")}
+                        {t("No clients available ")} - {t("Add clients first")}
                       </SelectItem>
                     ) : (
                       availableClients
@@ -876,7 +853,7 @@ export function FacturePage({
                   id="new-name"
                   value={newClient.name}
                   onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                  placeholder="Client full name"
+                  placeholder={t("Client full name")}
                 />
               </div>
               <div className="space-y-2">
@@ -885,7 +862,7 @@ export function FacturePage({
                   id="new-company"
                   value={newClient.company}
                   onChange={(e) => setNewClient({ ...newClient, company: e.target.value })}
-                  placeholder="Client company name"
+                  placeholder={t("Client company name")}
                 />
               </div>
               <div className="space-y-2">
@@ -895,7 +872,7 @@ export function FacturePage({
                   type="email"
                   value={newClient.email}
                   onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
-                  placeholder="Client email address"
+                  placeholder={t("Client email address")}
                 />
               </div>
               <div className="space-y-2">
@@ -904,14 +881,13 @@ export function FacturePage({
                   id="new-phone"
                   value={newClient.phone}
                   onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
-                  placeholder="Client phone number"
+                  placeholder={t("Client phone number")}
                 />
               </div>
             </div>
           )}
         </CardContent>
       </Card>
-
 
       {/* Products/Services */}
       <Card>
@@ -927,7 +903,7 @@ export function FacturePage({
               <div className="col-span-6">{t("Description")}</div>
               <div className="col-span-2">{t("Unit Price")}</div>
               <div className="col-span-2">{t("Quantity")}</div>
-              <div className="col-span-2">{("Total")}</div>
+              <div className="col-span-2">{t("Total")}</div>
             </div>
 
             {/* Invoice Items */}
@@ -935,7 +911,7 @@ export function FacturePage({
               <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
                 <div className="col-span-6">
                   <Textarea
-                    placeholder="Enter description..."
+                    placeholder={t("Description") + "..."}
                     value={item.description}
                     onChange={(e) => updateInvoiceItem(item.id, "description", e.target.value)}
                     className="min-h-[60px] resize-none"
@@ -999,7 +975,7 @@ export function FacturePage({
                 </div>
                 {invoiceParameters.tax && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">{t("Tax")}({invoiceSettings.taxAmount}%):</span>
+                    <span className="text-gray-600">{t("Tax")} ({invoiceSettings.taxAmount}%):</span>
                     <span className="font-medium">
                       {invoiceSettings.currencyType} {calculateTax().toFixed(2)}
                     </span>
@@ -1036,16 +1012,16 @@ export function FacturePage({
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              {editInvoice ? t("updating"): t("Creating")}
+              {editInvoice ? t("updated") + "..." : t("Creating") + "..."}
             </>
           ) : (
             <>
               <Save className="w-4 h-4 mr-2" />
-              {editInvoice ? t("updated") : t("Save & Preview")}
+              {editInvoice ? t("update") + " " + t("invoice") : t("Save & Preview")}
             </>
           )}
         </Button>
       </div>
     </div>
-  );
-}}
+  )
+}
