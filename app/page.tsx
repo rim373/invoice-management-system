@@ -1,5 +1,5 @@
 "use client"
-
+import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
 import { LoginForm } from "@/components/login-form"
 import { Header } from "@/components/header"
@@ -65,10 +65,18 @@ interface Invoice {
 }
 
 export default function Home() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+  const urlPage = searchParams.get("page")
+  setCurrentPage(urlPage ?? "home")
+}, [searchParams])
+
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [userRole, setUserRole] = useState<"user" | "admin">("admin")
   const [userData, setUserData] = useState<any>(null)
-  const [currentPage, setCurrentPage] = useState("home")
+  const [currentPage, setCurrentPage] = useState<string | undefined>(undefined)
   const [clientsData, setClientsData] = useState<Client[]>([])
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [isDataLoaded, setIsDataLoaded] = useState(false)
@@ -152,6 +160,7 @@ export default function Home() {
       return
     }
     console.log("Changing page to:", page)
+    router.push(`/?page=${page}`)
     setCurrentPage(page)
 
     // Clear editing invoice and prefilled client when changing pages
