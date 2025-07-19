@@ -418,7 +418,7 @@ export default function Home() {
         )
       case "home":
       default:
-        return userRole === "user" ? <UserDashboard /> : <AdminDashboard />
+        return userRole === "user" ? <UserDashboard onPageChange={handlePageChange} /> : <AdminDashboard />
     }
   }
 
