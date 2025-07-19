@@ -76,43 +76,55 @@ export default function Home() {
   const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
   const [prefilledClient, setPrefilledClient] = useState<Client | null>(null)
   const [journalSearchTerm, setJournalSearchTerm] = useState("")
-  const [isLoadingAuth, setIsLoadingAuth] = useState(true) // New loading state for auth
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true)
 
   // Initial authentication check on component mount
   useEffect(() => {
     const authenticate = async () => {
       setIsLoadingAuth(true)
-      const user = await checkAuthStatus(
-        (user) => {
-          setIsAuthenticated(true)
-          setUserRole(user.role)
-          setUserData(user)
-          startActivityTracking(
-            () => {
-              console.warn("Session will expire soon due to inactivity.")
-            },
-            () => {
-              console.log("Logging out due to inactivity.")
-              handleLogout()
-            },
-            async () => {
-              // This callback is for the periodic check
-              const currentUser = await getCurrentUser()
-              if (!currentUser) {
-                console.log("Session expired or invalid during periodic check, logging out.")
+
+      try {
+        const user = await checkAuthStatus(
+          (user) => {
+            console.log("Authentication successful:", user.email)
+            setIsAuthenticated(true)
+            setUserRole(user.role)
+            setUserData(user)
+            startActivityTracking(
+              () => {
+                console.warn("Session will expire soon due to inactivity.")
+              },
+              () => {
+                console.log("Logging out due to inactivity.")
                 handleLogout()
-              }
-            },
-          )
-        },
-        () => {
-          setIsAuthenticated(false)
-          setUserRole("admin") // Default role if not authenticated
-          setUserData(null)
-          stopActivityTracking()
-        },
-      )
-      setIsLoadingAuth(false)
+              },
+              async () => {
+                // Periodic check every 10 seconds
+                const currentUser = await getCurrentUser()
+                if (!currentUser) {
+                  console.log("Session expired or invalid during periodic check, logging out.")
+                  handleLogout()
+                }
+              },
+            )
+          },
+          () => {
+            console.log("Authentication failed, showing login form")
+            setIsAuthenticated(false)
+            setUserRole("admin")
+            setUserData(null)
+            stopActivityTracking()
+          },
+        )
+      } catch (error) {
+        console.error("Authentication error:", error)
+        setIsAuthenticated(false)
+        setUserRole("admin")
+        setUserData(null)
+        stopActivityTracking()
+      } finally {
+        setIsLoadingAuth(false)
+      }
     }
 
     authenticate()
@@ -125,7 +137,7 @@ export default function Home() {
 
   // Load data from backend on authentication
   useEffect(() => {
-    if (!isAuthenticated || !userData || isLoadingAuth) return // Wait for auth to load
+    if (!isAuthenticated || !userData || isLoadingAuth) return
 
     const loadData = async () => {
       try {
@@ -169,7 +181,7 @@ export default function Home() {
     }
 
     loadData()
-  }, [isAuthenticated, userData, userRole, isLoadingAuth]) // Add isLoadingAuth to dependencies
+  }, [isAuthenticated, userData, userRole, isLoadingAuth])
 
   const handleLogin = (role: "user" | "admin", data: any) => {
     console.log("Login successful, setting user data:", role, data.email)
@@ -186,7 +198,7 @@ export default function Home() {
         handleLogout()
       },
       async () => {
-        // This callback is for the periodic check
+        // Periodic check every 10 seconds
         const currentUser = await getCurrentUser()
         if (!currentUser) {
           console.log("Session expired or invalid during periodic check, logging out.")
@@ -198,7 +210,7 @@ export default function Home() {
 
   const handleLogout = async () => {
     console.log("Logging out user")
-    await logoutUser() // Call the logout function from lib/auth.ts
+    await logoutUser()
     setIsAuthenticated(false)
     setUserRole("admin")
     setUserData(null)
@@ -289,6 +301,7 @@ export default function Home() {
       throw error
     }
   }
+
   const handleInvoiceUpdate = async (updatedInvoice: Invoice) => {
     try {
       console.log("Updating invoice:", updatedInvoice.number)
@@ -353,14 +366,19 @@ export default function Home() {
     }
   }
 
+  // Show loading screen while checking authentication
   if (isLoadingAuth) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <p>Loading authentication...</p>
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
       </div>
     )
   }
 
+  // Show login form if not authenticated
   if (!isAuthenticated) {
     return <LoginForm onLogin={handleLogin} />
   }
