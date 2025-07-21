@@ -11,71 +11,94 @@
     "Help": "Help"
   },
   "adminDashboard": {
-    "form":{
-      "name":"Name",
-      "email":"Email",
-      "phone":"Phone",
-      "company":"Company",
-      "sector":"sector",
-      "location":"Location",
-      "size":"Company Size",
-      "acess":"Acess Count",
-      "stat":"Status",
-      "Join":"Join Date",
-      "pwd":"Password"
+    "TOP":"Top Products",
+    "invoiceStatus": {
+        "paid": "Paid",
+        "pending": "Pending",
+        "partial": "Partial",
+        "refunded": "Refunded",
+        "cancelled": "Cancelled"
+        },
+    "recentInvoice":"Recent Invoices",
+    "revenue":"Revenue by Client & Product",
+    "sales": {
+      "title": "Average Sale",
+      "subtitle": "per invoice",
+      "description":"invoices"
+    },
+    "rate": {
+      "title": "Conversion Rate",
+      "subtitle": "Paid invoices"
+    },
+    "stock": {
+      "title": "Stock Value",
+      "subtitle": "Total inventory value",
+      "description":"items"
+    },
+    
+    "growthRate": {
+      "title": "Growth Rate",
+      "subtitle": "vs last period"
+    },
+    "monthlyActivity": {
+      "title": "Monthly Activity",
+      "subtitle":"Revenue"
+    },
+    "stockOverview": {
+      "title": "Stock Overview",
+      "view" :"View details",
+      "status":{
+        "1":"In Stock",
+        "2":"Low Stock",
+        "3":"Out Of Stock"
 
+      },
+      "restock":"items need restocking"        
     },
-    "placeholders":{
-      "name":"Enter full name",
-      "email":"Enter email address",
-      "phone":"Enter your phone number",
-      "company":"enter your company name",
-      "sector":"Select sector",
-      "location":"Select location",
-      "size":"Select Company size",
-      "acess":"Enter access count",
-      "pwd":"Enter your password"
+    "averageSale": {
+      "title": "Average Sale",
+      "subtitle": "per invoice"
     },
-    "select paiment method":"Select payment method",
-    "status":{
-      "1":"Active",
-      "2":"Inactive",
-      "3":"Pending"
+    "conversionRate": {
+      "title": "Conversion Rate",
+      "subtitle": "Paid invoices"
     },
-    "errors":{
-      "1":"Failed to update user",
-      "2":"Failed to create user",
-      "3":"Error saving user"
-
+    "stockValue": {
+      "title": "Stock Value",
+      "subtitle": "total inventory value"
     },
-
-    "Clients": "Clients",
-    "Search clients": "Search clients",
-    "Client ID": "Client ID",
-    "Name": "Name",
-    "Contact": "Contact",
-    "Company": "Company",
-    "Number of Access": "Number of Access",
-    "Secteur": "Secteur",
-    "Location": "Location",
-    "Company Size": "Company Size",
-    "Participation Date": "Participation Date",
-    "Paiement Method": "Paiement Method",
-    "Actions": "Actions",
-    "Edit": "Edit",
-    "Call (WhatsApp)": "Call (WhatsApp)",
-    "Email": "Email",
-    "Delete": "Delete",
-    "Stop Access": "Stop Access",
-    "Paiement method": "Paiement method",
-    "Per Month": "Per Month",
-    "3 Months": "3 Months",
-    "Per Year": "Per Year",
-    "Edit Client": "Edit Client",
-    "Add Client": "Add Client",
-    "Update": "Update",
-    "Create": "Create"
-  },
+    "revenueByClientProduct": {
+      "title": "Revenue by Client & Product"
+    },
+    "recentInvoices": {
+      "title": "Recent Invoices"
+    },
+    "topProducts": {
+      "title": "Top Products"
+    },
+    "stockStatus": {
+      "inStock": "In Stock",
+      "lowStock": "Low Stock",
+      "outOfStock": "Out of Stock",
+      "needsRestocking": "items need restocking"
+    },
+    "actions": {
+      "viewDetails": "View Details",
+      "loading": "Loading..."
+    },
+    "chart": {
+      "revenue": "Revenue",
+      "totalRevenue": "Total Revenue"
+    },
+    "status": {
+      "paid": "Paid",
+      "pending": "Pending",
+      "partial": "Partial",
+      "refunded": "Refunded",
+      "cancelled": "Cancelled"
+    }
+  }
+,
   "clientsPage":{
         "view":"View Invoices",
         "Client Repository": "Client Repository",

@@ -1,5 +1,5 @@
 "use client"
-
+import { Badge } from "@/components/ui/badge"
 import { useTranslations } from "next-intl"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -80,6 +80,7 @@ interface UserDashboardProps {
 }
 
 export function UserDashboard({ onPageChange }: UserDashboardProps) {
+  const t = useTranslations("adminDashboard")
   const [invoices, setInvoices] = useState<Invoice[]>([])
   const [stockItems, setStockItems] = useState<StockItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -246,9 +247,9 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
     const inStockItems = stockMetrics.totalItems - stockMetrics.lowStockItems - stockMetrics.outOfStockItems
 
     return [
-      { name: "In Stock", value: inStockItems, color: "#10b981" },
-      { name: "Low Stock", value: stockMetrics.lowStockItems, color: "#f59e0b" },
-      { name: "Out of Stock", value: stockMetrics.outOfStockItems, color: "#ef4444" },
+      { name: t("stockOverview.status.1"), value: inStockItems, color: "#10b981" },
+      { name: t("stockOverview.status.2"), value: stockMetrics.lowStockItems, color: "#f59e0b" },
+      { name: t("stockOverview.status.3"), value: stockMetrics.outOfStockItems, color: "#ef4444" },
     ]
   }
 
@@ -260,39 +261,39 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
 
   const dashboardMetrics = [
     {
-      title: "Growth Rate",
+      title: t("growthRate.title"),
       value: loading ? "Loading..." : `${metrics.growthRate.toFixed(1)}%`,
-      subtitle: "compared to last month",
+      subtitle: t("growthRate.subtitle"),
       icon: TrendingUp,
       color: "bg-blue-500",
       change: `${metrics.growthRate.toFixed(1)}%`,
       positive: metrics.growthRate >= 0,
     },
     {
-      title: "Average Sale",
+      title: t("sales.title"),
       value: loading ? "Loading..." : `€${metrics.averageSale.toFixed(2)}`,
-      subtitle: "per invoice",
+      subtitle: t("sales.subtitle"),
       icon: DollarSign,
       color: "bg-green-500",
-      change: `${metrics.totalInvoices} invoices`,
+      change: `${metrics.totalInvoices}, ${t("sales.description")}`,
       positive: true,
     },
     {
-      title: "Conversion Rate",
+      title: t("rate.title"),
       value: loading ? "Loading..." : `${metrics.conversionRate.toFixed(1)}%`,
-      subtitle: "Paid invoices",
+      subtitle: t("rate.subtitle"),
       icon: Target,
       color: "bg-purple-500",
       change: `${metrics.paidInvoices}/${metrics.totalInvoices}`,
       positive: metrics.conversionRate > 50,
     },
     {
-      title: "Stock Value",
+      title: t("stock.title"),
       value: loading ? "Loading..." : `€${stockMetrics.totalStockValue.toFixed(2)}`,
-      subtitle: "total inventory value",
+      subtitle: t("stock.subtitle"),
       icon: Package,
       color: "bg-orange-500",
-      change: `${stockMetrics.totalItems} items`,
+      change: `${stockMetrics.totalItems} , ${t("stock.description")}`,
       positive: true,
     },
   ]
@@ -357,7 +358,7 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
         {/* Monthly Activity Chart */}
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Monthly Monetary Activity</CardTitle>
+            <CardTitle>{t("monthlyActivity.title")}</CardTitle>
             <Button variant="ghost" size="icon">
               <MoreHorizontal className="w-4 h-4" />
             </Button>
@@ -370,7 +371,7 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
                   <YAxis stroke="#888888" />
                   <Tooltip formatter={(value: number) => `€${value.toLocaleString()}`} />
                   <Legend />
-                  <Bar dataKey="revenue" fill="#fb923c" radius={[4, 4, 0, 0]} name="Revenue" barSize={50} />
+                  <Bar dataKey="revenue" fill="#fb923c" radius={[4, 4, 0, 0]} name={t("monthlyActivity.subtitle")} barSize={50} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -380,10 +381,10 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
         {/* Stock Status Overview */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Stock Overview</CardTitle>
+            <CardTitle>{t("stockOverview.title")}</CardTitle>
             <Button variant="ghost" size="sm" onClick={handleViewStockDetails}>
               <Eye className="w-4 h-4 mr-2" />
-              View Details
+              {t("stockOverview.view")}
             </Button>
           </CardHeader>
           <CardContent>
@@ -422,7 +423,7 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
               {stockMetrics.lowStockItems > 0 && (
                 <div className="flex items-center p-3 bg-orange-50 rounded-lg">
                   <AlertTriangle className="w-4 h-4 text-orange-500 mr-2" />
-                  <span className="text-sm text-orange-700">{stockMetrics.lowStockItems} items need restocking</span>
+                  <span className="text-sm text-orange-700">{stockMetrics.lowStockItems} {t("stockOverview.restock")}</span>
                 </div>
               )}
             </div>
@@ -434,7 +435,7 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
       {revenueByClientProduct.length > 0 && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Revenue by Client & Product</CardTitle>
+            <CardTitle>{t("revenue")}</CardTitle>
             <Button variant="ghost" size="icon">
               <MoreHorizontal className="w-4 h-4" />
             </Button>
@@ -481,7 +482,7 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Invoices</CardTitle>
+            <CardTitle>{t("recentInvoice")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -503,7 +504,7 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
                       }
                       className="text-xs"
                     >
-                      {invoice.status}
+                      {t(`invoiceStatus.${invoice.status}`)}
                     </Badge>
                   </div>
                 </div>
@@ -522,7 +523,9 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
                 // Calculate top products by revenue
                 const productRevenue: { [key: string]: number } = {}
                 invoices.forEach((invoice) => {
+                  console.log("Sample invoice:", invoice)
                   invoice.items.forEach((item) => {
+                     
                     if (!productRevenue[item.description]) {
                       productRevenue[item.description] = 0
                     }
@@ -536,7 +539,7 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
                   .map(([product, revenue]) => (
                     <div key={product} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="font-medium text-sm truncate">{product}</div>
-                      <div className="font-medium text-sm">€{revenue.toFixed(2)}</div>
+                      <div className="font-medium text-sm">{revenue.toFixed(2)}</div>
                     </div>
                   ))
               })()}

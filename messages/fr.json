@@ -11,645 +11,668 @@
     "Help": "Aide"
   },
   "adminDashboard": {
-    "form": {
-        "name": "Nom",
-        "email": "Email",
-        "phone": "Téléphone",
-        "company": "Entreprise",
-        "sector": "Secteur",
-        "location": "Emplacement",
-        "size": "Taille de l'entreprise",
-        "acess": "Nombre d'accès",
-        "stat": "Statut",
-        "Join": "Date d'adhésion",
-        "pwd": "Mot de passe"
+    "TOP": "Meilleures ventes",
+    "invoiceStatus": {
+        "paid": "Payée",
+        "pending": "En attente",
+        "partial": "Partiellement payée",
+        "refunded": "Remboursée",
+        "cancelled": "Annulée"
         },
-    "placeholders": {
-        "name": "Entrez le nom complet",
-        "email": "Entrez l'adresse e-mail",
-        "phone": "Entrez votre numéro de téléphone",
-        "company": "Entrez le nom de votre entreprise",
-        "sector": "Sélectionnez un secteur",
-        "location": "Sélectionnez un emplacement",
-        "size": "Sélectionnez la taille de l'entreprise",
-        "acess": "Entrez le nombre d'accès",
-        "pwd": "Entrez votre mot de passe"
-        },
-    "select paiment method": "Sélectionnez le mode de paiement",
-    "status": {
-        "1": "Actif",
-        "2": "Inactif",
-        "3": "En attente"
-        },
-
-    "errors": {
-        "1": "Échec de la mise à jour de l'utilisateur",
-        "2": "Échec de la création de l'utilisateur",
-        "3": "Erreur lors de l'enregistrement de l'utilisateur"
+    "recentInvoice": "Factures récentes",
+    "revenue": "Revenus par client et produit",
+    "sales": {
+    "title": "Vente moyenne",
+    "subtitle": "par facture",
+    "description":"factures"
     },
-    "Clients": "Clients",
-    "Search clients": "Rechercher des clients",
-    "Client ID": "ID de Client",
-    "Name": "Nom",
-    "Contact": "Contact",
-    "Company": "Entreprise",
-    "Number of Access": "Nombre d'accès",
-    "Secteur": "Secteur",
-    "Location": "Localisation",
-    "Company Size": "Taille de l'entreprise",
-    "Participation Date": "Date d'inscription",
-    "Paiement Method": "Méthode de paiement",
-    "Actions": "Actions",
-    "Edit": "Modifier",
-    "Call (WhatsApp)": "Appeler (WhatsApp)",
-    "Email": "Envoyer un e-mail",
-    "Delete": "Supprimer",
-    "Stop Access": "Bloquer l'accès",
-    "Paiement method": "Méthode de paiement",
-    "Per Month": "Par mois",
-    "3 Months": "3 mois",
-    "Per Year": "Par an",
-    "Edit Client": "Modifier le client",
-    "Add Client": "Ajouter un Client",
-    "Update": "Mettre à jour",
-    "Create": "Créer"
-  }
-  ,"clientsPage":{
-        "view":"Voir Factures",
-        "createINV":"Créer Facture",
-        "Client Repository": "Répertoire des clients",
-        "Manage and search through your client database": "Gérez et recherchez dans votre base de données clients",
-        "Add Client": "Ajouter un client",
-        "Add New Client": "Ajouter un nouveau client",
-        "Enter the client information to add them to your database": "Saisissez les informations du client pour l'ajouter à votre base de données",
-        "Name": "Nom",
-        "Email": "Email",
-        "Phone": "Téléphone",
-        "Company": "Entreprise",
-        "Status": "Statut",
-        "Cancel": "Annuler",
-        "Save Changes": "Enregistrer les modifications",
-        "Edit Client": "Modifier le client",
-        "Update the client information": "Mettre à jour les informations du client",
-        "Total Clients": "Nombre total des Clients",
-        "Active Clients": "Clients actifs",
-        "Search Clients": "Rechercher des clients",
-        "Search by client ID, name, email, or company": "Rechercher par ID, nom, email ou entreprise",
-        "Showing": "Affichage",
-        "Active": "Actif",
-        "Inactive": "Inactif",
-        "Pending": "En attente",
-        "Client Directory": "Annuaire des clients",
-        "Sort by ": "Trier par ",
-        "Name (A-Z)": "Nom (A-Z)",
-        "Name (Z-A)": "Nom (Z-A)",
-        "Status (Active → Inactive)": "Statut (Actif → Inactif)",
-        "Status (Inactive → Active)": "Statut (Inactif → Actif)",
-        "Client ID": "ID Client",
-        "Contact": "Contact",
-        "Actions": "Actions",
-        "Facture": "Facture",
-        "Send Email": "Envoyer un e-mail",
-        "Call Client": "Appeler le client",
-        "Delete Client": "Supprimer le client",
-        "Are you sure you want to delete this client?": "Êtes-vous sûr de vouloir supprimer ce client ?"
-    },
-    "facturePage":{
-        "Please select a client": "Veuillez sélectionner un client",
-        "Please fill all new client fields": "Veuillez remplir tous les champs du nouveau client",
-        "Please add at least one item": "Veuillez ajouter au moins un article",
-        "All items must have description valid price and quantity": "Tous les articles doivent avoir une description un prix et une quantité valides",
-        "updated":"Mise à jour de Facture ",
-        "update":"Mettre à jour",
-        "sucess":"avec succes",
-        "invoice":"Facture",
-        "Start Number":"Numéro de départ",
-        "Your facture has been saved to the Journal":"Votre facture a été enregistrée dans le journal",
-        "Facture created successfully":"Facture créée avec succès",
-        "Create New Invoice": "Créer une nouvelle facture",
-        "Generate professional invoices for your clients": "Générez des factures professionnelles pour vos clients",
-        "Existing Client": "Client existant",
-        "New Client": "Nouveau client",
-        "Invoice Parameters": "Paramètres de la facture",
-        "Invoice Number": "Numéro de facture",
-        "Due Date": "Date d'échéance",
-        "Currency": "Devise",
-        "Discount": "Remise",
-        "Tax": "Taxe",
-        "Notes": "Notes",
-        "Custom Date": "Date personnalisée",
-        "Select Payment Term": "Sélectionnez le délai de paiement",
-        "Add New Item": "Ajouter un nouvel article",
-        "Subtotal": "Sous-total",
-        "Tax Amount (%)": "Taxe(%)",
-        "Total": "Total",
-        "Save & Preview": "Enregistrer & Prévisualiser",
-        "Creating": "Création",
-        "60 jours après facturation":"60 jours après facturation ",
-        "30 jours après facturation":"30 jours après facturation ",
-        "20 jours après facturation":"20 jours après facturation ",
-        "10 jours après facturation":"7 jours après facturation ",
-        "7 jours après facturation":"7 jours après facturation ",
-        "US Dollar": "Dollar américain",
-        "Euro": "Euro",
-        "Tunisian Dinar": "Dinar tunisien",
-        "Separator":"Séparateur ",
-        "Sign Placement": "Position du symbole monétaire",
-        "Before Amount": "Avant le montant",
-        "After Amount": "Après le montant",
-        "Decimal Places": "Nombre de décimales",
-        "Discount Type": "Type de remise",
-        "Percentage": "Pourcentage",
-        "Fixed Amount": "Montant fixe",
-        "Amount": "Montant",
-        "VAT Number": "Numéro de TVA",
-        "Tax Method": "Méthode de taxe",
-        "Default Values": "Valeurs par défaut",
-        "autoliquidation": "Autoliquidation",
-        "Default Notes": "Notes par défaut",
-        
-        "Client Information": "Informations du client",
-        "Available clients": "Clients disponibles",
-        "Go to Clients page to add clients": "Aller à la page Clients pour ajouter des clients",
-        "Select Client": "Sélectionner un client",
-        "Choose a client": "Choisissez un client",
-        "No clients available ": "Aucun client disponible ",
-        "Add clients first":"Ajoutez d'abord des clients",
-        "Name & Company": "Nom et Société",
-        "Contact": "Contact",
-        "Status": "Statut",
-        "Client ID": "ID du client",
-        "Name": "Nom",
-        "Company": "Société",
-        "Email": "Email",
-        "Phone": "Téléphone",
-        "Client full name": "Nom complet du client",
-        "Client company name": "Nom de la société du client",
-        "Client email address": "Adresse email du client",
-        "Client phone number": "Numéro de téléphone du client",
-        "Products": "Produits",
-        "Services": "Services",
-        "Description": "Description",
-        "Unit Price": "Prix unitaire",
-        "Quantity": "Quantité"
-    },
-    "HeaderPage":{
-        "Good Morning": "Bonjour",
-        "Edit Password": "Modifier le mot de passe",
-        "Logout": "Déconnexion",
-        "Change Password": "Changer le mot de passe",
-        "Current Password": "Mot de passe actuel",
-        "New Password": "Nouveau mot de passe",
-        "Confirm New Password": "Confirmer le nouveau mot de passe",
-        "Update Password": "Mettre à jour le mot de passe"
-    },
-    "helpDropDown":{
-        "Help": "Aide",
-        "Show Tutorial": "Afficher le tutoriel",
-        "Learn More": "En savoir plus"
-    },
-    "help":{
-        "Logo": "Logo",
-        "Drag file here": "Déposez le fichier ici",
-        "OR SELECT PHOTO": "OU SÉLECTIONNER UNE PHOTO",
-        "Full Name": "Nom et Prénom",
-        "Address": "Adresse",
-        "Phone Number": "N° de téléphone",
-        "Bank RIB": "RIB bancaire",
-        "Company": "Société",
-        "Email": "Email",
-        "Website": "Site internet",
-        "Bank Name": "Nom de la banque",
-        "Sound": "Son",
-        "Default Values": "Valeurs par défaut",
-        "Mute": "Muet",
-        "Language": "Langue",
-        "French": "Français",
-        "Open PDF file after saving": "Ouvrir le fichier PDF après la sauvegarde",
-        "PDF Folder Save Location": "Emplacement de sauvegarde du dossier PDF",
-        "Template": "Modèle",
-        "Minimal": "Minimal",
-        "Date Format": "Format de la date",
-        "07/02/2025 (MM/DD/YYYY)": "07/02/2025 (MM/JJ/AAAA)",
-        "Invoice Number": "Numéro de la facture",
-        "Due Date": "Échéance",
-        "Currency": "Devise",
-        "Discount": "Remise",
-        "Tax": "Taxe",
-        "Note": "Remarque",
-        "VAT Number": "Numéro de TVA",
-        "Amount": "Montant",
-        "Method": "Méthode",
-        "US Dollar": "Dollar US",
-        "Separator": "Séparateur",
-        " (Comma & Dot)": " (Virgule & Point)"
-        },
-    "LearnMoreModal":{
-        "Help & Learning Resources": "Aide et ressources d'apprentissage",
-        "About Client Facturation": "À propos de Client Facturation",
-        "App overview description": "Une solution complète de facturation et de gestion client conçue pour simplifier vos opérations commerciales.",
-        "Key Features": "Fonctionnalités clés",
-        "Client Management": "Gestion des clients",
-        "Invoice Generation": "Génération de factures",
-        "Financial Tracking": "Suivi financier",
-        "Report Generation": "Génération de rapports",
-        "Learning Resources": "Ressources d'apprentissage",
-        "Documentation": "Documentation",
-        "Complete user guide and API reference": "Guide utilisateur complet et référence API",
-        "Read Docs": "Lire la documentation",
-        "Video Tutorials": "Tutoriels vidéo",
-        "Step-by-step video guides": "Guides vidéo étape par étape",
-        "Watch Videos": "Regarder les vidéos",
-        "Community": "Communauté",
-        "Join our user community forum": "Rejoignez notre forum communautaire",
-        "Join Forum": "Rejoindre le forum",
-        "Email Support": "Support par email",
-        "Get help from our support team": "Obtenez de l'aide de notre équipe de support",
-        "Contact Support": "Contacter le support",
-        "Quick Tip": "Astuce rapide",
-        "Quick tip text": "Commencez par le tutoriel interactif pour vous familiariser avec toutes les fonctionnalités, puis ajoutez la documentation à vos favoris",
-        "Close": "Fermer"
-    },
-    "SettingsPage": {
-        "title": "Paramètres",
-        "save": "ENREGISTRER",
-        "saving": "Enregistrement...",
-        "tabs": {
-        "profile": "Profil",
-        "invoice": "Facture",
-        "general": "Général"
-        },
-        "profile": {
-        "logo": "LOGO",
-        "logoDescription": "Accepte PNG, JPG et SVG (Recommandé)",
-        "dragFile": "Glissez le fichier ici",
-        "selectPhoto": "OU SÉLECTIONNEZ UNE PHOTO",
-        "firstName": "PRÉNOM ET NOM",
-        "company": "ENTREPRISE",
-        "address": "ADRESSE",
-        "phoneNumber": "NUMÉRO DE TÉLÉPHONE",
-        "email": "EMAIL",
-        "website": "SITE WEB",
-        "bankName": "NOM DE LA BANQUE",
-        "bankRib": "RIB BANCAIRE"
-        },
-        "invoice": {
-            "requiredFields": "CHAMPS OBLIGATOIRES",
-            "invoiceNumber": "NUMÉRO DE FACTURE",
-            "dueDate": "DATE D'ÉCHÉANCE",
-            "currency": "DEVISE",
-            "discount": "REMISE",
-            "tax": "TAXE",
-            "notes": "NOTES",
-            "invoiceNumberSettings": "PARAMÈTRES DU NUMÉRO DE FACTURE",
-            "prefix": "PRÉFIXE",
-            "startingNumber": "NUMÉRO DE DÉPART",
-            "dueDateSettings": "PARAMÈTRES DE DATE D'ÉCHÉANCE",
-            "customDate": "Date personnalisée",
-            "paymentTerm": "Sélectionner le terme de paiement",
-            "paymentTerms": {
-                "7": "7 jours après facturation",
-                "10": "10 jours après facturation",
-                "20": "20 jours après facturation",
-                "30": "30 jours après facturation",
-                "60": "60 jours après facturation"
-            },
-            "currencySettings": "PARAMÈTRES DE DEVISE",
-            "separator": "SÉPARATEUR",
-            "signPlacement": "PLACEMENT DU SIGNE",
-            "decimalPlaces": "DÉCIMALES",
-            "currencyTypes": {
-                "usDollar": "Dollar américain",
-                "euro": "Euro",
-                "tunisianDinar": "Dinar tunisien"
-            },
-            "separatorTypes": {
-                "commaDot": "1,999,000 (Virgule et Point)",
-                "dotComma": "1.999.000 (Point et Virgule)"
-            },
-            "signPlacements": {
-                "before": "Avant le montant",
-                "after": "Après le montant"
-            },
-            "discountSettings": "PARAMÈTRES DE REMISE",
-            "percentage": "Pourcentage",
-            "fixedAmount": "Montant fixe",
-            "percentageLabel": "POURCENTAGE (%)",
-            "amountLabel": "MONTANT",
-            "taxSettings": "PARAMÈTRES DE TAXE",
-            "vatNumber": "NUMÉRO DE TVA",
-            "taxAmount": "MONTANT (%)",
-            "method": "MÉTHODE",
-            "taxMethods": {
-                "default": "Valeurs par défaut",
-                "custom": "Personnalisé"
-            },
-            "notesSettings": "PARAMÈTRES DES NOTES",
-            "defaultNotes": "NOTES PAR DÉFAUT",
-            "defaultNotesPlaceholder": "Entrez les notes par défaut pour les factures...",
-            "otherSettings": "AUTRES PARAMÈTRES",
-            "pdfSaveLocation": "EMPLACEMENT DE SAUVEGARDE PDF",
-            "selectFolderPlaceholder": "Sélectionnez le chemin du dossier...",
-            "folderSelectDescription": "Cliquez sur l'icône du dossier pour parcourir et sélectionner un dossier pour enregistrer les fichiers PDF",
-            "template": "MODÈLE",
-            "dateFormat": "FORMAT DE DATE",
-            "templates": {
-                "minimal": "Minimal",
-                "standard": "Standard",
-                "professional": "Professionnel"
-            },
-            "dateFormats": {
-                "mmddyyyy": "07/04/2025 (MM/JJ/AAAA)",
-                "ddmmyyyy": "04/07/2025 (JJ/MM/AAAA)",
-                "yyyymmdd": "2025-07-04 (AAAA-MM-JJ)"
-            }
-            },
-        "general": {
-            "sound": "SON",
-            "mute": "MUET",
-            "language": "LANGUE",
-            "openPdfAfterSave": "OUVRIR LE FICHIER PDF APRÈS SAUVEGARDE",
-            "soundOptions": {
-                "default": "Valeurs par défaut",
-                "custom": "Personnalisé",
-                "disabled": "Désactivé"
-            },
-            "languages": {
-                "english": "Anglais",
-                "french": "Français"
-            }
-            },
-        "toasts": {
-        "settingsSaved": "Paramètres sauvegardés",
-        "settingsSavedDescription": "Vos paramètres ont été sauvegardés avec succès.",
-        "error": "Erreur",
-        "errorDescription": "Échec de la sauvegarde des paramètres. Veuillez réessayer.",
-        "folderSelected": "Dossier sélectionné",
-        "folderSelectedDescription": "Dossier sélectionné : {{path}}"
-        }
-    },
-    "TutorialPage": {
-        "steps": {
-        "hello": {
-            "title": "Bonjour !",
-            "description": "Merci de me donner une chance. Laissez-moi vous montrer comment créer de belles factures en seulement 3 étapes simples"
-        },
-        "step1": {
-            "title": "Étape 1 : Gérer vos clients",
-            "description": "Commencez par ajouter vos clients dans la section 'Clients'. Vous pouvez stocker toutes leurs informations importantes ici."
-        },
-        "step2": {
-            "title": "Étape 2 : Créer une facture",
-            "description": "Utilisez la section 'Facture' pour créer rapidement des factures professionnelles avec tous les détails nécessaires."
-        },
-        "step3": {
-            "title": "Étape 3 : Suivre vos factures",
-            "description": "Le 'Journal' vous permet de suivre toutes vos factures, leur statut et l'historique des paiements."
-        },
-        "congratulations": {
-            "title": "Félicitations !",
-            "description": "Vous êtes maintenant prêt à utiliser Client Facturation comme un pro ! N'hésitez pas à explorer toutes les fonctionnalités."
-        }
-        },
-        "buttons": {
-        "skip": "Passer",
-        "back": "Retour",
-        "previous": "Précédent",
-        "next": "Suivant",
-        "finish": "Terminer"
-        }
-    },
-    "userDashboard":{
-        "growthRate": "Taux de croissance",
-        "comparedToLastMonth": "par rapport au mois dernier",
-        "averageSale": "Vente moyenne",
-        "perInvoice": "par facture",
-        "conversionRate": "Taux de conversion",
-        "paidInvoices": "Factures payées",
-        "monthlyMonetaryActivity": "Activité monétaire mensuelle",
-        "revenueByClientAndProduct": "Revenu par client et produit",
-        "totalRevenue": "Revenu total",
-        "revenue": "Revenu"
-        },
-    "journalPage":{
-        "invoiceJournal": "Journal des factures",
-        "trackAndManage": "Suivez et gérez toutes vos factures",
-        "all": "TOUTES",
-        "paid": "PAYÉE",
-        "partiallyPaid": "PARTIELLEMENT PAYÉE",
-        "pending": "EN ATTENTE",
-        "refunded": "REMBOURSÉE",
-        "cancelled": "ANNULÉE",
-        "filterByClient": "Filtrer par client",
-        "client": "CLIENT",
-        "invoiceNumber": "NUMÉRO DE FACTURE",
-        "totalValue": "MONTANT TOTAL",
-        "created": "CRÉÉE LE",
-        "invoiceItems": "Articles de la facture ",
-        "subtotal": "Sous-total ",
-        "tax": "Taxe ",
-        "total": "Total ",
-        "payments": "Paiements",
-        "addPayment": "Ajouter un paiement",
-        "paymentHistory": "Historique des paiements",
-        "via":"à travers",
-        "showReceipt": "Afficher le reçu",
-        "remaining": "Restant",
-        "modify": "MODIFIER",
-        "view": "VOIR",
-        "noInvoicesFound": "Aucune facture trouvée",
-        "noInvoicesYet": "Vous n'avez pas encore créé de factures Allez à la page Facture pour créer votre première facture",
-        "noInvoicesMatch": "Aucune facture ne correspond à vos filtres actuels",
-        "deleteInvoice": "Supprimer la facture",
-        "deleteConfirm": "Êtes-vous sûr de vouloir supprimer la facture ?",
-        "for":"pour",
-        "deleteWarn": "Cette action est irréversible Tout l'historique des paiements et les données de la facture seront supprimés définitivement",
-        "cancel": "Annuler",
-        "delete": "Supprimer la facture",
-        "addPaymentDialog": "Ajouter un paiement",
-        "remainingBalance": "Solde restant ",
-        "amount": "Montant",
-        "method": "Méthode",
-        "note": "Note",
-        "addForInvoice": "Ajouter le paiement",
-        "receiptTitle": "REÇU DE PAIEMENT",
-        "receiptSubtitle": "Confirmation de la transaction",
-        "receiptNumber": "REÇU N° ",
-        "date": "DATE ",
-        "time": "HEURE ",
-        "receiptInvoice": "FACTURE N° ",
-        "paymentMethod": "MOYEN DE PAIEMENT ",
-        "amountPaid": "MONTANT PAYÉ ",
-        "totalPaidUpper": "TOTAL PAYÉ ",
-        "remainingUpper": "RESTANT ",
-        "thanks": "Merci pour votre paiement ",
-        "printReceipt": "Imprimer le reçu",
-        "paiementMethod":{
-            "bank":"Transfert bancaire",
-            "card":"Carte",
-            "cash":"liquid",
-            "check":"Check",
-            "paypal":"paypal"
-            }
-    },
-    "invoiceViewer":{
-        "templates": {
-            "standard": {
-            "name": "Standard",
-            "description": "Propre et professionnel",
-            "title": "FACTURE",
-            "from": "De",
-            "to": "À"
-            },
-            "spreadsheet": {
-            "name": "Feuille de calcul",
-            "description": "Mise en page axée sur les tableaux"
-            },
-            "continental": {
-            "name": "Continental",
-            "description": "Style européen",
-            "title": "FACTURE",
-            "billTo": "Destinataire",
-            "detailsTitle": "Détails de la facture"
-            },
-            "compact": {
-            "name": "Compact",
-            "description": "Économie d'espace",
-            "billTo": "Facturé à"
-            }
-        },
-        "From":"De",
-        "invoiceTitle": "Facture",
-        "companyLogoAlt": "Logo de L'entreprise ",
-        "errors": {
-            "pdfFail":"Erreur de géneration de pdf",
-            "pdfGenerationFailed": "La génération du PDF a échoué. Ouverture de la boîte d'impression à la place"},
-            "log": {
-            "pdfPath": "Le PDF serait enregistré à l’emplacement "},
-        "clientInfo": {
-            "billTo": "Facturé à :"
-        },
-        "itemsTable": {
-            "itemAndDescription": "Article & Description",
-            "qty": "Qté",
-            "rate": "Tarif",
-            "amount": "Montant"
-        },
-        "notes": {
-            "title": "Notes"
-        },
-        "footer": {
-            "thankYou": "Merci pour votre confiance "
-        },
-        "invoiceViewer": {
-        "invoice": "Facture",
-        "dialogDescription": "Afficher et personnaliser votre modèle de facture"
-        },
-        "actions": {
-            "customize": "Personnaliser",
-            "print": "Imprimer",
-            "download": "Télécharger"
-        },
-        "customization": {
-            "template": "Modèle",
-            "logo": "Logo de l'organisation",
-            "selectLogoOption": "Choisir une option de logo",
-            "none": "Aucun",
-            "myLogo": "Mon logo",
-            "uploadLogo": "Télécharger un logo",
-            "savedLogo": "Votre logo d'entreprise enregistré",
-            "colors": "Couleurs",
-            "background": "Arrière-plan",
-            "labels": "Étiquettes",
-            "text": "Texte",
-            "accent": "Couleur d'accent"
-        },
-        "details": {
-            "invoiceDate": "Date de facturation ",
-            "dueDate": "Date d'échéance",
-            "due": "Échéance",
-            "terms": "Conditions",
-            "discount": "Remise",
-            "afterDiscount": "Après le remise",
-            "vatLabel": "TVA",
-            "Total": "Total",
-            "invoiceTotal": "Montant total",
-            "invoiceSubTotal": "Sous-total",
-            "taxInvoiceTitle": "FACTURE",
-            "invoiceNumber": "Facture n° ",
-            "tax": "Taxe "
-        }
+    "rate": {
+    "title": "Taux de conversion",
+    "subtitle": "Factures payées"
     },
     "stock": {
-  "header": {
-    "title": "Gestion de Stock",
-    "subtitle": "Contrôle de stock simplifié",
-    "add": "Ajouter un produit"
-  },
-  "status": {
-    "total": "Produits Totals",
-    "low": "Stock Faible",
-    "empty": "Rupture de Stock",
-    "in": "En Stock",
-    "badge": {
-      "empty": "Rupture de Stock",
-      "low": "Stock Faible",
-      "good": "En Stock"
+    "title": "Valeur du stock",
+    "subtitle": "valeur totale de l'inventaire",
+    "description":"piéces"
+    },
+    "growthRate": {
+      "title": "Taux de croissance",
+      "subtitle": "par rapport à la période précédente"
+    },
+    "monthlyActivity": {
+      "title": "Activité mensuelle",
+      "subtitle":"Les revenues"
+    },
+    "stockOverview": {
+      "title": "Aperçu du stock",
+      "view" :"Voir les details",
+      "status": {
+        "1": "En stock",
+        "2": "Stock faible",
+        "3": "Rupture de stock"
+        },
+        "restock": "articles doivent être réapprovisionnés" 
+
+    },
+    "averageSale": {
+      "title": "Vente moyenne",
+      "subtitle": "par facture"
+    },
+    "conversionRate": {
+      "title": "Taux de conversion",
+      "subtitle": "Factures payées"
+    },
+    "stockValue": {
+      "title": "Valeur du stock",
+      "subtitle": "valeur totale de l'inventaire"
+    },
+    "revenueByClientProduct": {
+      "title": "Chiffre d'affaires par client et produit"
+    },
+    "recentInvoices": {
+      "title": "Factures récentes"
+    },
+    "topProducts": {
+      "title": "Meilleurs produits"
+    },
+    "stockStatus": {
+      "inStock": "En stock",
+      "lowStock": "Stock faible",
+      "outOfStock": "Rupture de stock",
+      "needsRestocking": "articles nécessitent un réapprovisionnement"
+    },
+    "actions": {
+      "viewDetails": "Voir les détails",
+      "loading": "Chargement..."
+    },
+    "chart": {
+      "revenue": "Chiffre d'affaires",
+      "totalRevenue": "Chiffre d'affaires total"
+    },
+    "status": {
+      "paid": "Payée",
+      "pending": "En attente",
+      "partial": "Partielle",
+      "refunded": "Remboursée",
+      "cancelled": "Annulée"
     }
   },
-  "form": {
-    "name": "Nom du produit",
-    "myproduct": "Mon produit",
-    "quantity": "Quantité",
-    "minStock": "Stock Minimum",
-    "price": "Prix",
-    "currency": "Devise",
-    "supplier": "Fournisseur",
-    "description": "Description",
-    "cancel": "Annuler",
-    "submitAdd": "Ajouter le produit",
-    "submitEdit": "Mettre à jour le produit",
-    "placeholderCurrency": "Sélectionner une devise"
-  },
-  "filter": {
-    "search": "Rechercher des produits",
-    "all": "Tous les produits",
-    "low": "Stock Faible",
-    "in": "En Stock",
-    "out": "Rupture de Stock",
-    "my": "Mes produits",
-    "imported": "Produits importés"
-  },
-  "action": {
-    "add":"ajouter au stock",
-    "edit": "Modifier",
-    "restock": "Réapprovisionner",
-    "delete": "Supprimer",
-    "successAdd": "Produit ajouté avec succès",
-    "successEdit": "Produit mis à jour avec succès",
-    "successDelete": "Produit supprimé avec succès",
-    "successRestockQuantity": "Ajout de ",
-    "successRestockProduict": " unités à",
-    "errorMissingFields": "Veuillez remplir tous les champs obligatoires",
-    "errorQuantity": "Veuillez saisir une quantité valide"
-  },
-  "empty": {
-    "title": "Aucun produit trouvé",
-    "description": "Essayez de modifier votre recherche ou d'ajouter un nouveau produit"
-  },
-  "restock": {
-    "title": "Réapprovisionner un produit",
-    "description": "Ajouter des unités à ",
-    "quantity": "Quantité à ajouter",
-    "current": "Stock actuel",
-    "after": "Après réapprovisionnement"
-  },
-  "modal": {
-    "addTitle": "Ajouter un nouveau produit",
-    "addDescription": "Saisissez les détails du nouveau produit",
-    "editTitle": "Modifier le produit",
-    "editDescription": "Mettre à jour les détails du produit"
-  }
-}
+    "clientsPage":{
+            "view":"Voir Factures",
+            "createINV":"Créer Facture",
+            "Client Repository": "Répertoire des clients",
+            "Manage and search through your client database": "Gérez et recherchez dans votre base de données clients",
+            "Add Client": "Ajouter un client",
+            "Add New Client": "Ajouter un nouveau client",
+            "Enter the client information to add them to your database": "Saisissez les informations du client pour l'ajouter à votre base de données",
+            "Name": "Nom",
+            "Email": "Email",
+            "Phone": "Téléphone",
+            "Company": "Entreprise",
+            "Status": "Statut",
+            "Cancel": "Annuler",
+            "Save Changes": "Enregistrer les modifications",
+            "Edit Client": "Modifier le client",
+            "Update the client information": "Mettre à jour les informations du client",
+            "Total Clients": "Nombre total des Clients",
+            "Active Clients": "Clients actifs",
+            "Search Clients": "Rechercher des clients",
+            "Search by client ID, name, email, or company": "Rechercher par ID, nom, email ou entreprise",
+            "Showing": "Affichage",
+            "Active": "Actif",
+            "Inactive": "Inactif",
+            "Pending": "En attente",
+            "Client Directory": "Annuaire des clients",
+            "Sort by ": "Trier par ",
+            "Name (A-Z)": "Nom (A-Z)",
+            "Name (Z-A)": "Nom (Z-A)",
+            "Status (Active → Inactive)": "Statut (Actif → Inactif)",
+            "Status (Inactive → Active)": "Statut (Inactif → Actif)",
+            "Client ID": "ID Client",
+            "Contact": "Contact",
+            "Actions": "Actions",
+            "Facture": "Facture",
+            "Send Email": "Envoyer un e-mail",
+            "Call Client": "Appeler le client",
+            "Delete Client": "Supprimer le client",
+            "Are you sure you want to delete this client?": "Êtes-vous sûr de vouloir supprimer ce client ?"
+        },
+        "facturePage":{
+            "Please select a client": "Veuillez sélectionner un client",
+            "Please fill all new client fields": "Veuillez remplir tous les champs du nouveau client",
+            "Please add at least one item": "Veuillez ajouter au moins un article",
+            "All items must have description valid price and quantity": "Tous les articles doivent avoir une description un prix et une quantité valides",
+            "updated":"Mise à jour de Facture ",
+            "update":"Mettre à jour",
+            "sucess":"avec succes",
+            "invoice":"Facture",
+            "Start Number":"Numéro de départ",
+            "Your facture has been saved to the Journal":"Votre facture a été enregistrée dans le journal",
+            "Facture created successfully":"Facture créée avec succès",
+            "Create New Invoice": "Créer une nouvelle facture",
+            "Generate professional invoices for your clients": "Générez des factures professionnelles pour vos clients",
+            "Existing Client": "Client existant",
+            "New Client": "Nouveau client",
+            "Invoice Parameters": "Paramètres de la facture",
+            "Invoice Number": "Numéro de facture",
+            "Due Date": "Date d'échéance",
+            "Currency": "Devise",
+            "Discount": "Remise",
+            "Tax": "Taxe",
+            "Notes": "Notes",
+            "Custom Date": "Date personnalisée",
+            "Select Payment Term": "Sélectionnez le délai de paiement",
+            "Add New Item": "Ajouter un nouvel article",
+            "Subtotal": "Sous-total",
+            "Tax Amount (%)": "Taxe(%)",
+            "Total": "Total",
+            "Save & Preview": "Enregistrer & Prévisualiser",
+            "Creating": "Création",
+            "60 jours après facturation":"60 jours après facturation ",
+            "30 jours après facturation":"30 jours après facturation ",
+            "20 jours après facturation":"20 jours après facturation ",
+            "10 jours après facturation":"7 jours après facturation ",
+            "7 jours après facturation":"7 jours après facturation ",
+            "US Dollar": "Dollar américain",
+            "Euro": "Euro",
+            "Tunisian Dinar": "Dinar tunisien",
+            "Separator":"Séparateur ",
+            "Sign Placement": "Position du symbole monétaire",
+            "Before Amount": "Avant le montant",
+            "After Amount": "Après le montant",
+            "Decimal Places": "Nombre de décimales",
+            "Discount Type": "Type de remise",
+            "Percentage": "Pourcentage",
+            "Fixed Amount": "Montant fixe",
+            "Amount": "Montant",
+            "VAT Number": "Numéro de TVA",
+            "Tax Method": "Méthode de taxe",
+            "Default Values": "Valeurs par défaut",
+            "autoliquidation": "Autoliquidation",
+            "Default Notes": "Notes par défaut",
+            
+            "Client Information": "Informations du client",
+            "Available clients": "Clients disponibles",
+            "Go to Clients page to add clients": "Aller à la page Clients pour ajouter des clients",
+            "Select Client": "Sélectionner un client",
+            "Choose a client": "Choisissez un client",
+            "No clients available ": "Aucun client disponible ",
+            "Add clients first":"Ajoutez d'abord des clients",
+            "Name & Company": "Nom et Société",
+            "Contact": "Contact",
+            "Status": "Statut",
+            "Client ID": "ID du client",
+            "Name": "Nom",
+            "Company": "Société",
+            "Email": "Email",
+            "Phone": "Téléphone",
+            "Client full name": "Nom complet du client",
+            "Client company name": "Nom de la société du client",
+            "Client email address": "Adresse email du client",
+            "Client phone number": "Numéro de téléphone du client",
+            "Products": "Produits",
+            "Services": "Services",
+            "Description": "Description",
+            "Unit Price": "Prix unitaire",
+            "Quantity": "Quantité"
+        },
+        "HeaderPage":{
+            "Good Morning": "Bonjour",
+            "Edit Password": "Modifier le mot de passe",
+            "Logout": "Déconnexion",
+            "Change Password": "Changer le mot de passe",
+            "Current Password": "Mot de passe actuel",
+            "New Password": "Nouveau mot de passe",
+            "Confirm New Password": "Confirmer le nouveau mot de passe",
+            "Update Password": "Mettre à jour le mot de passe"
+        },
+        "helpDropDown":{
+            "Help": "Aide",
+            "Show Tutorial": "Afficher le tutoriel",
+            "Learn More": "En savoir plus"
+        },
+        "help":{
+            "Logo": "Logo",
+            "Drag file here": "Déposez le fichier ici",
+            "OR SELECT PHOTO": "OU SÉLECTIONNER UNE PHOTO",
+            "Full Name": "Nom et Prénom",
+            "Address": "Adresse",
+            "Phone Number": "N° de téléphone",
+            "Bank RIB": "RIB bancaire",
+            "Company": "Société",
+            "Email": "Email",
+            "Website": "Site internet",
+            "Bank Name": "Nom de la banque",
+            "Sound": "Son",
+            "Default Values": "Valeurs par défaut",
+            "Mute": "Muet",
+            "Language": "Langue",
+            "French": "Français",
+            "Open PDF file after saving": "Ouvrir le fichier PDF après la sauvegarde",
+            "PDF Folder Save Location": "Emplacement de sauvegarde du dossier PDF",
+            "Template": "Modèle",
+            "Minimal": "Minimal",
+            "Date Format": "Format de la date",
+            "07/02/2025 (MM/DD/YYYY)": "07/02/2025 (MM/JJ/AAAA)",
+            "Invoice Number": "Numéro de la facture",
+            "Due Date": "Échéance",
+            "Currency": "Devise",
+            "Discount": "Remise",
+            "Tax": "Taxe",
+            "Note": "Remarque",
+            "VAT Number": "Numéro de TVA",
+            "Amount": "Montant",
+            "Method": "Méthode",
+            "US Dollar": "Dollar US",
+            "Separator": "Séparateur",
+            " (Comma & Dot)": " (Virgule & Point)"
+            },
+        "LearnMoreModal":{
+            "Help & Learning Resources": "Aide et ressources d'apprentissage",
+            "About Client Facturation": "À propos de Client Facturation",
+            "App overview description": "Une solution complète de facturation et de gestion client conçue pour simplifier vos opérations commerciales.",
+            "Key Features": "Fonctionnalités clés",
+            "Client Management": "Gestion des clients",
+            "Invoice Generation": "Génération de factures",
+            "Financial Tracking": "Suivi financier",
+            "Report Generation": "Génération de rapports",
+            "Learning Resources": "Ressources d'apprentissage",
+            "Documentation": "Documentation",
+            "Complete user guide and API reference": "Guide utilisateur complet et référence API",
+            "Read Docs": "Lire la documentation",
+            "Video Tutorials": "Tutoriels vidéo",
+            "Step-by-step video guides": "Guides vidéo étape par étape",
+            "Watch Videos": "Regarder les vidéos",
+            "Community": "Communauté",
+            "Join our user community forum": "Rejoignez notre forum communautaire",
+            "Join Forum": "Rejoindre le forum",
+            "Email Support": "Support par email",
+            "Get help from our support team": "Obtenez de l'aide de notre équipe de support",
+            "Contact Support": "Contacter le support",
+            "Quick Tip": "Astuce rapide",
+            "Quick tip text": "Commencez par le tutoriel interactif pour vous familiariser avec toutes les fonctionnalités, puis ajoutez la documentation à vos favoris",
+            "Close": "Fermer"
+        },
+        "SettingsPage": {
+            "title": "Paramètres",
+            "save": "ENREGISTRER",
+            "saving": "Enregistrement...",
+            "tabs": {
+            "profile": "Profil",
+            "invoice": "Facture",
+            "general": "Général"
+            },
+            "profile": {
+            "logo": "LOGO",
+            "logoDescription": "Accepte PNG, JPG et SVG (Recommandé)",
+            "dragFile": "Glissez le fichier ici",
+            "selectPhoto": "OU SÉLECTIONNEZ UNE PHOTO",
+            "firstName": "PRÉNOM ET NOM",
+            "company": "ENTREPRISE",
+            "address": "ADRESSE",
+            "phoneNumber": "NUMÉRO DE TÉLÉPHONE",
+            "email": "EMAIL",
+            "website": "SITE WEB",
+            "bankName": "NOM DE LA BANQUE",
+            "bankRib": "RIB BANCAIRE"
+            },
+            "invoice": {
+                "requiredFields": "CHAMPS OBLIGATOIRES",
+                "invoiceNumber": "NUMÉRO DE FACTURE",
+                "dueDate": "DATE D'ÉCHÉANCE",
+                "currency": "DEVISE",
+                "discount": "REMISE",
+                "tax": "TAXE",
+                "notes": "NOTES",
+                "invoiceNumberSettings": "PARAMÈTRES DU NUMÉRO DE FACTURE",
+                "prefix": "PRÉFIXE",
+                "startingNumber": "NUMÉRO DE DÉPART",
+                "dueDateSettings": "PARAMÈTRES DE DATE D'ÉCHÉANCE",
+                "customDate": "Date personnalisée",
+                "paymentTerm": "Sélectionner le terme de paiement",
+                "paymentTerms": {
+                    "7": "7 jours après facturation",
+                    "10": "10 jours après facturation",
+                    "20": "20 jours après facturation",
+                    "30": "30 jours après facturation",
+                    "60": "60 jours après facturation"
+                },
+                "currencySettings": "PARAMÈTRES DE DEVISE",
+                "separator": "SÉPARATEUR",
+                "signPlacement": "PLACEMENT DU SIGNE",
+                "decimalPlaces": "DÉCIMALES",
+                "currencyTypes": {
+                    "usDollar": "Dollar américain",
+                    "euro": "Euro",
+                    "tunisianDinar": "Dinar tunisien"
+                },
+                "separatorTypes": {
+                    "commaDot": "1,999,000 (Virgule et Point)",
+                    "dotComma": "1.999.000 (Point et Virgule)"
+                },
+                "signPlacements": {
+                    "before": "Avant le montant",
+                    "after": "Après le montant"
+                },
+                "discountSettings": "PARAMÈTRES DE REMISE",
+                "percentage": "Pourcentage",
+                "fixedAmount": "Montant fixe",
+                "percentageLabel": "POURCENTAGE (%)",
+                "amountLabel": "MONTANT",
+                "taxSettings": "PARAMÈTRES DE TAXE",
+                "vatNumber": "NUMÉRO DE TVA",
+                "taxAmount": "MONTANT (%)",
+                "method": "MÉTHODE",
+                "taxMethods": {
+                    "default": "Valeurs par défaut",
+                    "custom": "Personnalisé"
+                },
+                "notesSettings": "PARAMÈTRES DES NOTES",
+                "defaultNotes": "NOTES PAR DÉFAUT",
+                "defaultNotesPlaceholder": "Entrez les notes par défaut pour les factures...",
+                "otherSettings": "AUTRES PARAMÈTRES",
+                "pdfSaveLocation": "EMPLACEMENT DE SAUVEGARDE PDF",
+                "selectFolderPlaceholder": "Sélectionnez le chemin du dossier...",
+                "folderSelectDescription": "Cliquez sur l'icône du dossier pour parcourir et sélectionner un dossier pour enregistrer les fichiers PDF",
+                "template": "MODÈLE",
+                "dateFormat": "FORMAT DE DATE",
+                "templates": {
+                    "minimal": "Minimal",
+                    "standard": "Standard",
+                    "professional": "Professionnel"
+                },
+                "dateFormats": {
+                    "mmddyyyy": "07/04/2025 (MM/JJ/AAAA)",
+                    "ddmmyyyy": "04/07/2025 (JJ/MM/AAAA)",
+                    "yyyymmdd": "2025-07-04 (AAAA-MM-JJ)"
+                }
+                },
+            "general": {
+                "sound": "SON",
+                "mute": "MUET",
+                "language": "LANGUE",
+                "openPdfAfterSave": "OUVRIR LE FICHIER PDF APRÈS SAUVEGARDE",
+                "soundOptions": {
+                    "default": "Valeurs par défaut",
+                    "custom": "Personnalisé",
+                    "disabled": "Désactivé"
+                },
+                "languages": {
+                    "english": "Anglais",
+                    "french": "Français"
+                }
+                },
+            "toasts": {
+            "settingsSaved": "Paramètres sauvegardés",
+            "settingsSavedDescription": "Vos paramètres ont été sauvegardés avec succès.",
+            "error": "Erreur",
+            "errorDescription": "Échec de la sauvegarde des paramètres. Veuillez réessayer.",
+            "folderSelected": "Dossier sélectionné",
+            "folderSelectedDescription": "Dossier sélectionné : {{path}}"
+            }
+        },
+        "TutorialPage": {
+            "steps": {
+            "hello": {
+                "title": "Bonjour !",
+                "description": "Merci de me donner une chance. Laissez-moi vous montrer comment créer de belles factures en seulement 3 étapes simples"
+            },
+            "step1": {
+                "title": "Étape 1 : Gérer vos clients",
+                "description": "Commencez par ajouter vos clients dans la section 'Clients'. Vous pouvez stocker toutes leurs informations importantes ici."
+            },
+            "step2": {
+                "title": "Étape 2 : Créer une facture",
+                "description": "Utilisez la section 'Facture' pour créer rapidement des factures professionnelles avec tous les détails nécessaires."
+            },
+            "step3": {
+                "title": "Étape 3 : Suivre vos factures",
+                "description": "Le 'Journal' vous permet de suivre toutes vos factures, leur statut et l'historique des paiements."
+            },
+            "congratulations": {
+                "title": "Félicitations !",
+                "description": "Vous êtes maintenant prêt à utiliser Client Facturation comme un pro ! N'hésitez pas à explorer toutes les fonctionnalités."
+            }
+            },
+            "buttons": {
+            "skip": "Passer",
+            "back": "Retour",
+            "previous": "Précédent",
+            "next": "Suivant",
+            "finish": "Terminer"
+            }
+        },
+        "userDashboard":{
+            "growthRate": "Taux de croissance",
+            "comparedToLastMonth": "par rapport au mois dernier",
+            "averageSale": "Vente moyenne",
+            "perInvoice": "par facture",
+            "conversionRate": "Taux de conversion",
+            "paidInvoices": "Factures payées",
+            "monthlyMonetaryActivity": "Activité monétaire mensuelle",
+            "revenueByClientAndProduct": "Revenu par client et produit",
+            "totalRevenue": "Revenu total",
+            "revenue": "Revenu"
+            },
+        "journalPage":{
+            "invoiceJournal": "Journal des factures",
+            "trackAndManage": "Suivez et gérez toutes vos factures",
+            "all": "TOUTES",
+            "paid": "PAYÉE",
+            "partiallyPaid": "PARTIELLEMENT PAYÉE",
+            "pending": "EN ATTENTE",
+            "refunded": "REMBOURSÉE",
+            "cancelled": "ANNULÉE",
+            "filterByClient": "Filtrer par client",
+            "client": "CLIENT",
+            "invoiceNumber": "NUMÉRO DE FACTURE",
+            "totalValue": "MONTANT TOTAL",
+            "created": "CRÉÉE LE",
+            "invoiceItems": "Articles de la facture ",
+            "subtotal": "Sous-total ",
+            "tax": "Taxe ",
+            "total": "Total ",
+            "payments": "Paiements",
+            "addPayment": "Ajouter un paiement",
+            "paymentHistory": "Historique des paiements",
+            "via":"à travers",
+            "showReceipt": "Afficher le reçu",
+            "remaining": "Restant",
+            "modify": "MODIFIER",
+            "view": "VOIR",
+            "noInvoicesFound": "Aucune facture trouvée",
+            "noInvoicesYet": "Vous n'avez pas encore créé de factures Allez à la page Facture pour créer votre première facture",
+            "noInvoicesMatch": "Aucune facture ne correspond à vos filtres actuels",
+            "deleteInvoice": "Supprimer la facture",
+            "deleteConfirm": "Êtes-vous sûr de vouloir supprimer la facture ?",
+            "for":"pour",
+            "deleteWarn": "Cette action est irréversible Tout l'historique des paiements et les données de la facture seront supprimés définitivement",
+            "cancel": "Annuler",
+            "delete": "Supprimer la facture",
+            "addPaymentDialog": "Ajouter un paiement",
+            "remainingBalance": "Solde restant ",
+            "amount": "Montant",
+            "method": "Méthode",
+            "note": "Note",
+            "addForInvoice": "Ajouter le paiement",
+            "receiptTitle": "REÇU DE PAIEMENT",
+            "receiptSubtitle": "Confirmation de la transaction",
+            "receiptNumber": "REÇU N° ",
+            "date": "DATE ",
+            "time": "HEURE ",
+            "receiptInvoice": "FACTURE N° ",
+            "paymentMethod": "MOYEN DE PAIEMENT ",
+            "amountPaid": "MONTANT PAYÉ ",
+            "totalPaidUpper": "TOTAL PAYÉ ",
+            "remainingUpper": "RESTANT ",
+            "thanks": "Merci pour votre paiement ",
+            "printReceipt": "Imprimer le reçu",
+            "paiementMethod":{
+                "bank":"Transfert bancaire",
+                "card":"Carte",
+                "cash":"liquid",
+                "check":"Check",
+                "paypal":"paypal"
+                }
+        },
+        "invoiceViewer":{
+            "templates": {
+                "standard": {
+                "name": "Standard",
+                "description": "Propre et professionnel",
+                "title": "FACTURE",
+                "from": "De",
+                "to": "À"
+                },
+                "spreadsheet": {
+                "name": "Feuille de calcul",
+                "description": "Mise en page axée sur les tableaux"
+                },
+                "continental": {
+                "name": "Continental",
+                "description": "Style européen",
+                "title": "FACTURE",
+                "billTo": "Destinataire",
+                "detailsTitle": "Détails de la facture"
+                },
+                "compact": {
+                "name": "Compact",
+                "description": "Économie d'espace",
+                "billTo": "Facturé à"
+                }
+            },
+            "From":"De",
+            "invoiceTitle": "Facture",
+            "companyLogoAlt": "Logo de L'entreprise ",
+            "errors": {
+                "pdfFail":"Erreur de géneration de pdf",
+                "pdfGenerationFailed": "La génération du PDF a échoué. Ouverture de la boîte d'impression à la place"},
+                "log": {
+                "pdfPath": "Le PDF serait enregistré à l’emplacement "},
+            "clientInfo": {
+                "billTo": "Facturé à :"
+            },
+            "itemsTable": {
+                "itemAndDescription": "Article & Description",
+                "qty": "Qté",
+                "rate": "Tarif",
+                "amount": "Montant"
+            },
+            "notes": {
+                "title": "Notes"
+            },
+            "footer": {
+                "thankYou": "Merci pour votre confiance "
+            },
+            "invoiceViewer": {
+            "invoice": "Facture",
+            "dialogDescription": "Afficher et personnaliser votre modèle de facture"
+            },
+            "actions": {
+                "customize": "Personnaliser",
+                "print": "Imprimer",
+                "download": "Télécharger"
+            },
+            "customization": {
+                "template": "Modèle",
+                "logo": "Logo de l'organisation",
+                "selectLogoOption": "Choisir une option de logo",
+                "none": "Aucun",
+                "myLogo": "Mon logo",
+                "uploadLogo": "Télécharger un logo",
+                "savedLogo": "Votre logo d'entreprise enregistré",
+                "colors": "Couleurs",
+                "background": "Arrière-plan",
+                "labels": "Étiquettes",
+                "text": "Texte",
+                "accent": "Couleur d'accent"
+            },
+            "details": {
+                "invoiceDate": "Date de facturation ",
+                "dueDate": "Date d'échéance",
+                "due": "Échéance",
+                "terms": "Conditions",
+                "discount": "Remise",
+                "afterDiscount": "Après le remise",
+                "vatLabel": "TVA",
+                "Total": "Total",
+                "invoiceTotal": "Montant total",
+                "invoiceSubTotal": "Sous-total",
+                "taxInvoiceTitle": "FACTURE",
+                "invoiceNumber": "Facture n° ",
+                "tax": "Taxe "
+            }
+        },
+        "stock": {
+    "header": {
+        "title": "Gestion de Stock",
+        "subtitle": "Contrôle de stock simplifié",
+        "add": "Ajouter un produit"
+    },
+    "status": {
+        "total": "Produits Totals",
+        "low": "Stock Faible",
+        "empty": "Rupture de Stock",
+        "in": "En Stock",
+        "badge": {
+        "empty": "Rupture de Stock",
+        "low": "Stock Faible",
+        "good": "En Stock"
+        }
+    },
+    "form": {
+        "name": "Nom du produit",
+        "myproduct": "Mon produit",
+        "quantity": "Quantité",
+        "minStock": "Stock Minimum",
+        "price": "Prix",
+        "currency": "Devise",
+        "supplier": "Fournisseur",
+        "description": "Description",
+        "cancel": "Annuler",
+        "submitAdd": "Ajouter le produit",
+        "submitEdit": "Mettre à jour le produit",
+        "placeholderCurrency": "Sélectionner une devise"
+    },
+    "filter": {
+        "search": "Rechercher des produits",
+        "all": "Tous les produits",
+        "low": "Stock Faible",
+        "in": "En Stock",
+        "out": "Rupture de Stock",
+        "my": "Mes produits",
+        "imported": "Produits importés"
+    },
+    "action": {
+        "add":"ajouter au stock",
+        "edit": "Modifier",
+        "restock": "Réapprovisionner",
+        "delete": "Supprimer",
+        "successAdd": "Produit ajouté avec succès",
+        "successEdit": "Produit mis à jour avec succès",
+        "successDelete": "Produit supprimé avec succès",
+        "successRestockQuantity": "Ajout de ",
+        "successRestockProduict": " unités à",
+        "errorMissingFields": "Veuillez remplir tous les champs obligatoires",
+        "errorQuantity": "Veuillez saisir une quantité valide"
+    },
+    "empty": {
+        "title": "Aucun produit trouvé",
+        "description": "Essayez de modifier votre recherche ou d'ajouter un nouveau produit"
+    },
+    "restock": {
+        "title": "Réapprovisionner un produit",
+        "description": "Ajouter des unités à ",
+        "quantity": "Quantité à ajouter",
+        "current": "Stock actuel",
+        "after": "Après réapprovisionnement"
+    },
+    "modal": {
+        "addTitle": "Ajouter un nouveau produit",
+        "addDescription": "Saisissez les détails du nouveau produit",
+        "editTitle": "Modifier le produit",
+        "editDescription": "Mettre à jour les détails du produit"
+    }
+    }
 
 }

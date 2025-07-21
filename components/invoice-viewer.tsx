@@ -102,14 +102,6 @@ interface InvoiceViewerProps {
 
 
 
-
-export function InvoicePreview({ isOpen, onClose }: InvoiceViewerProps) {
-  //translation
-  const t = useTranslations("invoiceViewer")
-
-
-
-
 export function InvoicePreview({ invoice, isOpen, onClose }: InvoiceViewerProps) {
 
   const t = useTranslations("invoiceViewer")

@@ -418,7 +418,7 @@ export function AdminDashboard() {
                   <td className="py-2 px-4 font-semibold">{user.secteur}</td>
                   <td className="py-2 px-4 font-semibold">{user.location}</td>
                   <td className="py-2 px-4 font-semibold">{user.company_size}</td>
-                  <td className="py-2 px-4 font-semibold">{formatDateForDisplay(user.date)}</td>{" "}
+                  <td className="py-2 px-4 font-semibold">{formatDateForDisplay(user.date)}</td>
                   <td className="py-2 px-4">
                     <Badge
                       variant={
