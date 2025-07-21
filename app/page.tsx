@@ -152,6 +152,8 @@ export default function Home() {
     setEditingInvoice(null)
     setPrefilledClient(null)
     setJournalSearchTerm("")
+    // ✅ Redirect to base route "/"
+    router.push("/")
   }
 
   const handlePageChange = (page: string) => {
