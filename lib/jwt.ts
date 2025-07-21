@@ -11,19 +11,19 @@ export interface JWTPayload {
   company: string
   iat?: number
   exp?: number
-  lastActivity?: number
+  lastActivity?: number // Unix timestamp in seconds
 }
 
 // 30 minutes in seconds
-const ACCESS_TOKEN_EXPIRY = 30 * 60
+export const ACCESS_TOKEN_EXPIRY = 30 * 60
 // 7 days in seconds
-const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60
+export const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60
 
 export function generateAccessToken(payload: Omit<JWTPayload, "iat" | "exp" | "lastActivity">): string {
   return jwt.sign(
     {
       ...payload,
-      lastActivity: Math.floor(Date.now() / 1000),
+      lastActivity: Math.floor(Date.now() / 1000), // Record activity timestamp
     },
     JWT_SECRET,
     { expiresIn: ACCESS_TOKEN_EXPIRY },
@@ -38,19 +38,19 @@ export function verifyAccessToken(token: string): JWTPayload | null {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload
 
-    // Check if token is expired due to inactivity (30 minutes)
+    // Check if token is expired due to inactivity (2 hours)
     const now = Math.floor(Date.now() / 1000)
     const lastActivity = decoded.lastActivity || decoded.iat || 0
-    const inactivityLimit = 30 * 60 // 30 minutes in seconds
+    const inactivityLimit = 2 * 60 * 60 // 2 hours in seconds
 
     if (now - lastActivity > inactivityLimit) {
-      console.log("JWT Error: Token expired due to inactivity")
+      console.log("JWT Error: Access token expired due to inactivity")
       return null // Token expired due to inactivity
     }
 
     return decoded
   } catch (error) {
-    console.log("JWT Error: Token verification failed", error)
+    console.log("JWT Error: Access token verification failed", error)
     return null
   }
 }

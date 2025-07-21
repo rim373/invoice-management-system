@@ -5,30 +5,42 @@ import { verifyAccessToken } from "@/lib/jwt"
 export async function POST(request: NextRequest) {
   try {
     const accessToken = request.cookies.get("access_token")?.value
+    const refreshToken = request.cookies.get("refresh_token")?.value
 
-    if (!accessToken) {
-      return NextResponse.json({ error: "No access token found" }, { status: 400 })
+    let decodedPayload = null
+    if (accessToken) {
+      decodedPayload = verifyAccessToken(accessToken)
     }
 
-    // Verify the token to get user info, though not strictly needed for deletion
-    // but good for logging/security checks
-    const decoded = verifyAccessToken(accessToken)
-    if (!decoded) {
-      console.log("Logout Error: Invalid access token")
-      const response = NextResponse.json({ error: "Invalid token" }, { status: 401 })
-      response.cookies.delete("access_token")
-      response.cookies.delete("refresh_token")
-      return response
+    // Delete session from user_sessions table if access token exists
+    if (accessToken) {
+      const { error: deleteSessionError } = await supabaseAdmin
+        .from("user_sessions")
+        .delete()
+        .eq("session_token", accessToken)
+
+      if (deleteSessionError) {
+        console.error("Database Error: Failed to delete user session on logout", deleteSessionError)
+      } else if (decodedPayload) {
+        console.log(`Session for user ${decodedPayload.email} (ID: ${decodedPayload.userId}) deleted successfully.`)
+      }
     }
 
-    // Delete the specific session entry using the access token
-    const { error: deleteError } = await supabaseAdmin.from("user_sessions").delete().eq("session_token", accessToken)
+    // Delete refresh token from refresh_tokens table if it exists
+    if (refreshToken && decodedPayload) {
+      const { error: deleteRefreshTokenError } = await supabaseAdmin
+        .from("refresh_tokens")
+        .delete()
+        .eq("token", refreshToken)
+        .eq("user_id", decodedPayload.userId)
 
-    if (deleteError) {
-      console.error("Database Error: Failed to delete user session on logout", deleteError)
-      // Even if deletion fails, proceed to clear cookies for client-side logout
-    } else {
-      console.log(`Session for user ${decoded.email} (ID: ${decoded.userId}) deleted successfully.`)
+      if (deleteRefreshTokenError) {
+        console.error("Database Error: Failed to delete refresh token on logout", deleteRefreshTokenError)
+      } else {
+        console.log(
+          `Refresh token for user ${decodedPayload.email} (ID: ${decodedPayload.userId}) deleted successfully.`,
+        )
+      }
     }
 
     const response = NextResponse.json({ success: true })

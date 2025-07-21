@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
-import { generateAccessToken, generateRefreshToken } from "@/lib/jwt"
+import { generateAccessToken, generateRefreshToken, REFRESH_TOKEN_EXPIRY } from "@/lib/jwt" // Import REFRESH_TOKEN_EXPIRY
 import bcrypt from "bcryptjs"
 
 export async function POST(request: NextRequest) {
@@ -57,6 +57,18 @@ export async function POST(request: NextRequest) {
       company: user.company,
     })
 
+    // Store refresh token in database
+    const { error: insertTokenError } = await supabaseAdmin.from("refresh_tokens").insert({
+      user_id: user.id,
+      token: refreshToken,
+      expires_at: new Date(Date.now() + REFRESH_TOKEN_EXPIRY * 1000).toISOString(),
+    })
+
+    if (insertTokenError) {
+      console.error("Database Error: Failed to store refresh token", insertTokenError)
+      return NextResponse.json({ error: "Internal server error during token storage" }, { status: 500 })
+    }
+
     // --- Device Access Control Logic ---
     const clientIp = request.headers.get("x-forwarded-for") || request.ip || "unknown"
     console.log(`User ${user.email} attempting login from IP: ${clientIp}`)
@@ -107,7 +119,6 @@ export async function POST(request: NextRequest) {
         .from("user_sessions")
         .select("ip_address", { count: "exact" })
         .eq("user_id", user.id)
-        .neq("ip_address", clientIp) // Exclude current IP if it's being added as new
         .then(({ data, error, count }) => {
           // Manually count distinct IPs if data is returned
           if (data) {
@@ -183,7 +194,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: REFRESH_TOKEN_EXPIRY, // 7 days
     })
 
     console.log("Login successful for:", email)
