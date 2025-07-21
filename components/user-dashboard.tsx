@@ -515,23 +515,33 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Top Products</CardTitle>
+            <CardTitle>{t("TOP")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               {(() => {
-                // Calculate top products by revenue
-                const productRevenue: { [key: string]: number } = {}
+                // Define conversion rates relative to TND
+                const conversionRates: { [key: string]: number } = {
+                  TND: 1,
+                  EUR: 3.3,   // Example rate: 1 EUR = 3.3 TND
+                  USD: 3.1,   // Example rate: 1 USD = 3.1 TND
+                  // Add other currencies as needed
+                };
+
+                const productRevenue: { [key: string]: number } = {};
+
                 invoices.forEach((invoice) => {
-                  console.log("Sample invoice:", invoice)
+                  const currency = invoice.currency || "TND"; // Default to TND if missing
+                  const conversionRate = conversionRates[currency] || 1;
+
                   invoice.items.forEach((item) => {
-                     
                     if (!productRevenue[item.description]) {
-                      productRevenue[item.description] = 0
+                      productRevenue[item.description] = 0;
                     }
-                    productRevenue[item.description] += item.totalPrice
-                  })
-                })
+                    // Convert totalPrice to TND before adding
+                    productRevenue[item.description] += item.totalPrice * conversionRate;
+                  });
+                });
 
                 return Object.entries(productRevenue)
                   .sort(([, a], [, b]) => b - a)
@@ -539,9 +549,9 @@ export function UserDashboard({ onPageChange }: UserDashboardProps) {
                   .map(([product, revenue]) => (
                     <div key={product} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="font-medium text-sm truncate">{product}</div>
-                      <div className="font-medium text-sm">{revenue.toFixed(2)}</div>
+                      <div className="font-medium text-sm">{revenue.toFixed(2)} TND</div>
                     </div>
-                  ))
+                  ));
               })()}
             </div>
           </CardContent>
