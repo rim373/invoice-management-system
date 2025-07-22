@@ -1,34 +1,37 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
-import { verifyRefreshToken, generateAccessToken, generateRefreshToken, REFRESH_TOKEN_EXPIRY } from "@/lib/jwt"
+import {
+  verifyRefreshToken,
+  generateAccessToken,
+  generateRefreshToken,
+  REFRESH_TOKEN_EXPIRY,
+} from "@/lib/jwt"
 import { cookies } from "next/headers"
 
 export async function POST(request: NextRequest) {
-  const response = NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
   try {
     const cookieStore = await cookies()
     const oldRefreshToken = cookieStore.get("refresh_token")?.value
 
     if (!oldRefreshToken) {
       console.log("Refresh Error: No refresh token provided")
-      response.status = 401
-      response.json({ error: "No refresh token" })
-      return response
+      const res = NextResponse.json({ error: "No refresh token" }, { status: 401 })
+      res.cookies.delete("access_token")
+      res.cookies.delete("refresh_token")
+      return res
     }
 
     // Verify old refresh token
     const payload = verifyRefreshToken(oldRefreshToken)
     if (!payload) {
       console.log("Refresh Error: Invalid refresh token payload")
-      response.status = 401
-      response.json({ error: "Invalid refresh token" })
-      // Clear cookies if refresh token is invalid
-      response.cookies.delete("access_token")
-      response.cookies.delete("refresh_token")
-      return response
+      const res = NextResponse.json({ error: "Invalid refresh token" }, { status: 401 })
+      res.cookies.delete("access_token")
+      res.cookies.delete("refresh_token")
+      return res
     }
 
-    // Check if refresh token exists in database
+    // Check if refresh token exists in DB
     const { data: tokenRecord, error: tokenError } = await supabaseAdmin
       .from("refresh_tokens")
       .select("*")
@@ -37,56 +40,36 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (tokenError || !tokenRecord) {
-      console.log("Database Error: Refresh token not found or invalid in DB", tokenError)
-      response.status = 401
-      response.json({ error: "Invalid refresh token" })
-      // Clear cookies if refresh token is not found in DB
-      response.cookies.delete("access_token")
-      response.cookies.delete("refresh_token")
-      return response
+      console.log("Database Error: Refresh token not found in DB", tokenError)
+      const res = NextResponse.json({ error: "Invalid refresh token" }, { status: 401 })
+      res.cookies.delete("access_token")
+      res.cookies.delete("refresh_token")
+      return res
     }
 
-    // Check if token is expired
+    // Expired?
     if (new Date(tokenRecord.expires_at) < new Date()) {
-      console.log("Token Error: Refresh token expired in DB")
-      await supabaseAdmin.from("refresh_tokens").delete().eq("token", oldRefreshToken) // Delete expired token
-      response.status = 401
-      response.json({ error: "Refresh token expired" })
-      // Clear cookies if refresh token is expired
-      response.cookies.delete("access_token")
-      response.cookies.delete("refresh_token")
-      return response
+      console.log("Token Error: Refresh token expired")
+      await supabaseAdmin.from("refresh_tokens").delete().eq("token", oldRefreshToken)
+      const res = NextResponse.json({ error: "Refresh token expired" }, { status: 401 })
+      res.cookies.delete("access_token")
+      res.cookies.delete("refresh_token")
+      return res
     }
 
-    // --- Refresh Token Rotation ---
-    // Delete the old refresh token from the database
+    // Refresh token rotation
     const { error: deleteOldTokenError } = await supabaseAdmin
       .from("refresh_tokens")
       .delete()
       .eq("token", oldRefreshToken)
 
     if (deleteOldTokenError) {
-      console.error("Database Error: Failed to delete old refresh token", deleteOldTokenError)
-      // Continue, but log the error. This is not critical enough to block the refresh.
+      console.error("Warning: Could not delete old refresh token", deleteOldTokenError)
     }
 
-    // Generate new access token and new refresh token
-    const newAccessToken = generateAccessToken({
-      userId: payload.userId,
-      email: payload.email,
-      role: payload.role,
-      name: payload.name,
-      company: payload.company,
-    })
-    const newRefreshToken = generateRefreshToken({
-      userId: payload.userId,
-      email: payload.email,
-      role: payload.role,
-      name: payload.name,
-      company: payload.company,
-    })
+    const newAccessToken = generateAccessToken(payload)
+    const newRefreshToken = generateRefreshToken(payload)
 
-    // Store the new refresh token in the database
     const { error: insertNewTokenError } = await supabaseAdmin.from("refresh_tokens").insert({
       user_id: payload.userId,
       token: newRefreshToken,
@@ -95,21 +78,18 @@ export async function POST(request: NextRequest) {
 
     if (insertNewTokenError) {
       console.error("Database Error: Failed to store new refresh token", insertNewTokenError)
-      response.status = 500
-      response.json({ error: "Internal server error during new token storage" })
-      // Clear cookies if new refresh token cannot be stored
-      response.cookies.delete("access_token")
-      response.cookies.delete("refresh_token")
-      return response
+      const errorResponse = NextResponse.json(
+        { error: "Internal server error during new token storage" },
+        { status: 500 }
+      )
+      errorResponse.cookies.delete("access_token")
+      errorResponse.cookies.delete("refresh_token")
+      return errorResponse
     }
-    // --- End Refresh Token Rotation ---
 
-    // Update last activity for the user
     await supabaseAdmin.from("users").update({ last_activity: new Date().toISOString() }).eq("id", payload.userId)
 
-    // Set new access token and new refresh token cookies
-    response.status = 200
-    response.json({ success: true })
+    const response = NextResponse.json({ success: true }, { status: 200 })
 
     response.cookies.set("access_token", newAccessToken, {
       httpOnly: true,
@@ -122,18 +102,19 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: REFRESH_TOKEN_EXPIRY, // 7 days
+      maxAge: REFRESH_TOKEN_EXPIRY, // e.g., 7 days
     })
 
     console.log("Token refresh successful for user:", payload.email)
     return response
   } catch (error) {
     console.error("Refresh API Error: Unexpected server error", error)
-    response.status = 500
-    response.json({ error: "Internal server error" })
-    // Ensure cookies are cleared on any unexpected error during refresh
-    response.cookies.delete("access_token")
-    response.cookies.delete("refresh_token")
-    return response
+    const errorResponse = NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+    errorResponse.cookies.delete("access_token")
+    errorResponse.cookies.delete("refresh_token")
+    return errorResponse
   }
 }

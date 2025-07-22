@@ -1,5 +1,6 @@
 import { cookies } from "next/headers"
 import { verifyAccessToken, type JWTPayload } from "./jwt"
+import { NextResponse } from "next/server"
 
 export async function getCurrentUser(): Promise<JWTPayload | null> {
   try {
@@ -40,8 +41,9 @@ export async function requireAuth(requiredRole?: "admin" | "user"): Promise<JWTP
   return user
 }
 
-export async function clearAuthCookies() {
-  const cookieStore = await cookies()
-  cookieStore.delete("access_token")
-  cookieStore.delete("refresh_token")
+export function clearAuthCookiesResponse(message: string = "Cleared"): NextResponse {
+  const response = NextResponse.json({ error: message }, { status: 401 })
+  response.cookies.delete("access_token")
+  response.cookies.delete("refresh_token")
+  return response
 }
