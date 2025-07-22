@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect  } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,26 +11,28 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { FileText, Download, Printer, Settings } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {useTranslations} from "next-intl"
+import { getCurrentUser } from "@/lib/auth"
+import { fetchSettings } from "@/lib/settings"
 // Company Settings Interface
+
 interface MySettings {
   adress: string
   image: string
-  storageUrl: string
   name: string
   email: string
   companyName: string
   phoneNumber: string
+  vatNumber?: string
 }
 
 // Default Company Settings
-const MY_SETTINGS: MySettings = {
-  adress: "technopol el ghazela",
-  image: "/placeholder.svg?height=80&width=200&text=Your+Company+Logo",
-  storageUrl: "C:/Users/rimba/Downloads/invoices", // Local folder path for PDF storage
-  name: "rim",
-  email: "contact@sucom.com",
-  companyName: "supcom",
-  phoneNumber: "+1 (555) 123-4567",
+const DEFAULT_SETTINGS: MySettings = {
+  adress: "",
+  image: "",
+  name: "",
+  email: "",
+  companyName: "",
+  phoneNumber: "",
 }
 
 // Removed exampleInvoice as it will now come from props
@@ -105,6 +107,9 @@ interface InvoiceViewerProps {
 export function InvoicePreview({ invoice, isOpen, onClose }: InvoiceViewerProps) {
 
   const t = useTranslations("invoiceViewer")
+  // State for user settings
+  const [userSettings, setUserSettings] = useState<MySettings>(DEFAULT_SETTINGS)
+  const [isLoadingSettings, setIsLoadingSettings] = useState(false)
 
   const templates: InvoiceTemplate[] = [
     {
@@ -129,7 +134,64 @@ export function InvoicePreview({ invoice, isOpen, onClose }: InvoiceViewerProps)
     }
   ]
 
-  
+  // Load user settings when component mounts or when dialog opens
+  useEffect(() => {
+    const loadUserSettings = async () => {
+      if (!isOpen) return // Only load when dialog is open
+      
+      setIsLoadingSettings(true)
+      try {
+        // Fetch current user data
+        const user = await getCurrentUser()
+        
+        // Fetch saved settings from backend
+        const settingsResult = await fetchSettings()
+        
+        // Combine user data and settings into userSettings
+        const combinedSettings: MySettings = {
+          // Use settings data if available, otherwise fallback to user data or defaults
+          name: settingsResult.success && settingsResult.settings?.profile_settings?.firstName 
+            ? settingsResult.settings.profile_settings.firstName 
+            : user?.name || DEFAULT_SETTINGS.name,
+          
+          email: settingsResult.success && settingsResult.settings?.profile_settings?.email 
+            ? settingsResult.settings.profile_settings.email 
+            : user?.email || DEFAULT_SETTINGS.email,
+          
+          companyName: settingsResult.success && settingsResult.settings?.profile_settings?.company 
+            ? settingsResult.settings.profile_settings.company 
+            : user?.company || DEFAULT_SETTINGS.companyName,
+          
+          phoneNumber: settingsResult.success && settingsResult.settings?.profile_settings?.phone 
+            ? settingsResult.settings.profile_settings.phone 
+            : DEFAULT_SETTINGS.phoneNumber,
+          
+          adress: settingsResult.success && settingsResult.settings?.profile_settings?.address 
+            ? settingsResult.settings.profile_settings.address 
+            : DEFAULT_SETTINGS.adress,
+          
+          image: settingsResult.success && settingsResult.settings?.profile_settings?.logoPreview 
+            ? settingsResult.settings.profile_settings.logoPreview 
+            : user?.image || DEFAULT_SETTINGS.image,
+          
+          vatNumber: settingsResult.success && settingsResult.settings?.profile_settings?.bankRib 
+            ? settingsResult.settings.profile_settings.bankRib 
+            : undefined,
+          
+    
+        }
+        
+        setUserSettings(combinedSettings)
+      } catch (error) {
+        console.error("Error loading user settings:", error)
+        // Keep default settings if loading fails
+      } finally {
+        setIsLoadingSettings(false)
+      }
+    }
+
+    loadUserSettings()
+  }, [isOpen]) // Reload when dialog opens
 
   
 
@@ -210,12 +272,20 @@ export function InvoicePreview({ invoice, isOpen, onClose }: InvoiceViewerProps)
     labelColor: "#374151",
     fontColor: "#111827",
     accentColor: "#f97316",
-    logoUrl: MY_SETTINGS.image, // Use company logo from settings
+    logoUrl: "", // Use company logo from settings
     logoOption: "my-logo",
   })
 
   const [showCustomization, setShowCustomization] = useState(false)
   const invoiceRef = useRef<HTMLDivElement | null>(null)
+  useEffect(() => {
+    if (userSettings.image) {
+      setCustomization(prev => ({
+        ...prev,
+        logoUrl: userSettings.image
+      }))
+    }
+  }, [userSettings.image])
 
   if (!invoice) return null
 
@@ -699,7 +769,6 @@ export function InvoicePreview({ invoice, isOpen, onClose }: InvoiceViewerProps)
       // Note: In a browser environment, we can't directly save to a specific local folder
       // The file will be downloaded to the user's default download folder
       // For actual local folder saving, you'd need a desktop app or server-side solution
-      console.log(t("log.pdfPath"),{ path: `${MY_SETTINGS.storageUrl}/${filename}` })
 
       // Download the PDF
       pdf.save(filename)
@@ -723,11 +792,11 @@ export function InvoicePreview({ invoice, isOpen, onClose }: InvoiceViewerProps)
           <img src={customization.logoUrl || "/placeholder.svg"} alt={t("companyLogoAlt")}className="h-16 mb-4" />
         )}
         <h1 className="text-2xl font-bold" style={{ color: customization.accentColor }}>
-          {MY_SETTINGS.companyName}
+          {userSettings.companyName}
         </h1>
-        <p className="text-gray-600">{MY_SETTINGS.adress}</p>
-        <p className="text-gray-600">{MY_SETTINGS.email}</p>
-        <p className="text-gray-600">{MY_SETTINGS.phoneNumber}</p>
+        <p className="text-gray-600">{userSettings.adress}</p>
+        <p className="text-gray-600">{userSettings.email}</p>
+        <p className="text-gray-600">{userSettings.phoneNumber}</p>
 
         {hasValue(invoice.vatNumber) && (
           <p className="text-gray-600 mt-2">
@@ -984,11 +1053,11 @@ export function InvoicePreview({ invoice, isOpen, onClose }: InvoiceViewerProps)
                 <h3 className="font-semibold mb-2" style={{ color: customization.labelColor }}>
                   {t("From")}:
                 </h3>
-                <p style={{ color: customization.fontColor }}>{MY_SETTINGS.companyName}</p>
-                <p style={{ color: customization.fontColor }}>123 Business Street</p>
-                <p style={{ color: customization.fontColor }}>City, State 12345</p>
-                <p style={{ color: customization.fontColor }}>{MY_SETTINGS.email}</p>
-                <p style={{ color: customization.fontColor }}>{MY_SETTINGS.phoneNumber}</p>
+                <p style={{ color: customization.fontColor }}>{userSettings.name}</p>
+                <p style={{ color: customization.fontColor }}>{userSettings.companyName}</p>
+                <p style={{ color: customization.fontColor }}>{userSettings.email}</p>
+                <p style={{ color: customization.fontColor }}>{userSettings.phoneNumber}</p>
+                <p style={{ color: customization.fontColor }}>{userSettings.vatNumber}</p>
                 {hasValue(invoice.vatNumber) && (
                   <p style={{ color: customization.fontColor }}>{t("details.vatLabel")}: {invoice.vatNumber}</p>
                 )}
@@ -1044,19 +1113,19 @@ export function InvoicePreview({ invoice, isOpen, onClose }: InvoiceViewerProps)
                     <img src={customization.logoUrl || "/placeholder.svg"} alt={t("companyLogoAlt")} className="h-16 mb-4" />
                   )}
                   <h1 className="text-xl font-bold" style={{ color: customization.fontColor }}>
-                    {MY_SETTINGS.companyName}
+                    {userSettings.name}
                   </h1>
                   <p className="text-sm" style={{ color: customization.fontColor }}>
-                    123 Business Street
+                    {userSettings.companyName}
                   </p>
                   <p className="text-sm" style={{ color: customization.fontColor }}>
-                    {MY_SETTINGS.adress}
+                    {userSettings.adress}
                   </p>
                   <p className="text-sm" style={{ color: customization.fontColor }}>
-                    {MY_SETTINGS.email}
+                    {userSettings.email}
                   </p>
                   <p className="text-sm" style={{ color: customization.fontColor }}>
-                    {MY_SETTINGS.phoneNumber}
+                    {userSettings.phoneNumber}
                   </p>
                   {hasValue(invoice.vatNumber) && (
                     <p className="text-sm" style={{ color: customization.fontColor }}>
@@ -1151,13 +1220,13 @@ export function InvoicePreview({ invoice, isOpen, onClose }: InvoiceViewerProps)
               </div>
               <div className="text-right">
                 <p className="text-xs" style={{ color: customization.labelColor }}>
-                  {MY_SETTINGS.companyName}
+                  {userSettings.companyName}
                 </p>
                 <p className="text-xs" style={{ color: customization.fontColor }}>
-                  {MY_SETTINGS.email}
+                  {userSettings.email}
                 </p>
                 <p className="text-xs" style={{ color: customization.fontColor }}>
-                  {MY_SETTINGS.phoneNumber}
+                  {userSettings.phoneNumber}
                 </p>
                 {hasValue(invoice.vatNumber) && (
                   <p className="text-xs" style={{ color: customization.fontColor }}>
@@ -1321,7 +1390,7 @@ export function InvoicePreview({ invoice, isOpen, onClose }: InvoiceViewerProps)
                           setCustomization((prev) => ({
                             ...prev,
                             logoOption: value,
-                            logoUrl: MY_SETTINGS.image,
+                            logoUrl: userSettings.image,
                           }))
                         } else if (value === "upload") {
                           setCustomization((prev) => ({ ...prev, logoOption: value }))
@@ -1360,7 +1429,7 @@ export function InvoicePreview({ invoice, isOpen, onClose }: InvoiceViewerProps)
 
                     {customization.logoOption === "my-logo" && (
                       <div className="mt-2 p-3 bg-gray-100 rounded-lg">
-                        <img src={MY_SETTINGS.image || "/placeholder.svg"} alt={t("companyLogoAlt")} className="h-16 w-auto" />
+                        <img src={userSettings.image || "/placeholder.svg"} alt={t("companyLogoAlt")} className="h-16 w-auto" />
                         <p className="text-xs text-gray-600 mt-1">{t("customization.savedLogo")}</p>
                       </div>
                     )}
