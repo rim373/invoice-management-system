@@ -1,7 +1,7 @@
 "use client"
 import { useClickSound } from "@/lib/playClickSound"
-import { toast } from 'react-toastify'
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 import { useTranslations } from "next-intl"
 import { Switch } from "@/components/ui/switch"
 import { useState, useEffect, useCallback } from "react"
@@ -10,17 +10,23 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { FileText, Plus, Trash2, Save, CheckCircle, Loader2 } from "lucide-react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { fetchSettings, type InvoiceSettings, defaultSettings } from "@/lib/settings" // Import defaultSettings
+import { fetchSettings, type InvoiceSettings, defaultSettings } from "@/lib/settings"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+
+interface SimpleStockItem {
+  name: string
+  price: number
+}
 
 interface InvoiceItem {
   id: string
   description: string
   price: number
   quantity: number
+  isCustom: boolean
 }
 
 interface Client {
@@ -73,6 +79,39 @@ interface FacturePageProps {
   onInvoiceUpdate?: (invoice: Invoice) => Promise<void>
 }
 
+export function useSimpleStockItems() {
+  const [stockItems, setStockItems] = useState<SimpleStockItem[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+
+  const fetchStockItems = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch("/api/stock")
+      if (!response.ok) {
+        throw new Error("Failed to fetch stock items")
+      }
+      const data = await response.json()
+      // Extract only name and price
+      const simpleItems = (data.stockItems || []).map((item: any) => ({
+        name: item.name,
+        price: item.price,
+      }))
+      setStockItems(simpleItems)
+    } catch (error) {
+      console.error("Error fetching stock items:", error)
+      toast.error("Failed to load stock items")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchStockItems()
+  }, [])
+
+  return { stockItems, loading }
+}
+
 export function FacturePage({
   clients = [],
   onInvoiceCreate,
@@ -85,8 +124,13 @@ export function FacturePage({
   const handlesound = () => {
     playClickSound()
   }
+
   //translation:
   const t = useTranslations("facturePage")
+
+  // Use the stock items hook
+  const { stockItems, loading: stockLoading } = useSimpleStockItems()
+
   // State for invoice settings, initialized with default values
   const [invoiceSettings, setInvoiceSettings] = useState<InvoiceSettings>(defaultSettings.invoice_settings)
 
@@ -109,9 +153,17 @@ export function FacturePage({
 
   const [activeTab, setActiveTab] = useState<"facture" | "avoir">("facture")
   const [selectedClient, setSelectedClient] = useState<string>("")
-  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([{ id: "1", description: "", price: 0, quantity: 1 }])
-  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
+  const [invoiceItems, setInvoiceItems] = useState<InvoiceItem[]>([
+    {
+      id: "1",
+      description: "",
+      price: 0,
+      quantity: 1,
+      isCustom: true,
+    },
+  ])
 
+  const [editingInvoice, setEditingInvoice] = useState<Invoice | null>(null)
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
@@ -198,13 +250,17 @@ export function FacturePage({
       setActiveTab("avoir")
     }
 
-    // Set invoice items
-    const items = invoice.items.map((item) => ({
-      id: item.id,
-      description: item.description,
-      price: item.unitPrice,
-      quantity: item.quantity,
-    }))
+    // Set invoice items - check if they match stock items
+    const items = invoice.items.map((item) => {
+      const stockItem = stockItems.find((stock) => stock.name === item.description)
+      return {
+        id: item.id,
+        description: item.description,
+        price: item.unitPrice,
+        quantity: item.quantity,
+        isCustom: !stockItem, // If not found in stock, it's custom
+      }
+    })
     setInvoiceItems(items)
     setEditingInvoice(invoice)
   }
@@ -221,6 +277,7 @@ export function FacturePage({
       description: "",
       price: 0,
       quantity: 1,
+      isCustom: true,
     }
     setInvoiceItems([...invoiceItems, newItem])
   }
@@ -231,8 +288,38 @@ export function FacturePage({
     }
   }
 
-  const updateInvoiceItem = (id: string, field: keyof InvoiceItem, value: string | number) => {
+  const updateInvoiceItem = (id: string, field: keyof InvoiceItem, value: string | number | boolean) => {
     setInvoiceItems(invoiceItems.map((item) => (item.id === id ? { ...item, [field]: value } : item)))
+  }
+
+  // Updated function to handle stock item selection - fix the state update issue
+  const handleStockItemSelect = (itemId: string, stockItemName: string) => {
+    if (stockItemName === "custom") {
+      // Set to custom item - update all fields at once
+      setInvoiceItems(
+        invoiceItems.map((item) =>
+          item.id === itemId ? { ...item, isCustom: true, description: "", price: 0 } : item,
+        ),
+      )
+    } else {
+      // Find the selected stock item
+      const selectedStock = stockItems.find((stock) => stock.name === stockItemName)
+      if (selectedStock) {
+        // Update all fields at once
+        setInvoiceItems(
+          invoiceItems.map((item) =>
+            item.id === itemId
+              ? {
+                  ...item,
+                  isCustom: false,
+                  description: selectedStock.name,
+                  price: selectedStock.price,
+                }
+              : item,
+          ),
+        )
+      }
+    }
   }
 
   const getSelectedClientData = () => {
@@ -249,7 +336,6 @@ export function FacturePage({
   const calculateDiscount = () => {
     const { discountType, discountAmount } = invoiceSettings
     const subtotal = calculateSubtotal()
-
     const parsedAmount = Number.parseFloat(discountAmount || "0")
 
     if (parsedAmount <= 0 || !invoiceParameters.discount) {
@@ -259,11 +345,9 @@ export function FacturePage({
     if (discountType === "percentage") {
       return (subtotal * parsedAmount) / 100
     }
-
     if (discountType === "fixed") {
       return parsedAmount
     }
-
     return 0
   }
 
@@ -355,7 +439,6 @@ export function FacturePage({
           toast.error("Please fill all new client fields")
           return
         }
-
         clientData = {
           id: `client-${Date.now()}`,
           name,
@@ -411,7 +494,7 @@ export function FacturePage({
       setTimeout(() => {
         if (!editInvoice) {
           setSelectedClient("")
-          setInvoiceItems([{ id: "1", description: "", price: 0, quantity: 1 }])
+          setInvoiceItems([{ id: "1", description: "", price: 0, quantity: 1, isCustom: true }])
           setInvoiceNumber("")
           setInvoiceDate(new Date().toISOString().split("T")[0])
           // Reset due date based on current settings
@@ -428,9 +511,9 @@ export function FacturePage({
         }
       }, 2000)
     } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to save invoice"
-        toast.error(`Error: ${message}`)
-        console.error("Invoice operation failed:", error)
+      const message = error instanceof Error ? error.message : "Failed to save invoice"
+      toast.error(`Error: ${message}`)
+      console.error("Invoice operation failed:", error)
     } finally {
       setIsSubmitting(false)
     }
@@ -439,13 +522,13 @@ export function FacturePage({
     invoiceItems,
     invoiceDate,
     dueDate,
-    invoiceSettings, // Added invoiceSettings to dependencies
-    invoiceParameters, // Added invoiceParameters to dependencies
+    invoiceSettings,
+    invoiceParameters,
     onInvoiceCreate,
     onInvoiceUpdate,
     editInvoice,
     prefilledClient,
-    newClient, // Added newClient to dependencies
+    newClient,
   ])
 
   return (
@@ -457,9 +540,7 @@ export function FacturePage({
             <FileText className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              {editInvoice ? t("updated") : t("Create New Invoice")}
-            </h1>
+            <h1 className="text-3xl font-bold text-gray-900">{editInvoice ? t("updated") : t("Create New Invoice")}</h1>
             <p className="text-gray-600">
               {editInvoice
                 ? t("update") + " " + t("invoice")
@@ -536,7 +617,7 @@ export function FacturePage({
         </Card>
       )}
 
-      {/* Invoice Parameters */}
+      {/* Invoice Parameters - keeping the same as before */}
       <Card>
         <CardContent className="p-6 space-y-6">
           <h3 className="text-sm font-medium text-gray-700 uppercase tracking-wide">{t("Invoice Parameters")}</h3>
@@ -765,7 +846,7 @@ export function FacturePage({
         </CardContent>
       </Card>
 
-      {/* Client Information */}
+      {/* Client Information - keeping the same as before */}
       <Card>
         <CardHeader>
           <CardTitle>{t("Client Information")}</CardTitle>
@@ -901,6 +982,12 @@ export function FacturePage({
           <CardTitle>
             {t("Products")} / {t("Services")} <span className="text-red-500">*</span>
           </CardTitle>
+          {stockLoading && (
+            <p className="text-sm text-gray-500 flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Loading stock items...
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -914,23 +1001,60 @@ export function FacturePage({
 
             {/* Invoice Items */}
             {invoiceItems.map((item, index) => (
-              <div key={item.id} className="grid grid-cols-12 gap-4 items-center">
-                <div className="col-span-6">
-                  <Textarea
-                    placeholder={t("Description") + "..."}
+              <div key={item.id} className="grid grid-cols-12 gap-4 items-start">
+                <div className="col-span-6 space-y-2">
+                  {/* Stock Item Selector with debugging */}
+                  <Select
+                    value={item.isCustom ? "custom" : item.description}
+                    onValueChange={(value) => {
+                      handleStockItemSelect(item.id, value)
+                    }}
+                    disabled={stockLoading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={stockLoading ? "Loading..." : "Select item or custom..."} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="custom">
+                        <div className="flex items-center gap-2">
+                          <Plus className="w-4 h-4" />
+                          Custom Item
+                        </div>
+                      </SelectItem>
+                      {stockItems.map((stockItem) => (
+                        <SelectItem key={stockItem.name} value={stockItem.name}>
+                          <div className="flex items-center justify-between w-full">
+                            <span>{stockItem.name}</span>
+                            <span className="text-sm text-gray-500 ml-2">
+                              {invoiceSettings.currencyType} {stockItem.price.toFixed(2)}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Description input - always editable */}
+                  <Input
+                    placeholder="Enter item description..."
                     value={item.description}
                     onChange={(e) => updateInvoiceItem(item.id, "description", e.target.value)}
-                    className="min-h-[60px] resize-none"
+                    className="w-full"
                   />
                 </div>
+
                 <div className="col-span-2">
                   <Input
                     type="number"
+                    step="0.01"
                     placeholder="0.00"
                     value={item.price || ""}
                     onChange={(e) => updateInvoiceItem(item.id, "price", Number.parseFloat(e.target.value) || 0)}
+                    className=""
                   />
+                  {!item.isCustom && <p className="text-xs text-gray-500 mt-1">From stock item (editable)</p>}
                 </div>
+
                 <div className="col-span-2">
                   <Input
                     type="number"
@@ -939,11 +1063,13 @@ export function FacturePage({
                     onChange={(e) => updateInvoiceItem(item.id, "quantity", Number.parseInt(e.target.value) || 1)}
                   />
                 </div>
+
                 <div className="col-span-1 flex items-center justify-between">
                   <span className="font-medium text-gray-900">
                     {invoiceSettings.currencyType} {(item.price * item.quantity).toFixed(2)}
                   </span>
                 </div>
+
                 <div className="col-span-1 flex justify-end">
                   {invoiceItems.length > 1 && (
                     <Button
@@ -981,7 +1107,9 @@ export function FacturePage({
                 </div>
                 {invoiceParameters.tax && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">{t("Tax")} ({invoiceSettings.taxAmount}%):</span>
+                    <span className="text-gray-600">
+                      {t("Tax")} ({invoiceSettings.taxAmount}%):
+                    </span>
                     <span className="font-medium">
                       {invoiceSettings.currencyType} {calculateTax().toFixed(2)}
                     </span>
@@ -1012,7 +1140,10 @@ export function FacturePage({
       <div className="flex justify-end space-x-3">
         <Button
           className="bg-orange-500 hover:bg-orange-600 text-white"
-          onClick={() => { handlesound(); handleSaveInvoice(); }}
+          onClick={() => {
+            handlesound()
+            handleSaveInvoice()
+          }}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
