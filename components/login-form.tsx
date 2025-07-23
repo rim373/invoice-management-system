@@ -102,19 +102,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
             </Button>
           </form>
 
-          <div className="mt-6 space-y-3">
-            <div className="text-sm text-gray-600">
-              <p className="font-medium mb-2">Demo Accounts:</p>
-              <div className="space-y-1 text-xs">
-                <p>
-                  <strong>User:</strong> user@demo.com / demo
-                </p>
-                <p>
-                  <strong>Admin:</strong> admin@demo.com / demo
-                </p>
-              </div>
-            </div>
-          </div>
+          
         </CardContent>
       </Card>
     </div>

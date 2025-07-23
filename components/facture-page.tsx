@@ -15,10 +15,12 @@ import { FileText, Plus, Trash2, Save, CheckCircle, Loader2 } from "lucide-react
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { fetchSettings, type InvoiceSettings, defaultSettings } from "@/lib/settings"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { fetchExchangeRates, convertCurrency } from "@/services/currencyService";
 
 interface SimpleStockItem {
   name: string
   price: number
+  currency :string
 }
 
 interface InvoiceItem {
@@ -80,6 +82,8 @@ interface FacturePageProps {
 }
 
 export function useSimpleStockItems() {
+
+  const [convertedAmount, setConvertedAmount] = useState<number | null>(null);
   const [stockItems, setStockItems] = useState<SimpleStockItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
 
@@ -95,6 +99,7 @@ export function useSimpleStockItems() {
       const simpleItems = (data.stockItems || []).map((item: any) => ({
         name: item.name,
         price: item.price,
+        currency: item.currency,
       }))
       setStockItems(simpleItems)
     } catch (error) {
@@ -119,6 +124,24 @@ export function FacturePage({
   prefilledClient,
   onInvoiceUpdate,
 }: FacturePageProps) {
+  //currency change 
+  const baseUnit = "";
+  const toConvertUnit = "";
+  const amount = 0;
+  const [convertedAmount, setConvertedAmount] = useState<number | null>(null);
+  useEffect(() => {
+    async function convert() {
+      try {
+        await fetchExchangeRates("USD", [baseUnit, toConvertUnit]);
+        const result = convertCurrency(baseUnit, toConvertUnit, amount);
+        setConvertedAmount(result);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    convert();
+  }, []);
   //sound
   const playClickSound = useClickSound()
   const handlesound = () => {
@@ -167,17 +190,35 @@ export function FacturePage({
   const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [exchangeRatesLoaded, setExchangeRatesLoaded] = useState(false)
 
   // Form parameters
   const [invoiceNumber, setInvoiceNumber] = useState("")
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0])
   const [dueDate, setDueDate] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0])
-  const [currency] = useState("EUR") // This seems hardcoded, but invoiceSettings.currencyType is used for display
+  
 
   // Load settings on component mount
   useEffect(() => {
     loadSettings()
   }, [])
+
+  // Load exchange rates when invoice currency changes
+useEffect(() => {
+  const loadExchangeRates = async () => {
+    try {
+      await fetchExchangeRates(invoiceSettings.currencyType)
+      setExchangeRatesLoaded(true)
+    } catch (error) {
+      console.error("Failed to load exchange rates:", error)
+      toast.error("Failed to load exchange rates")
+    }
+  }
+  
+  if (invoiceSettings.currencyType) {
+    loadExchangeRates()
+  }
+}, [invoiceSettings.currencyType])
 
   // Load invoice data if editing
   useEffect(() => {
@@ -305,6 +346,7 @@ export function FacturePage({
       // Find the selected stock item
       const selectedStock = stockItems.find((stock) => stock.name === stockItemName)
       if (selectedStock) {
+        const convertedPrice = getConvertedPrice(selectedStock)
         // Update all fields at once
         setInvoiceItems(
           invoiceItems.map((item) =>
@@ -313,7 +355,7 @@ export function FacturePage({
                   ...item,
                   isCustom: false,
                   description: selectedStock.name,
-                  price: selectedStock.price,
+                  price: convertedPrice,
                 }
               : item,
           ),
@@ -530,6 +572,19 @@ export function FacturePage({
     prefilledClient,
     newClient,
   ])
+  // Helper function to get converted price
+  const getConvertedPrice = (stockItem: SimpleStockItem): number => {
+    if (!exchangeRatesLoaded || stockItem.currency === invoiceSettings.currencyType) {
+      return stockItem.price
+    }
+    
+    try {
+      return convertCurrency(stockItem.currency, invoiceSettings.currencyType, stockItem.price)
+    } catch (error) {
+      console.error("Currency conversion failed:", error)
+      return stockItem.price // Fallback to original price
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -1026,8 +1081,17 @@ export function FacturePage({
                           <div className="flex items-center justify-between w-full">
                             <span>{stockItem.name}</span>
                             <span className="text-sm text-gray-500 ml-2">
-                              {invoiceSettings.currencyType} {stockItem.price.toFixed(2)}
-                            </span>
+                            {exchangeRatesLoaded && stockItem.currency !== invoiceSettings.currencyType ? (
+                              <>
+                                <span className="line-through">{stockItem.currency} {stockItem.price.toFixed(2)}</span>
+                                <span className="ml-1 font-medium text-green-600">
+                                  {invoiceSettings.currencyType} {getConvertedPrice(stockItem).toFixed(2)}
+                                </span>
+                              </>
+                            ) : (
+                              `${stockItem.currency} ${stockItem.price.toFixed(2)}`
+                            )}
+                          </span>
                           </div>
                         </SelectItem>
                       ))}
