@@ -56,6 +56,37 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { name, myproduct, quantity, minStock, price, currency, supplier, description } = body
 
+    // Check for existing item before inserting to prevent duplicates
+    const { data: existingItem, error: existingError } = await supabaseAdmin
+      .from("stock_items")
+      .select("id, name, my_product, quantity, min_stock, price, currency, supplier, description")
+      .eq("user_id", userId)
+      .eq("name", name)
+      .single()
+
+    if (existingError && existingError.code !== "PGRST116") {
+      // PGRST116 means "No rows found"
+      console.error("Database error checking for existing stock item:", existingError)
+      return NextResponse.json({ error: "Failed to check for existing stock item" }, { status: 500 })
+    }
+
+    if (existingItem) {
+      // Item with this name already exists for this user, return it instead of creating a duplicate
+      console.log(`Stock item "${name}" already exists for user ${userId}, returning existing item.`)
+      const transformedExistingItem = {
+        id: existingItem.id,
+        name: existingItem.name,
+        myproduct: existingItem.my_product,
+        quantity: existingItem.quantity,
+        minStock: existingItem.min_stock,
+        price: Number.parseFloat(existingItem.price),
+        currency: existingItem.currency,
+        supplier: existingItem.supplier,
+        description: existingItem.description,
+      }
+      return NextResponse.json({ stockItem: transformedExistingItem }, { status: 200 }) // Return 200 OK for existing resource
+    }
+
     // Validate required fields
     if (!name || quantity === undefined || price === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
@@ -181,11 +212,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete stock item
-    const { error } = await supabaseAdmin
-      .from("stock_items")
-      .delete()
-      .eq("id", id)
-      .eq("user_id", userId) // Ensure user can only delete their own items
+    const { error } = await supabaseAdmin.from("stock_items").delete().eq("id", id).eq("user_id", userId) // Ensure user can only delete their own items
 
     if (error) {
       console.error("Database error:", error)

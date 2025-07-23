@@ -425,6 +425,50 @@ export function FacturePage({
         return
       }
 
+      // Handle adding custom invoice items to stock
+      const customItemsToAdd = invoiceItems.filter((item) => item.isCustom)
+
+      for (const customItem of customItemsToAdd) {
+        // Check if this custom item already exists in the current stockItems state
+        const existingStockItem = stockItems.find((stock) => stock.name === customItem.description)
+
+        if (!existingStockItem) {
+          try {
+            const stockResponse = await fetch("/api/stock", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                name: customItem.description,
+                myproduct: true, // Default to true as per API
+                quantity: 0, // As requested
+                minStock: 0, // As requested
+                price: customItem.price,
+                currency: invoiceSettings.currencyType, // Use the invoice currency
+                supplier: null, // Default
+                description: "Automatically added from invoice custom item", // Default description
+              }),
+            })
+
+            if (!stockResponse.ok) {
+              const errorData = await stockResponse.json()
+              console.error(`Failed to add custom item "${customItem.description}" to stock:`, errorData.error)
+              toast.warn(
+                `Could not add custom item "${customItem.description}" to stock. It might already exist or there was an error.`,
+              )
+            } else {
+              console.log(`Custom item "${customItem.description}" added to stock successfully.`)
+            }
+          } catch (stockError) {
+            console.error(`Network error adding custom item "${customItem.description}" to stock:`, stockError)
+            toast.warn(`Network error adding custom item "${customItem.description}" to stock.`)
+          }
+        } else {
+          console.log(`Custom item "${customItem.description}" already exists in stock, skipping addition.`)
+        }
+      }
+
       let clientData: Client | null = null
 
       if (activeTab === "facture") {
@@ -529,6 +573,7 @@ export function FacturePage({
     editInvoice,
     prefilledClient,
     newClient,
+    stockItems,
   ])
 
   return (
