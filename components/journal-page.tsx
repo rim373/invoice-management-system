@@ -1,5 +1,7 @@
 "use client"
-
+import { useClickSound } from "@/lib/playClickSound"
+import html2canvas from "html2canvas"
+import jsPDF from "jspdf"
 import { useState, useEffect,useRef  } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,7 +11,8 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-
+import { InvoicePreview } from "./invoice-viewer"
+import { useTranslations } from "next-intl"
 import {
   BookOpen,
   Search,
@@ -67,12 +70,36 @@ interface JournalPageProps {
   invoices?: Invoice[]
   onInvoiceUpdate?: (invoices: Invoice[]) => void
   onInvoiceDelete?: (invoiceId: string) => void
+  onInvoiceEdit?: (invoice: Invoice) => void
+  searchTerm?: string
 }
 
-export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInvoiceDelete }: JournalPageProps) {
+export function JournalPage({
+  invoices: externalInvoices,
+  onInvoiceUpdate,
+  onInvoiceDelete,
+  onInvoiceEdit,
+  searchTerm: externalSearchTerm,
+}: JournalPageProps) {
+  //sound effect
+  const playClickSound = useClickSound()
+  const handlesound = () => {
+    playClickSound()
+  }
+  //TRANSLATION FUNCTION 
+  const t = useTranslations("journalPage")
+  // invoice pdf
+  const [viewingInvoice, setViewingInvoice] = useState<Invoice | null>(null)
+  const [isViewerOpen, setIsViewerOpen] = useState(false)
+  const handleViewInvoice = (invoice: Invoice) => {
+    setViewingInvoice(invoice)
+    setIsViewerOpen(true)
+  }
+  // invoice pdf
+
   const receiptRef = useRef<HTMLDivElement>(null)
   const [activeStatus, setActiveStatus] = useState<string>("all")
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState(externalSearchTerm || "")
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null)
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
   const [paymentAmount, setPaymentAmount] = useState("")
@@ -80,11 +107,11 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
   const [paymentNote, setPaymentNote] = useState("")
   const [showReceipt, setShowReceipt] = useState(false)
   const [lastPayment, setLastPayment] = useState<{
-  payment: PaymentHistory
-  invoice: Invoice
-  paidUntilNow: number
-  remaining: number
-} | null>(null)
+    payment: PaymentHistory
+    invoice: Invoice
+    paidUntilNow: number
+    remaining: number
+  } | null>(null)
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [invoiceToDelete, setInvoiceToDelete] = useState<Invoice | null>(null)
 
@@ -97,6 +124,13 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
       setInvoices(externalInvoices)
     }
   }, [externalInvoices])
+
+  // Update search term when external search term changes
+  useEffect(() => {
+    if (externalSearchTerm !== undefined) {
+      setSearchTerm(externalSearchTerm)
+    }
+  }, [externalSearchTerm])
 
   const statusCounts = {
     paid: invoices.filter((inv) => inv.status === "paid").length,
@@ -151,15 +185,15 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "paid":
-        return "PAID"
+        return t("paid")
       case "partial":
-        return "PARTIALLY PAID"
+        return t("partiallyPaid")
       case "pending":
-        return "PENDING"
+        return t("pending")
       case "refunded":
-        return "REFUNDED"
+        return t("refunded")
       case "cancelled":
-        return "CANCELLED"
+        return t("cancelled")
       default:
         return status.toUpperCase()
     }
@@ -189,6 +223,12 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
     }
     setDeleteConfirmOpen(false)
     setInvoiceToDelete(null)
+  }
+
+  const handleEditInvoice = (invoice: Invoice) => {
+    if (onInvoiceEdit) {
+      onInvoiceEdit(invoice)
+    }
   }
 
   const handleSavePayment = () => {
@@ -253,6 +293,8 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
     setShowReceipt(true)
   }
 
+
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -262,8 +304,8 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
             <BookOpen className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Invoice Journal</h1>
-            <p className="text-gray-600">Track and manage all your invoices ({invoices.length} total)</p>
+            <h1 className="text-3xl font-bold text-gray-900">{t("invoiceJournal")}</h1>
+            <p className="text-gray-600">{t("trackAndManage")} ({invoices.length} total)</p>
           </div>
         </div>
       </div>
@@ -279,7 +321,7 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                 onClick={() => setActiveStatus("all")}
                 className={activeStatus === "all" ? "bg-orange-500 hover:bg-orange-600" : "bg-transparent"}
               >
-                ALL ({invoices.length})
+                {t("all")} ({invoices.length})
               </Button>
               <Button
                 variant={activeStatus === "paid" ? "default" : "outline"}
@@ -287,7 +329,7 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                 onClick={() => setActiveStatus("paid")}
                 className={activeStatus === "paid" ? "bg-green-500 hover:bg-green-600" : "bg-transparent"}
               >
-                PAID ({statusCounts.paid})
+                {t("paid")} ({statusCounts.paid})
               </Button>
               <Button
                 variant={activeStatus === "partial" ? "default" : "outline"}
@@ -295,7 +337,7 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                 onClick={() => setActiveStatus("partial")}
                 className={activeStatus === "partial" ? "bg-yellow-500 hover:bg-yellow-600" : "bg-transparent"}
               >
-                PARTIALLY PAID ({statusCounts.partial})
+                {t("partiallyPaid")} ({statusCounts.partial})
               </Button>
               <Button
                 variant={activeStatus === "pending" ? "default" : "outline"}
@@ -303,7 +345,7 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                 onClick={() => setActiveStatus("pending")}
                 className={activeStatus === "pending" ? "bg-blue-500 hover:bg-blue-600" : "bg-transparent"}
               >
-                PENDING ({statusCounts.pending})
+                {t("pending")} ({statusCounts.pending})
               </Button>
               <Button
                 variant={activeStatus === "refunded" ? "default" : "outline"}
@@ -311,7 +353,7 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                 onClick={() => setActiveStatus("refunded")}
                 className={activeStatus === "refunded" ? "bg-purple-500 hover:bg-purple-600" : "bg-transparent"}
               >
-                REFUNDED ({statusCounts.refunded})
+                {t("refunded")} ({statusCounts.refunded})
               </Button>
               <Button
                 variant={activeStatus === "cancelled" ? "default" : "outline"}
@@ -319,14 +361,14 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                 onClick={() => setActiveStatus("cancelled")}
                 className={activeStatus === "cancelled" ? "bg-red-500 hover:bg-red-600" : "bg-transparent"}
               >
-                CANCELLED ({statusCounts.cancelled})
+                {t("cancelled")} ({statusCounts.cancelled})
               </Button>
             </div>
 
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Filter by client..."
+                placeholder={t("filterByClient")}
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -348,9 +390,6 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                     <span>{getStatusLabel(invoice.status)}</span>
                   </Badge>
                   <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <FileText className="w-4 h-4 text-gray-400" />
-                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -366,27 +405,27 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
 
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div>
-                  <p className="text-sm text-gray-600 uppercase tracking-wide">CLIENT</p>
+                  <p className="text-sm text-gray-600 uppercase tracking-wide">{t("client")}</p>
                   <p className="font-semibold text-gray-900">{invoice.clientName}</p>
                   <p className="text-sm text-gray-600">{invoice.clientCompany}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 uppercase tracking-wide">INVOICE NUMBER</p>
+                  <p className="text-sm text-gray-600 uppercase tracking-wide">{t("invoiceNumber")}</p>
                   <p className="font-semibold text-blue-600">{invoice.number}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 uppercase tracking-wide">TOTAL VALUE</p>
+                  <p className="text-sm text-gray-600 uppercase tracking-wide">{t("totalValue")}</p>
                   <p className="font-semibold text-gray-900">{formatCurrency(invoice.totalAmount, invoice.currency)}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 uppercase tracking-wide">CREATED</p>
+                  <p className="text-sm text-gray-600 uppercase tracking-wide">{t("created")}</p>
                   <p className="font-semibold text-gray-900">{invoice.createdDate}</p>
                 </div>
               </div>
 
               {/* Invoice Items Details */}
               <div className="mb-4">
-                <h4 className="font-semibold text-gray-900 mb-2">Invoice Items ({invoice.items.length})</h4>
+                <h4 className="font-semibold text-gray-900 mb-2">{t("invoiceItems")} ({invoice.items.length})</h4>
                 <div className="bg-gray-50 rounded-lg p-3">
                   <div className="space-y-2">
                     {invoice.items.map((item) => (
@@ -407,15 +446,15 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                   </div>
                   <Separator className="my-2" />
                   <div className="flex justify-between text-sm">
-                    <span>Subtotal:</span>
+                    <span>{t("subtotal")}:</span>
                     <span>{formatCurrency(invoice.subtotalAmount, invoice.currency)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Tax ({invoice.taxRate}%):</span>
+                    <span>{t("tax")} ({invoice.taxRate}%):</span>
                     <span>{formatCurrency(invoice.taxAmount, invoice.currency)}</span>
                   </div>
                   <div className="flex justify-between font-semibold">
-                    <span>Total:</span>
+                    <span>{t("total")}:</span>
                     <span>{formatCurrency(invoice.totalAmount, invoice.currency)}</span>
                   </div>
                 </div>
@@ -425,14 +464,14 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
 
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-gray-900">Payments</h3>
+                  <h3 className="font-semibold text-gray-900">{t("payments")}</h3>
                   <Button
                     size="sm"
                     className="bg-blue-500 hover:bg-blue-600 text-white"
                     onClick={() => handleAddPayment(invoice)}
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Add Payment
+                    {t("addPayment")}
                   </Button>
                 </div>
 
@@ -441,7 +480,7 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                   <div className="bg-gray-50 rounded-lg p-3">
                     <h4 className="font-medium text-gray-900 mb-2 flex items-center">
                       <History className="w-4 h-4 mr-2" />
-                      Payment History
+                      {t("paymentHistory")}
                     </h4>
                     <div className="space-y-2">
                       {invoice.paymentHistory.map((payment) => (
@@ -450,14 +489,14 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                             <span className="font-medium">
                               {formatCurrency(payment.amount, invoice.currency)}
                             </span>
-                            <span className="text-gray-600 ml-2">via {payment.method.replace("_", " ")}</span>
+                            <span className="text-gray-600 ml-2">{t("via")} {payment.method.replace("_", " ")}</span>
                             {payment.note && <span className="text-gray-500 ml-2">- {payment.note}</span>}
                           </div>
                           <div className="flex items-center space-x-2">
                             <span className="text-gray-600">{payment.date}</span>
                             <Button
                               variant="outline"
-                              size="xs"
+                              size="sm"
                               className="text-xs"
                               onClick={() => {
                                 const index = invoice.paymentHistory.findIndex(p => p.id === payment.id)
@@ -475,7 +514,7 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                                 setShowReceipt(true)
                               }}
                             >
-                              Show Receipt
+                              {t("showReceipt")}
                             </Button>
 
                           </div>
@@ -488,17 +527,17 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
 
                 <div className="grid grid-cols-3 gap-4 text-center">
                   <div>
-                    <p className="text-sm text-gray-600">Total</p>
+                    <p className="text-sm text-gray-600">{t("total")}</p>
                     <p className="font-semibold">{formatCurrency(invoice.totalAmount, invoice.currency)}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Paid</p>
+                    <p className="text-sm text-gray-600">{t("paid")}</p>
                     <p className="font-semibold text-green-600">
                       {formatCurrency(invoice.paidAmount, invoice.currency)}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-600">Remaining</p>
+                    <p className="text-sm text-gray-600">{t("remaining")}</p>
                     <p className="font-semibold text-orange-600">
                       {formatCurrency(invoice.totalAmount - invoice.paidAmount, invoice.currency)}
                     </p>
@@ -530,44 +569,45 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
                       <SelectItem value="pending">
                         <div className="flex items-center space-x-2">
                           <Clock className="w-4 h-4 text-blue-500" />
-                          <span>PENDING</span>
+                          <span>{t("pending")}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="paid">
                         <div className="flex items-center space-x-2">
                           <CheckCircle className="w-4 h-4 text-green-500" />
-                          <span>PAID</span>
+                          <span>{t("paid")}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="partial">
                         <div className="flex items-center space-x-2">
                           <Clock className="w-4 h-4 text-yellow-500" />
-                          <span>PARTIALLY PAID</span>
+                          <span>{t("partiallyPaid")}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="refunded">
                         <div className="flex items-center space-x-2">
                           <RefreshCw className="w-4 h-4 text-purple-500" />
-                          <span>REFUNDED</span>
+                          <span>{t("refunded")}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="cancelled">
                         <div className="flex items-center space-x-2">
                           <XCircle className="w-4 h-4 text-red-500" />
-                          <span>CANCELLED</span>
+                          <span>{t("cancelled")}</span>
                         </div>
                       </SelectItem>
                     </SelectContent>
                   </Select>
 
                   <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Edit className="w-4 h-4 mr-2" />
-                      MODIFY
-                    </Button>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" onClick={() => handleEditInvoice(invoice)}>
+                    <Edit className="w-4 h-4 mr-2" />
+                    {t("modify")}
+                  </Button>
+                    
+                    <Button variant="outline" size="sm" onClick={() => { handleViewInvoice(invoice); handlesound(); }}>
                       <Eye className="w-4 h-4 mr-2" />
-                      VIEW
+                      {t("view")}
                     </Button>
                   </div>
                 </div>
@@ -581,11 +621,11 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
         <Card>
           <CardContent className="p-12 text-center">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No invoices found</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t("noInvoicesFound")}</h3>
             <p className="text-gray-600">
               {invoices.length === 0
-                ? "You haven't created any invoices yet. Go to the Facture page to create your first invoice."
-                : "No invoices match your current filters."}
+                ? t("noInvoicesYet")
+                : t("noInvoicesMatch")}
             </p>
           </CardContent>
         </Card>
@@ -597,23 +637,23 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2 text-red-600">
               <Trash2 className="w-5 h-5" />
-              <span>Delete Invoice</span>
+              <span>{t("deleteInvoice")}</span>
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete invoice <strong>{invoiceToDelete?.number}</strong> for{" "}
+              {t("deleteConfirm")} <strong>{invoiceToDelete?.number}</strong>{t("for")}{" "}
               <strong>{invoiceToDelete?.clientName}</strong>?
               <br />
               <br />
-              This action cannot be undone. All payment history and invoice data will be permanently removed.
+              {t("deleteWarn")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end space-x-3 pt-4">
             <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
-              Cancel
+              {t("cancel")}
             </Button>
             <Button variant="destructive" onClick={confirmDeleteInvoice} className="bg-red-600 hover:bg-red-700">
               <Trash2 className="w-4 h-4 mr-2" />
-              Delete Invoice
+              {t("delete")}
             </Button>
           </div>
         </DialogContent>
@@ -623,9 +663,9 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
       <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Add Payment</DialogTitle>
+            <DialogTitle>{t("addPaymentDialog")}</DialogTitle>
             <DialogDescription>
-              Add a payment for invoice {selectedInvoice?.number}. Remaining balance:{" "}
+              {t("addForInvoice")} {selectedInvoice?.number}. {t("remainingBalance")}:{" "}
               {selectedInvoice &&
                 formatCurrency(selectedInvoice.totalAmount - selectedInvoice.paidAmount, selectedInvoice.currency)}
             </DialogDescription>
@@ -633,7 +673,7 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="payment-amount" className="text-right">
-                Amount
+                {t("amount")}
               </Label>
               <Input
                 id="payment-amount"
@@ -649,18 +689,18 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="payment-method" className="text-right">
-                Method
+                {t("method")}
               </Label>
               <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                 <SelectTrigger className="col-span-3">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="credit_card">Credit Card</SelectItem>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="check">Check</SelectItem>
-                  <SelectItem value="paypal">PayPal</SelectItem>
+                  <SelectItem value="bank_transfer">{t("paiementMethod.bank")}</SelectItem>
+                  <SelectItem value="credit_card">{t("paiementMethod.card")}</SelectItem>
+                  <SelectItem value="cash">{t("paiementMethod.cash")}</SelectItem>
+                  <SelectItem value="check">{t("paiementMethod.check")}</SelectItem>
+                  <SelectItem value="paypal">{t("paiementMethod.paypal")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -679,11 +719,11 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
           </div>
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
-              Cancel
+              {t("cancel")}
             </Button>
-            <Button className="bg-blue-500 hover:bg-blue-600" onClick={handleSavePayment}>
+            <Button className="bg-blue-500 hover:bg-blue-600" onClick={() => { handleSavePayment(); handlesound(); }}>
               <CreditCard className="w-4 h-4 mr-2" />
-              Add Payment
+              {t("addPaymentDialog")}
             </Button>
           </div>
         </DialogContent>
@@ -694,9 +734,9 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
       <Dialog open={showReceipt} onOpenChange={setShowReceipt}>
         <DialogContent className="sm:max-w-[600px] font-mono text-sm text-black">
           <DialogHeader>
-            <DialogTitle className="text-center text-lg font-bold">REÇU DE PAIEMENT</DialogTitle>
+            <DialogTitle className="text-center text-lg font-bold">{t("receiptTitle")}</DialogTitle>
             <DialogDescription className="text-center text-gray-500">
-              Confirmation de la Transaction
+              {t("receiptSubtitle")}
             </DialogDescription>
           </DialogHeader>
 
@@ -705,33 +745,33 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
           {lastPayment && (
             <div ref={receiptRef} className="space-y-4 p-4 border text-sm">
               <div className="flex justify-between">
-                <span>REÇU N° :</span>
+                <span>{t("receiptNumber")} :</span>
                 <span>RCP-{lastPayment.payment.id}</span>
               </div>
               <div className="flex justify-between">
-                <span>DATE :</span>
+                <span>{t("date")} :</span>
                 <span>{lastPayment.payment.date}</span>
               </div>
               <div className="flex justify-between">
-                <span>HEURE :</span>
+                <span>{t("time")} :</span>
                 <span>{new Date().toLocaleTimeString()}</span>
               </div>
 
               <Separator className="my-2" />
 
               <div className="flex justify-between">
-                <span>CLIENT :</span>
+                <span>{t("client")} :</span>
                 <span>{lastPayment.invoice.clientName}</span>
               </div>
               <div className="flex justify-between">
-                <span>FACTURE N° :</span>
+                <span>{t("receiptInvoice")} :</span>
                 <span>{lastPayment.invoice.number}</span>
               </div>
 
               <Separator className="my-2" />
 
               <div className="flex justify-between">
-                <span>MOYEN DE PAIEMENT :</span>
+                <span>{t("paymentMethod")}:</span>
                 <span>
                   {lastPayment.payment.method === "cash"
                     ? "Espèce"
@@ -742,7 +782,7 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
               <Separator className="my-2 border-t-2" />
 
               <div className="flex justify-between text-base font-bold">
-                <span>MONTANT PAYÉ :</span>
+                <span>{t("amountPaid")}:</span>
                 <span>
                   {lastPayment.invoice.currency.toUpperCase()} {lastPayment.payment.amount.toFixed(2)}
                 </span>
@@ -751,13 +791,13 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
               <Separator className="my-2 border-t-2" />
 
               <div className="flex justify-between">
-                <span>TOTAL PAYÉ :</span>
+                <span>{t("totalPaidUpper")} :</span>
                 <span>
                   {lastPayment.invoice.currency.toUpperCase()} {lastPayment.paidUntilNow.toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between">
-                <span>RESTANT :</span>
+                <span>{t("remainingUpper")}:</span>
                 <span>
                   {lastPayment.invoice.currency.toUpperCase()} {lastPayment.remaining.toFixed(2)}
                 </span>
@@ -765,7 +805,7 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
 
 
               <Separator className="my-2" />
-              <p className="text-center text-xs text-gray-500">Merci pour votre paiement !</p>
+              <p className="text-center text-xs text-gray-500">{t("thanks")} !</p>
             </div>
           )}
           {/* Print Button */}
@@ -773,57 +813,57 @@ export function JournalPage({ invoices: externalInvoices, onInvoiceUpdate, onInv
             <Button
               size="sm"
               variant="outline"
-              onClick={() => {
-                if (!receiptRef.current) return
+              onClick={async () => {
+                if (!receiptRef.current) return;
 
-                const printWindow = window.open("", "PRINT", "height=600,width=800")
-                if (printWindow) {
-                  printWindow.document.write(`
-                    <html>
-                      <head>
-                        <title>Reçu</title>
-                        <style>
-                          body {
-                            font-family: monospace;
-                            padding: 20px;
-                            font-size: 14px;
-                          }
-                          .line {
-                            display: flex;
-                            justify-content: space-between;
-                            margin: 4px 0;
-                          }
-                          .title {
-                            text-align: center;
-                            font-weight: bold;
-                            margin-bottom: 10px;
-                            font-size: 16px;
-                          }
-                          hr {
-                            border: none;
-                            border-top: 1px dashed #999;
-                            margin: 10px 0;
-                          }
-                        </style>
-                      </head>
-                      <body>
-                        ${receiptRef.current.innerHTML}
-                      </body>
-                    </html>
-                  `)
-                  printWindow.document.close()
-                  printWindow.focus()
-                  printWindow.print()
-                  printWindow.close()
-                }
+                const canvas = await html2canvas(receiptRef.current, {
+                  scale: 2, // Higher resolution
+                  useCORS: true,
+                });
+
+                const imgData = canvas.toDataURL("image/png");
+
+                const pdf = new jsPDF("p", "mm", "a4"); // A4 page: 210x297 mm
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const imgProps = {
+                  width: canvas.width,
+                  height: canvas.height,
+                };
+
+                // Convert px to mm (1px = 0.264583 mm)
+                const imgWidthMm = imgProps.width * 0.264583;
+                const imgHeightMm = imgProps.height * 0.264583;
+
+                // Fit image within PDF page width, keep aspect ratio
+                const scale = Math.min(pageWidth / imgWidthMm, pageHeight / imgHeightMm);
+
+                const finalWidth = imgWidthMm * scale;
+                const finalHeight = imgHeightMm * scale;
+
+                const marginX = (pageWidth - finalWidth) / 2;
+                const marginY = 10; // small top margin
+
+                // 3. Add image to PDF and save
+                pdf.addImage(imgData, "PNG", marginX, marginY, finalWidth, finalHeight);
+                pdf.save(`reçu-${lastPayment?.payment?.id}.pdf`);
               }}
             >
-              🖨️ Imprimer le reçu
+              🖨️ {t("printReceipt")}
             </Button>
           </div>
 
         </DialogContent>
       </Dialog>
+      {/* Invoice Viewer */}
+      <InvoicePreview
+        invoice={viewingInvoice}
+        isOpen={isViewerOpen}
+        onClose={() => {
+          setIsViewerOpen(false)
+          setViewingInvoice(null)
+        }}
+      />
 
     </div>
   )

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { ChevronDown, Download, BookOpen, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useTranslations } from "next-intl"
 
 interface HelpDropdownProps {
   onShowTutorial: () => void
@@ -10,6 +11,7 @@ interface HelpDropdownProps {
 }
 
 export function HelpDropdown({ onShowTutorial, onLearnMore }: HelpDropdownProps) {
+  const  t  = useTranslations("helpDropDown")
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -41,12 +43,11 @@ export function HelpDropdown({ onShowTutorial, onLearnMore }: HelpDropdownProps)
       document.removeEventListener("mousedown", handleClickOutside)
       document.removeEventListener("keydown", handleKeyDown)
     }
-  }, [ onShowTutorial])
+  }, [onShowTutorial])
 
   const menuItems = [
-    
     {
-      label: "Show Tutorial",
+      label: t("Show Tutorial"),
       shortcut: "Ctrl+T",
       icon: BookOpen,
       onClick: () => {
@@ -55,7 +56,7 @@ export function HelpDropdown({ onShowTutorial, onLearnMore }: HelpDropdownProps)
       },
     },
     {
-      label: "Learn More",
+      label: t("Learn More"),
       shortcut: "",
       icon: ExternalLink,
       onClick: () => {
@@ -76,7 +77,7 @@ export function HelpDropdown({ onShowTutorial, onLearnMore }: HelpDropdownProps)
       >
         <span className="flex items-center space-x-3">
           <BookOpen className="w-5 h-5" />
-          <span>Help</span>
+          <span>{t("Help")}</span>
         </span>
         <ChevronDown className={cn("w-4 h-4 transition-transform", isOpen && "rotate-180")} />
       </button>
